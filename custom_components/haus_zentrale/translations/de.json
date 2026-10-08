@@ -1,0 +1,10 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Haus-Zentrale Pro",
+        "description": "Klicke auf Absenden, um das Dashboard zu aktivieren."
+      }
+    }
+  }
+}
