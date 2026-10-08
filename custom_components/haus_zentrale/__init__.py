@@ -48,7 +48,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             component_name="iframe",
             sidebar_title="Haus-Zentrale",
             sidebar_icon="mdi:home-assistant",
-            url_path="haus-zentrale",
+            frontend_url_path="haus-zentrale",
             config={"url": "/local/haus-zentrale/index.html"},
             require_admin=False,
         )
