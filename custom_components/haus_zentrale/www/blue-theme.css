@@ -1,0 +1,113 @@
+/* --- BLUE GLASS THEME BASIS & HINTERGRUND (HELL) --- */
+body.theme-blue { background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%) !important; background-attachment: fixed; background-size: cover; --text: #1c1c1e; }
+body.theme-blue #loginOverlay { background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%) !important; }
+
+/* --- ALLGEMEINER GLAS-EFFEKT (BLAU) --- */
+body.theme-blue .login-card, body.theme-blue .input-card, body.theme-blue li, body.theme-blue .day-card, body.theme-blue #trash-content, body.theme-blue .cat-btn, body.theme-blue .fav-chip, body.theme-blue .tab-bar, body.theme-blue .theme-toggle-top, body.theme-blue .admin-btn, body.theme-blue .cook-select, body.theme-blue .user-btn, body.theme-blue .month-card { background: rgba(255, 255, 255, 0.45) !important; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important; color: #000000 !important; }
+
+/* --- SIDEBAR BUTTONS (ZAHL DIREKT NEBEN NAME) --- */
+body.theme-blue .side-btn { background: rgba(255, 255, 255, 0.45) !important; backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.5) !important; color: #000000 !important; display: flex !important; flex-direction: row !important; justify-content: flex-start !important; align-items: center !important; gap: 10px !important; padding: 8px 12px !important; min-height: 50px !important; border-radius: 12px !important; }
+
+/* --- TEXTE SCHWARZ AUF GLAS --- */
+body.theme-blue h1, body.theme-blue .main-input, body.theme-blue .day-input, body.theme-blue .cat-btn, body.theme-blue .admin-btn, body.theme-blue .fav-chip, body.theme-blue .trash-name, body.theme-blue .day-label span, body.theme-blue .status-bar, body.theme-blue .tab-item, body.theme-blue .user-label, body.theme-blue #list-todo li div { color: #000000 !important; font-weight: 700 !important; }
+
+/* --- AKTIVE ELEMENTE (ROYAL-BLAU & WEISSE SCHRIFT) --- */
+body.theme-blue .side-btn.active-shop, body.theme-blue .side-btn.active-todo, body.theme-blue .cat-btn.active-shop, body.theme-blue .cat-btn.active-food, body.theme-blue .cat-btn.active-todo, body.theme-blue .user-btn.selected { background: #0984e3 !important; color: #ffffff !important; border-color: rgba(255, 255, 255, 0.6) !important; box-shadow: 0 5px 15px rgba(9, 132, 227, 0.3) !important; }
+
+/* --- TAB-BAR TOTAL-RESET BLAU --- */
+body.theme-blue .tab-bar { padding: 0 !important; margin: 0 !important; height: 80px !important; display: flex !important; align-items: stretch !important; justify-content: space-around !important; border-top: 1px solid rgba(255,255,255,0.2) !important; }
+body.theme-blue .tab-item { flex: 1 !important; height: 100% !important; display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important; background: transparent !important; }
+body.theme-blue .tab-item.active-shop, body.theme-blue .tab-item.active-food, body.theme-blue .tab-item.active-todo, body.theme-blue .tab-item.active-finance, body.theme-blue .tab-item.active-trash { background: #0984e3 !important; color: #ffffff !important; border-radius: 0 !important; height: 100% !important; width: 100% !important; transform: none !important; box-shadow: none !important; }
+body.theme-blue .tab-item.active-shop .icon, body.theme-blue .tab-item.active-food .icon, body.theme-blue .tab-item.active-todo .icon, body.theme-blue .tab-item.active-trash .icon, body.theme-blue .tab-item.active-finance .icon, body.theme-blue .tab-item.active-shop span, body.theme-blue .tab-item.active-food span, body.theme-blue .tab-item.active-finance span, body.theme-blue .tab-item.active-todo span { color: #ffffff !important; }
+
+/* --- DAY-DOTS FIX (TAGES-AUSWAHL) --- */
+body.theme-blue .day-dot { background: #ffffff !important; color: #000000 !important; border: 1px solid rgba(0, 0, 0, 0.1) !important; cursor: pointer !important; display: flex !important; justify-content: center !important; align-items: center !important; }
+body.theme-blue .day-dot.active { background: #0984e3 !important; color: #ffffff !important; border: 2px solid #ffffff !important; transform: scale(1.05) !important; box-shadow: 0 4px 10px rgba(9, 132, 227, 0.3) !important; }
+
+/* --- MODALS & FINANCE --- */
+body.theme-blue #intervalModal > div, body.theme-blue #editModal > div, body.theme-blue #shopQtyModal > div, body.theme-blue #finance-modal > div { background: rgba(116, 185, 255, 0.85) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important; color: #000000 !important; }
+body.theme-blue .finance-input-row input, body.theme-blue .finance-input-row select { background: rgba(255, 255, 255, 0.5) !important; border: 1px solid rgba(255, 255, 255, 0.3) !important; color: #000000 !important; }
+body.theme-blue .summary-total { color: #0984e3 !important; border-top: 2px solid rgba(9, 132, 227, 0.2) !important; }
+body.theme-blue .month-card h3, body.theme-blue #modal-content h2 { color: #0984e3 !important; font-weight: 800 !important; }
+body.theme-blue .modal-content h1, body.theme-blue .modal-content h2, body.theme-blue .modal-content h3, body.theme-blue .modal-content label { color: #003366 !important; }
+
+/* --- BLUE THEME: ABBRECH BUTTON --- */
+body.theme-blue .modal-content button[onclick*="closeEdit"], 
+body.theme-blue .modal-content button[onclick*="intervalModal"], 
+body.theme-blue .modal-content button[onclick*="shopQtyModal"] { color: #003366 !important; font-weight: 800 !important; opacity: 1 !important; background: none; border: none; transition: all 0.2s ease; cursor: pointer; }
+
+body.theme-blue .modal-content button[onclick*="closeEdit"]:hover, 
+body.theme-blue .modal-content button[onclick*="intervalModal"]:hover, 
+body.theme-blue .modal-content button[onclick*="shopQtyModal"]:hover { color: #00509d !important; transform: scale(1.1); background: rgba(0, 51, 102, 0.05) !important; border-radius: 8px; }
+
+/* --- BLUE THEME: NAMEN & EINGABE --- */
+body.theme-blue #modalAssignee, body.theme-blue #edit-name { color: #003366 !important; font-weight: 800 !important; border: 2px solid #003366 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 15px !important; transition: all 0.2s ease; outline: none; }
+
+/* --- BLUE THEME: DATUM --- */
+body.theme-blue #modalDate, body.theme-blue #edit-date-val { color: #003366 !important; font-weight: 800 !important; border: 2px solid #003366 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 15px !important; padding: 12px; transition: all 0.2s ease; outline: none; font-family: inherit; }
+
+/* --- BLUE THEME: ZAHLEN / INTERVALL --- */
+body.theme-blue #modalValue, body.theme-blue #edit-interval-val, body.theme-blue #shopQtyValue { color: #003366 !important; font-weight: 900 !important; border: 2px solid #003366 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 15px !important; padding: 15px; text-align: center; font-size: 1.8rem !important; transition: all 0.2s ease; outline: none; }
+
+/* --- BLUE THEME: FINANCE MODAL FIX (KOMPAKT) --- */
+body.theme-blue #finance-modal > div { background: rgba(116, 185, 255, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid rgba(255, 255, 255, 0.5) !important; } /* Fenster-Hintergrund & Glas-Effekt */
+body.theme-blue #modal-header-fixed { background: transparent !important; } /* Header-Hintergrund durchsichtig */
+body.theme-blue #modal-header-fixed h2 { color: #0984e3 !important; font-weight: 800 !important; } /* Monatsname in Theme-Blau */
+body.theme-blue .finance-input-row input, body.theme-blue .finance-input-row select { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003366 !important; color: #003366 !important; font-weight: bold !important; } /* Eingabefelder Weiß-Transparent mit Kontrast-Rahmen */
+body.theme-blue .finance-input-row input::placeholder { color: rgba(0, 51, 102, 0.5) !important; } /* Platzhalter-Farbe */
+body.theme-blue .finance-input-row .btn-add { background: #0984e3 !important; color: #ffffff !important; box-shadow: 0 4px 15px rgba(9, 132, 227, 0.4) !important; } /* OK-Button Blau */
+body.theme-blue #finance-modal button[onclick*="closeFinanceModal"] { color: #003366 !important; background: rgba(255, 255, 255, 0.5) !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; } /* Schließ-X in Dunkelblau */
+body.theme-blue #modal-content small { color: #003366 !important; opacity: 0.8 !important; font-weight: 800 !important; } /* Fixkosten/Ausgaben Beschriftung */
+/* --- BLUE THEME: UHRZEIT KOMPAKT --- */
+body.theme-blue #modalTime, body.theme-blue #edit-time { color: #003366 !important; font-weight: 800 !important; border: 2px solid #003366 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 15px !important; padding: 12px; transition: all 0.2s ease; outline: none; font-family: inherit; text-align: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+
+/* Fokus-Effekt kompakt */
+body.theme-blue #modalTime:focus, body.theme-blue #edit-time:focus { background: #ffffff !important; box-shadow: 0 0 10px rgba(9, 132, 227, 0.3) !important; }
+
+
+/* --- TABLET & PC OPTIMIERUNGEN --- */
+@media screen and (min-width: 768px) {
+    body.theme-blue .tab-bar { height: 120px !important; }
+    body.theme-blue .tab-item .icon { font-size: 2rem !important; }
+    body.theme-blue .tab-item span { font-size: 1.2rem !important; }
+    body.theme-blue .modal-content { width: 550px !important; padding: 45px !important; border-radius: 0px !important; background: rgba(255, 255, 255, 0.95) !important; border: 2px solid #003366 !important; }
+    body.theme-blue .modal-content h1, body.theme-blue .modal-content h2, body.theme-blue .modal-content h3, body.theme-blue .modal-content label { color: #003366 !important; }
+    body.theme-blue .modal-content input { height: 90px !important; font-size: 3.5rem !important; color:#003366 !important; -webkit-text-fill-color: #003366 !important; border: 2px solid #003366 !important; text-align: center !important; }
+    body.theme-blue .day-dot { height: 80px !important; font-size: 1.8rem !important; }
+    body.theme-blue .finance-input-row input, body.theme-blue .finance-input-row select { border: 2px solid rgba(255, 255, 255, 0.7) !important; }
+}
+
+/* --- SONSTIGES --- */
+body.theme-blue .btn-add { background: #0984e3 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(9, 132, 227, 0.4) !important; }
+body.theme-blue .shop-badge { display: flex !important; background: rgba(0, 0, 0, 0.1) !important; color: #000000 !important; width: 24px !important; height: 24px !important; border-radius: 50% !important; justify-content: center !important; align-items: center !important; border: 1px solid rgba(0, 0, 0, 0.2) !important; }
+body.theme-blue .side-btn.active-shop .shop-badge { background: #ffffff !important; color: #0984e3 !important; }
+body.theme-blue .side-btn.active-todo .shop-badge { background: #ffffff !important; color: #0984e3 !important; }
+body.theme-blue .login-card input[type="password"]::placeholder { color: #0984e3 !important; font-weight: 700 !important; }
+body.theme-blue .admin-close-btn { background: #ff453a !important; color: #ffffff !important; border-radius: 12px !important; }
+
+/* --- THEME DROPDOWN BLUE --- */
+body.theme-blue .theme-dropdown { background: rgba(9, 132, 227, 0.7) !important; backdrop-filter: blur(25px) !important; border: 1px solid rgba(255, 255, 255, 0.3) !important; }
+body.theme-blue .theme-dropdown div { color: #ffffff !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important; }
+body.theme-blue .theme-dropdown div:hover { background: rgba(255, 255, 255, 0.2) !important; }
+
+/* --- BLUE THEME: SKRIPT-FREUNDLICH --- */
+
+/* 1. NUR das div färben (wie im Dark Theme) */
+body.theme-blue #list-todo li div {
+    color: #000000 !important;
+}
+
+/* 2. Den Aufgaben-Namen (strong) explizit schwarz machen */
+body.theme-blue #list-todo li strong {
+    color: #000000 !important;
+}
+
+/* 3. NUR die grauen Labels gezielt ansprechen */
+body.theme-blue #list-todo li span[style*="color:var(--gray)"],
+body.theme-blue #list-todo li .user-label {
+    color: #000000 !important;
+    font-weight: 800 !important;
+}
+
+/* WICHTIG: Lösche JEDE Zeile, die allgemein 'li span' mit !important färbt! */
+
