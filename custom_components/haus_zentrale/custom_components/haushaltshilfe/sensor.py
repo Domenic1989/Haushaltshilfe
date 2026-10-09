@@ -1,4 +1,4 @@
-"""Sensor platform for Haus-Zentrale Pro."""
+"""Sensor platform for Haushaltshilfe."""
 import logging
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.core import HomeAssistant, callback
