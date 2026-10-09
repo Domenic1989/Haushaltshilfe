@@ -38,16 +38,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # 2. Sensoren laden
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # 3. Sidebar Panel ohne fehlerhafte Keyboards registrieren
-    # Reihenfolge: (hass, component_name, sidebar_title, sidebar_icon, url_path, config, require_admin)
+    # 3. Sidebar-Panel mit exaktem Keyword frontend_url_path registrieren
     frontend.async_register_built_in_panel(
         hass,
-        "iframe",
-        "Haushaltshilfe",
-        "mdi:home-assistant",
-        "haushaltshilfe",
-        {"url": "/local/haushaltshilfe/index.html"},
-        False,
+        component_name="iframe",
+        sidebar_title="Haushaltshilfe",
+        sidebar_icon="mdi:home-assistant",
+        frontend_url_path="haushaltshilfe",
+        config={"url": "/local/haushaltshilfe/index.html"},
+        require_admin=False,
     )
 
     return True
