@@ -110,7 +110,6 @@
     // --- THEME STEUERUNG (DROPDOWN) ---
 
     function toggleThemeMenu(event) {
-    // Verhindert, dass der Klick zum Hintergrund durchgereicht wird
         if (event) {
             event.stopPropagation();
             event.preventDefault();
@@ -119,13 +118,9 @@
         const dropdown = document.getElementById("themeDropdown");
     
         if (dropdown) {
-            // Toggle die Sichtbarkeit
             dropdown.classList.toggle("show");
-        
-            // TEST: Wenn du das hier in der Konsole (F12) siehst, funktioniert die Logik!
             console.log("Menü geklickt! Sichtbar:", dropdown.classList.contains("show"));
         } else {
-            // Das passiert, wenn die ID im HTML nicht gefunden wird
             alert("Kritischer Fehler: Menü-ID 'themeDropdown' nicht im HTML gefunden!");
         }
     }
@@ -133,22 +128,15 @@
     function setTheme(themeName) {
         const themes = ["theme-light", "theme-dark", "theme-glass", "theme-blue", "theme-green"];
         
-        // 1. Alle alten Klassen entfernen
         document.body.classList.remove(...themes);
-        
-        // 2. Neue Klasse setzen
         curTheme = themeName;
         document.body.className = curTheme;
-        
-        // 3. Speichern für den nächsten Start
         localStorage.setItem("app_theme", curTheme);
         
-        // 4. Menü schließen
         const dropdown = document.getElementById("themeDropdown");
         if (dropdown) dropdown.classList.remove("show");
     }
 
-    // Schließt das Menü, wenn man irgendwo anders hinklickt
     window.addEventListener('click', function(event) {
         const dropdown = document.getElementById("themeDropdown");
         const button = document.querySelector('.theme-toggle-top');
@@ -167,7 +155,6 @@
         if (user) startApp(); 
         highlightToday(); 
 
-        // ENTER-TASTE für das Shop-Mengen-Modal
         const shopInput = document.getElementById("shopQtyValue");
         if (shopInput) {
             shopInput.addEventListener("keypress", (e) => {
@@ -178,25 +165,22 @@
             });
         }
   
-        // ENTER-TASTE für das Haus-Intervall-Modal (optional, falls noch nicht drin)
         const intervalInput = document.getElementById("modalValue");
         if (intervalInput) {
            intervalInput.addEventListener("keypress", (e) => {
                if (e.key === "Enter") {
                     e.preventDefault();
-                     // Hier prüfen wir, welcher Button aktiv sein könnte, 
-                    // standardmäßig nehmen wir meistens 't' für Tage
                     confirmInterval('t'); 
                 }
             });
         }
         
         const pwInput = document.getElementById("pw");
-               if (pwInput) {
-                pwInput.addEventListener("keypress", (e) => {
-                  if (e.key === "Enter") {
-                  e.preventDefault();
-                  doLogin();
+        if (pwInput) {
+            pwInput.addEventListener("keypress", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    doLogin();
                 }
             });
         }
@@ -262,10 +246,8 @@
             sessionStorage.setItem("session_active", "true");
             localStorage.setItem("selectedUser", user);
 
-            // App-Oberfläche anzeigen
             await startApp(); 
         
-            // EXPLIZIT: Nach dem Login die Liste einmal frisch zeichnen
             if (curTab === 'todo') {
                 renderTodoList();
             }
@@ -281,7 +263,6 @@
             const index = users.indexOf(uStr);
             if (index !== -1) {
                 users[index] = `${uName}:${newPw}`;
-                // Speichert die Liste als JSON-String zurück in deinen HA-Helper
                 await fetch(`${HA_URL}/api/services/input_text/set_value`, { 
                     method: 'POST', 
                     headers: {'Authorization': `Bearer ${HA_TOKEN}`, 'Content-Type': 'application/json'}, 
@@ -291,7 +272,6 @@
                 alert(`Passwort für ${uName} geändert! ✅`);
             }
         }
-    
     }
     
     function togglePasswordVisibility() {
@@ -300,10 +280,10 @@
     
         if (pwInput.type === "password") {
             pwInput.type = "text";
-            eyeBtn.innerText = "🔒"; // Symbol ändert sich zu Schloss
+            eyeBtn.innerText = "🔒";
         } else {
             pwInput.type = "password";
-            eyeBtn.innerText = "👁️"; // Symbol ändert sich zu Auge
+            eyeBtn.innerText = "👁️";
         }
     }
 
@@ -312,13 +292,11 @@
         document.getElementById("app").style.display = "block";
 
         console.log("Starte initialen Daten-Sync...");
-        await syncDown(); // Hier warten wir, bis todoDb gefüllt ist
+        await syncDown();
         console.log("Initialer Sync abgeschlossen.");
 
-        // Erst jetzt den Tab initialisieren (das ruft intern render() und load() auf)
         tab(curTab); 
 
-        // Intervalle starten
         setInterval(load, 5000);
         setInterval(updateStatus, 1000);
         setInterval(syncDown, 20000); 
@@ -333,30 +311,25 @@
     }
 
 async function renderSidebars() {
-    // --- 1. SHOP-DATEN AUS DEM NEUEN SICHEREN SENSOR HOLEN ---
     let allOptions = [];
     try {
-        const cfg = SYNC_CONFIG.shopping; // Greift auf deinen neuen Shopping-Sensor zu
+        const cfg = SYNC_CONFIG.shopping;
         const r = await fetch(`${HA_URL}/api/states/${cfg.entity}`, { 
             headers: {'Authorization': `Bearer ${HA_TOKEN}`} 
         });
         const d = await r.json();
         
-        // Daten aus dem Attribut "shopping_json" (oder "data") holen
         if (d && d.attributes && d.attributes[cfg.attr]) {
             const rawData = d.attributes[cfg.attr];
-            // Falls es als Text gespeichert ist, parsen wir es, sonst direkt nutzen
             allOptions = (typeof rawData === 'string') ? JSON.parse(rawData) : rawData;
         }
     } catch(e) { 
         console.error("Sidebar-Zählung Shop fehlgeschlagen", e); 
     }
 
-    // --- 2. SHOP SIDEBAR RENDERN ---
     const shopSide = document.getElementById("shopSidebar");
     if(shopSide) {
         shopSide.innerHTML = stores.map(s => {
-            // Zählt alle Items, die mit dem Kürzel des Geschäfts enden (z.B. @Aldi)
             const count = allOptions.filter(opt => opt.endsWith(` @${s}`)).length;
             const badge = count > 0 ? `<span class="shop-badge">${count}</span>` : '';
             
@@ -368,7 +341,6 @@ async function renderSidebars() {
         }).join('') + `<button class="side-btn side-btn-add" onclick="addSidebarItem('shop')">+ Ort</button>`;
     }
 
-    // --- 3. TODO SIDEBAR RENDERN (Mit Invertierung bei Auswahl) ---
     const todoSide = document.getElementById("todoSidebar");
     if(todoSide) {
         const now = new Date();
@@ -381,7 +353,6 @@ async function renderSidebars() {
             
             const isActive = activeRoom === r;
 
-            // Logik für das Aussehen:
             let badgeStyle = "";
             if (!isActive) {
                 badgeStyle = hasUrgent ? "background: var(--danger);" : "background: #8e8e93;";
@@ -403,7 +374,6 @@ async function renderSidebars() {
     async function deleteSidebarItem(type, val) { if(confirm("Löschen?")) { if(type==='shop') stores = stores.filter(x=>x!==val); else rooms = rooms.filter(x=>x!==val); await syncUpSidebar(type); renderSidebars(); } }
 
 async function saveTodoDb(taskName = "Update", actionType = "aktualisiert") {
-    // ZENTRALER FIX: Bereinigt alle Zeitstempel direkt in der echten Liste (App + HA sync)
     if (Array.isArray(todoDb)) {
         todoDb.forEach(t => {
             if (t.nextDate && String(t.nextDate).endsWith('Z')) {
@@ -421,16 +391,13 @@ async function saveTodoDb(taskName = "Update", actionType = "aktualisiert") {
         });
     }
 
-    // Bereinigte Liste in Text umwandeln
     const dataToSend = JSON.stringify(todoDb || []);
 
-    // 1. Suche die Aufgabe in der Liste (Namen normalisieren)
     const taskObj = (todoDb || []).find(t => 
         t.name.toLowerCase().trim() === taskName.toLowerCase().trim()
     );
     
-    // 2. Den Raumnamen ermitteln. 
-    let roomName = "Haus"; // Standardwert
+    let roomName = "Haus";
 
     if (taskObj) {
         roomName = taskObj.room || taskObj.category || "Haus";
@@ -465,7 +432,6 @@ async function saveTodoDb(taskName = "Update", actionType = "aktualisiert") {
 }
     
 async function completeTodo(id) {
-    // WICHTIG: String-Umwandlung für Text- und Zahlen-IDs
     const t = todoDb.find(x => String(x.id) === String(id));
     
     if (!t) {
@@ -477,17 +443,14 @@ async function completeTodo(id) {
         try {
             const now = new Date();
 
-            // --- SPEZIAL-LOGIK FÜR MÜLLABFUHR ---
             if (t.room.trim() === "Müllabfuhr") {
                 todoDb = todoDb.filter(x => String(x.id) !== String(id));
                 await saveTodoDb(t.name, "Müll erledigt & entfernt 🗑️");
             } 
             else {
-                // --- NORMALE LOGIK FÜR HAUSHALT ---
                 t.lastDone = now.toISOString();
                 let nextDate;
 
-                // FALL A: Wochentage
                 if (t.selectedDays && t.selectedDays.length > 0) {
                     let next = new Date();
                     const wochenAbstand = t.weeks || 1;
@@ -502,14 +465,11 @@ async function completeTodo(id) {
                     }
                     nextDate = next;
                 } 
-                // FALL B: Normales Intervall (Stunden oder Tage)
                 else {
                     const hours = t.intervalHours || 24;
                     nextDate = new Date(now.getTime() + (hours * 60 * 60 * 1000));
                 }
 
-                // --- UHRZEIT AUS DEM OBJEKT ERZWINGEN ---
-                // Wir nehmen die gespeicherte Uhrzeit (z.B. "07:30") oder 10:00 als Fallback
                 if (t.time) {
                     const [h, m] = t.time.split(':');
                     nextDate.setHours(parseInt(h), parseInt(m), 0, 0);
@@ -521,7 +481,6 @@ async function completeTodo(id) {
                 await saveTodoDb(t.name, "erledigt ✅");
             }
 
-            // UI-Update
             renderTodoList();
             if (typeof updateAppBadges === "function") updateAppBadges();
 
@@ -532,24 +491,14 @@ async function completeTodo(id) {
 }    
      
 async function deleteTodo(id) {
-    // WICHTIG: Wir wandeln beide Seiten in Strings um, 
-    // damit "123" (Text) und 123 (Zahl) als gleich erkannt werden.
     const taskToDelete = todoDb.find(x => String(x.id) === String(id));
     
     if (taskToDelete && confirm(`Möchtest du "${taskToDelete.name}" wirklich löschen?`)) {
-        // Den Namen für Home Assistant merken
         const deletedName = taskToDelete.name;
-
-        // Aus der lokalen Liste filtern (auch hier mit String-Vergleich)
         todoDb = todoDb.filter(x => String(x.id) !== String(id));
-
-        // Den Namen an Home Assistant senden
         await saveTodoDb(deletedName, "gelöscht 🗑️");
-
-        // UI neu zeichnen
         renderTodoList();
 
-        // Badge aktualisieren, falls eine fällige Aufgabe gelöscht wurde
         if (typeof updateAppBadges === "function") {
             updateAppBadges();
         }
@@ -563,20 +512,15 @@ function addTodo(manualName = null) {
     tempTodoName = manualName || i.value.trim();
     if (!tempTodoName) return;
 
-    // 1. Auswahlmenü (Dropdown) im Fenster finden
     const select = document.getElementById("modalAssignee");
-
-    // 2. Dropdown leeren und mit "Niemand" starten
     select.innerHTML = '<option value="">Niemand (Alle)</option>'; 
 
-    // 3. Alle User aus deiner 'users' Liste hinzufügen
     users.forEach(uStr => {
         const uName = uStr.split(':')[0]; 
         const option = document.createElement("option");
         option.value = uName;
         option.innerText = uName;
 
-        // 4. Automatisch den aktuell angemeldeten User vor-auswählen
         if (uName === user) {
             option.selected = true;
         }
@@ -584,31 +528,23 @@ function addTodo(manualName = null) {
         select.appendChild(option);
     });
 
-    // 5. Titel setzen
     document.getElementById("modalTitle").innerText = `Intervall für "${tempTodoName}"`;
-    
-    // 6. Standardwerte für Intervall und UHRZEIT setzen
     document.getElementById("modalValue").value = "1";
     
-    // --- HIER DIE RICHTIGE ERGÄNZUNG FÜR DIE UHRZEIT ---
-    // Wir setzen beim Öffnen standardmäßig 10:00 Uhr
     const timeInput = document.getElementById("modalTime");
     if (timeInput) {
         timeInput.value = "10:00"; 
     }
 
-    // 7. Fenster öffnen
     document.getElementById("intervalModal").style.display = "flex";
 
-    // 8. Eingabefeld leeren, falls es kein Favorit (manualName) war
     if (!manualName) i.value = ""; 
 
-    // 9. Wochentage zurücksetzen (damit nichts vom letzten Mal hängen bleibt)
     selectedDays = [];
     document.querySelectorAll('.day-dot').forEach(dot => dot.classList.remove('active'));
 }
 
-let selectedDays = []; // Speicher für Mo-So (1-0)
+let selectedDays = [];
 
 function toggleDay(dayNum, element) {
     const index = selectedDays.indexOf(dayNum);
@@ -625,27 +561,23 @@ async function confirmInterval(einheit) {
     const valInput = document.getElementById("modalValue");
     const dateInput = document.getElementById("modalDate");
     const assigneeInput = document.getElementById("modalAssignee");
-    const timeInput = document.getElementById("modalTime"); // NEU: Das Uhrzeit-Feld
+    const timeInput = document.getElementById("modalTime");
 
     let nextDate;
     let hours;
     const now = new Date();
     
-    // Uhrzeit auslesen (z.B. "10:30")
     const timeVal = timeInput ? timeInput.value : "10:00";
     const [hrs, mins] = timeVal.split(':').map(Number);
 
-    // FALL 1: Festes Datum
     if (einheit === 'date') {
         if (!dateInput.value) { alert("Bitte Datum auswählen!"); return; }
         nextDate = new Date(dateInput.value);
-        // Hier nehmen wir die Uhrzeit direkt aus dem Zeit-Feld, falls im Datum-Picker keine Uhrzeit war
         nextDate.setHours(hrs, mins, 0, 0);
         
         const diffMs = nextDate.getTime() - now.getTime();
         hours = Math.max(1, Math.round(diffMs / 3600000)); 
     } 
-    // FALL 2: Wochentage
     else if (einheit === 'days') {
         if (!selectedDays || selectedDays.length === 0) { 
             alert("Bitte mindestens einen Wochentag auswählen!"); 
@@ -669,76 +601,62 @@ async function confirmInterval(einheit) {
             nextDate.setDate(nextDate.getDate() + (wochenRhythmus - 1) * 7);
         }
 
-        // --- UHRZEIT AUS DEM FELD SETZEN ---
         nextDate.setHours(hrs, mins, 0, 0);
-    
         hours = wochenRhythmus * 7 * 24; 
     }
-    // FALL 3: Stunden oder Tage
     else {
         const val = parseFloat(valInput.value.replace(',', '.'));
         if (isNaN(val) || val <= 0) { alert("Bitte eine Zahl eingeben!"); return; }
         
         hours = (einheit === 't') ? val * 24 : val;
         
-        // Bei Intervallen in TAGEN ('t') wollen wir meistens die exakte Uhrzeit
         if (einheit === 't') {
             nextDate = new Date(now);
             nextDate.setDate(now.getDate() + Math.round(val));
             nextDate.setHours(hrs, mins, 0, 0);
         } else {
-            // Bei STUNDEN rechnen wir einfach stumpf drauf (z.B. alle 4 Stunden)
             nextDate = new Date(now.getTime() + (hours * 3600000));
         }
     }
 
-    // Das fertige Aufgaben-Objekt
     const newTodo = { 
         id: Date.now(), 
         name: tempTodoName, 
         room: activeRoom, 
         assignedTo: assigneeInput.value,
-        time: timeVal, // WICHTIG: Die Zeit fest im Objekt speichern!
+        time: timeVal, 
         intervalHours: hours, 
         selectedWeekdays: einheit === 'days' ? [...selectedDays] : null,
-        weeks: (einheit === 'days') ? (parseInt(valInput.value) || 1) : 1, // Wochen-Rhythmus merken
+        weeks: (einheit === 'days') ? (parseInt(valInput.value) || 1) : 1, 
         lastDone: now.toISOString(), 
         nextDate: nextDate.toISOString() 
     };
 
-    // Speichern
     todoDb.push(newTodo);
     await saveTodoDb(newTodo.name, "neu erstellt 🆕");
 
-    // Modal schließen und aufräumen
     document.getElementById("intervalModal").style.display = "none";
     
     if(dateInput) dateInput.value = ""; 
     valInput.value = "1"; 
-    if(timeInput) timeInput.value = "10:00"; // Wieder auf Standard setzen
+    if(timeInput) timeInput.value = "10:00"; 
     selectedDays = []; 
     document.querySelectorAll('.day-dot').forEach(dot => dot.classList.remove('active'));
 
     renderTodoList();
 }
     
-    // --- BEARBEITEN FUNKTIONEN ---
-
 function openEdit(id) {
     const t = todoDb.find(x => String(x.id) === String(id));
     
     if(t) {
-        // ID und Name setzen
         document.getElementById('edit-id').value = t.id;
         document.getElementById('edit-name').value = t.name;
         
-        // --- BENUTZER (ASSIGNEE) STABIL LADEN ---
         const editSelect = document.getElementById('edit-assignee');
         if (editSelect) {
-            // Liste leeren und Standard-Option setzen
             editSelect.innerHTML = '<option value="">Niemand (Alle)</option>';
             
-            // Namen direkt aus der globalen 'users' Variable generieren
             if (typeof users !== 'undefined' && Array.isArray(users)) {
                 users.forEach(uStr => {
                     const uName = uStr.split(':')[0]; 
@@ -746,7 +664,6 @@ function openEdit(id) {
                     option.value = uName;
                     option.innerText = uName;
                     
-                    // Den aktuell gespeicherten Benutzer vor-auswählen
                     if (uName === t.assignedTo) {
                         option.selected = true;
                     }
@@ -754,13 +671,11 @@ function openEdit(id) {
                 });
             }
             
-            // Falls t.assignedTo leer war, wird automatisch "Niemand" gewählt
             if (!t.assignedTo) {
                 editSelect.value = "";
             }
         }
 
-        // --- Rhythmus berechnen ---
         let displayVal;
         if (t.selectedWeekdays && t.selectedWeekdays.length > 0) {
             displayVal = Math.round(t.intervalHours / 168); 
@@ -771,13 +686,11 @@ function openEdit(id) {
         const intervalInput = document.getElementById('edit-interval-val');
         if(intervalInput) intervalInput.value = displayVal;
 
-        // --- UHRZEIT LADEN ---
         const timeInput = document.getElementById('edit-time');
         if(timeInput) {
             timeInput.value = t.time || "10:00"; 
         }
 
-        // Datum für das Input-Feld formatieren (nächstes Datum)
         if(t.nextDate) {
             const date = new Date(t.nextDate);
             const local = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
@@ -785,7 +698,6 @@ function openEdit(id) {
             if(dateInput) dateInput.value = local;
         }
 
-        // Wochentage laden
         selectedDays = []; 
         const dots = document.querySelectorAll('#edit-weekday-row .day-dot');
         dots.forEach(dot => dot.classList.remove('active'));
@@ -802,7 +714,6 @@ function openEdit(id) {
             });
         }
         
-        // Modal anzeigen
         const modal = document.getElementById('editModal');
         if(modal) modal.style.display = 'flex';
     } else {
@@ -810,14 +721,12 @@ function openEdit(id) {
     }
 }    
 
-    // 2. Das Fenster schließen
     function closeEdit() {
         document.getElementById('editModal').style.display = 'none';
     }
 
 async function saveEdit(modus) {
     const id = document.getElementById('edit-id').value;
-    // Wichtig: String-Vergleich für maximale Kompatibilität
     const idx = todoDb.findIndex(t => String(t.id) === String(id));
     if(idx === -1) return;
 
@@ -826,23 +735,19 @@ async function saveEdit(modus) {
     const dateVal = document.getElementById('edit-date-val').value;
     const assignee = document.getElementById('edit-assignee').value;
     
-    // --- NEU: Uhrzeit auslesen ---
     const timeVal = document.getElementById('edit-time').value || "10:00";
     const [hrs, mins] = timeVal.split(':').map(Number);
-    // ------------------------------
 
     const now = new Date();
 
-    // Grunddaten aktualisieren
     todoDb[idx].name = name;
     todoDb[idx].assignedTo = assignee; 
-    todoDb[idx].time = timeVal; // Uhrzeit fest im Objekt speichern
+    todoDb[idx].time = timeVal; 
 
     if (modus === 'date') {
         if(!dateVal) return alert("Bitte Datum wählen!");
         const targetDate = new Date(dateVal);
         
-        // Gewählte Uhrzeit in das Zieldatum einrechnen
         targetDate.setHours(hrs, mins, 0, 0);
         
         todoDb[idx].nextDate = targetDate.toISOString();
@@ -865,11 +770,9 @@ async function saveEdit(modus) {
             let temp = new Date();
             temp.setDate(temp.getDate() + i);
             
-            // --- NEU: Gewählte Uhrzeit statt fester 10 Uhr ---
             temp.setHours(hrs, mins, 0, 0);
             
             if (selectedDays.includes(temp.getDay())) {
-                // Prüfen, ob der Termin heute schon in der Vergangenheit liegt
                 if (i === 0 && temp < now) continue;
                 
                 tageDiff = i;
@@ -882,20 +785,17 @@ async function saveEdit(modus) {
         let finalDate = new Date();
         finalDate.setDate(now.getDate() + tageDiff + ((wochenRhythmus - 1) * 7));
         
-        // --- NEU: Uhrzeit setzen ---
         finalDate.setHours(hrs, mins, 0, 0);
 
         todoDb[idx].nextDate = finalDate.toISOString();
         todoDb[idx].intervalHours = wochenRhythmus * 168; 
     } 
     else {
-        // Modus 's' (Stunden) oder 't' (Tage)
         const hours = (modus === 't') ? val * 24 : val;
         todoDb[idx].intervalHours = hours;
         
         let nextDate = new Date(now.getTime() + (hours * 60 * 60 * 1000));
         
-        // Wenn in TAGEN gerechnet wird, die Uhrzeit wieder auf die Zielzeit setzen
         if (modus === 't') {
             nextDate.setHours(hrs, mins, 0, 0);
         }
@@ -906,10 +806,8 @@ async function saveEdit(modus) {
         delete todoDb[idx].weeks;
     }
 
-    // Speichern und UI aktualisieren
     await saveTodoDb(name, "bearbeitet ✏️");
     
-    // Falls vorhanden, Modal schließen
     if (typeof closeEdit === "function") {
         closeEdit();
     } else {
@@ -920,7 +818,6 @@ async function saveEdit(modus) {
 }    
 
 function renderTodoList() {
-    // 1. Sidebar-Badges zuerst aktualisieren
     if (typeof renderSidebars === "function") {
         renderSidebars();
     }
@@ -929,7 +826,6 @@ function renderTodoList() {
     if (!ul) return; 
     ul.innerHTML = "";
 
-    // 2. Filtern nach aktivem Raum und SORTIEREN (nach Datum UND Uhrzeit)
     const filtered = todoDb
         .filter(t => t.room === activeRoom)
         .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
@@ -940,7 +836,6 @@ function renderTodoList() {
     }
 
     const now = new Date();
-    // Vergleichsdatum für "Heute" (Mitternacht)
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     filtered.forEach(t => {
@@ -948,13 +843,11 @@ function renderTodoList() {
         const diffMs = next - now;
         const diffHours = Math.round(diffMs / (1000 * 60 * 60));
         
-        // Berechnung für die Anzeige "In X Tagen"
         const tempNext = new Date(t.nextDate);
         const diffDays = Math.floor((tempNext.setHours(0,0,0,0) - todayStart.setHours(0,0,0,0)) / (1000 * 60 * 60 * 24));
         
         const isOverdue = diffMs < 0; 
         
-        // --- Status-Farben und Texte festlegen ---
         let statusColor = "var(--primary)"; 
         let timeText = `In ${diffDays} Tg.`;
 
@@ -974,7 +867,6 @@ function renderTodoList() {
 
         let btnLabel = isOverdue ? "Zurücksetzen 🔄" : "Erledigt ✅";
 
-        // --- Zeit-Formatierung (Inklusive Uhrzeit!) ---
         const formatDT = (isoStr) => {
             if (!isoStr) return '---';
             const d = new Date(isoStr);
@@ -985,10 +877,8 @@ function renderTodoList() {
         };
         
         const li = document.createElement("li");
-        // Blinken bei Überfälligkeit oder wenn es in den nächsten 6 Stunden fällig ist
         if (diffHours <= 6 || isOverdue) li.classList.add("urgent-blink");
 
-        // HTML-Struktur mit Buttons (WICHTIG: IDs in '${t.id}' wegen Text-IDs)
         li.innerHTML = `
             <div style="margin-bottom: 10px;">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
@@ -1013,7 +903,6 @@ function renderTodoList() {
         ul.appendChild(li);
     });
     
-    // 3. App-Badges (unten in der Tab-Bar) aktualisieren
     if (typeof updateAppBadges === "function") {
         updateAppBadges();
     }
@@ -1023,7 +912,6 @@ function renderTodoList() {
         try {
             console.log("🔄 SyncDown gestartet...");
 
-            // 1. Admin-Passwort laden
             const rPw = await fetch(`${HA_URL}/api/states/${ADMIN_PW_ENTITY}`, { 
                 headers: {'Authorization': `Bearer ${HA_TOKEN}`} 
             });
@@ -1032,22 +920,18 @@ function renderTodoList() {
                 ADMIN_PW = dPw.state;
             }
 
-            // 2. Favoriten-Chips laden (Shop, Food & Todo-Buttons)
             for (let t of ['shop', 'food', 'todo']) {
-                const cfg = SYNC_CONFIG[t]; // Holt die Config für den aktuellen Schleifen-Durchlauf
+                const cfg = SYNC_CONFIG[t];
     
-                // Abfrage an den jeweiligen Sensor (z.B. sensor.haushalt_food_favs_storage)
                 const r = await fetch(`${HA_URL}/api/states/${cfg.entity}`, { 
                     headers: {'Authorization': `Bearer ${HA_TOKEN}`} 
                 });
                 const d = await r.json();
 
-                // WICHTIG: Prüfen, ob der Sensor existiert und das Attribut hat
                 if (d && d.attributes && d.attributes[cfg.attr]) {
                     let rawData = d.attributes[cfg.attr];
                     let parsed;
 
-                    // Falls HA den Inhalt als String (Text) liefert, müssen wir ihn parsen
                     if (typeof rawData === 'string') {
                         try {
                             parsed = JSON.parse(rawData);
@@ -1056,11 +940,9 @@ function renderTodoList() {
                             parsed = { cats: ["Alle"], favs: [] };
                         }
                     } else {
-                        // Falls HA es direkt als Objekt liefert (JSON-Format)
                         parsed = rawData;
                     }
 
-                    // Jetzt die Daten in deine lokale App-Datenbank (db) schreiben
                     if (parsed) {
                         db[t].cats = parsed.cats || ["Alle"];
                         db[t].favs = parsed.favs || [];
@@ -1071,7 +953,6 @@ function renderTodoList() {
                 }
             }
 
-            // 3. Parallel alle Listen und den TRIGGER-SENSOR laden
             const [rStores, rRooms, rTodoData] = await Promise.all([
                 fetch(`${HA_URL}/api/states/${STORES_ENTITY}`, { headers: {'Authorization': `Bearer ${HA_TOKEN}`} }),
                 fetch(`${HA_URL}/api/states/${ROOMS_ENTITY}`, { headers: {'Authorization': `Bearer ${HA_TOKEN}`} }),
@@ -1082,17 +963,14 @@ function renderTodoList() {
             const dR = await rRooms.json();
             const dTodo = await rTodoData.json();
 
-            // 4. Läden und Räume verarbeiten
             if (dSt.state?.startsWith('[')) stores = JSON.parse(dSt.state);
             if (dR.state?.startsWith('[')) rooms = JSON.parse(dR.state);
 
-            // 5. AUFGABEN verarbeiten
             if (dTodo && dTodo.attributes && dTodo.attributes.tasks_json) {
                 try {
                     let rawData = dTodo.attributes.tasks_json;
                     let savedTasks;
 
-                    // FIX: Falls HA den String doppelt escaped hat oder als Objekt schickt
                     if (typeof rawData === 'string') {
                         savedTasks = JSON.parse(rawData);
                     } else {
@@ -1110,18 +988,14 @@ function renderTodoList() {
                 console.warn("⚠️ Aufgaben-Sensor liefert keine Daten.");
             }
 
-            // 6. UI AKTUALISIEREN
-            // Wichtig: Wir rendern nur, wenn wir nicht mehr im Login-Bildschirm sind
             if (document.getElementById("app").style.display !== "none") {
                 renderSidebars(); 
                 render(); 
             
-                // Nur wenn der Todo-Tab aktiv ist UND das Element existiert
                 if (curTab === 'todo' && document.getElementById("list-todo")) {
                     renderTodoList(); 
                 }
             
-                // load() kümmert sich um die Einkaufsliste (Shop) oder den Essensplan (Food)
                 if (typeof load === 'function') {
                     load();
                }
@@ -1135,27 +1009,22 @@ function renderTodoList() {
     }
 
     async function syncUp() { 
-        // 1. Die Konfiguration für den aktuellen Tab (shop, food oder todo) holen
         const cfg = SYNC_CONFIG[curTab];
     
-        // Sicherheitscheck: Falls der Tab nicht in SYNC_CONFIG steht (z.B. 'trash'), nichts tun
         if (!cfg) {
             console.warn(`⚠️ syncUp abgebrochen: Keine Konfiguration für ${curTab} gefunden.`);
             return;
         }
 
-        // 2. Die Daten (Kategorien & Favoriten) in einen JSON-String umwandeln
         const data = JSON.stringify(db[curTab]);
 
         try { 
-            // 3. Den API-Aufruf an den Event-Endpunkt von Home Assistant senden
             const response = await fetch(`${HA_URL}/api/events/${cfg.event}`, { 
                 method: 'POST', 
                 headers: {
                     'Authorization': `Bearer ${HA_TOKEN}`, 
                     'Content-Type': 'application/json'
                 }, 
-                // Hier senden wir das JSON-Objekt mit dem Key 'favs'
                 body: JSON.stringify({ 
                     favs: data 
                 }) 
@@ -1173,22 +1042,18 @@ function renderTodoList() {
     }
 
 async function load() {
-    // --- NEU: Sidebar immer aktualisieren, egal welcher Tab offen ist ---
-    // Das sorgt dafür, dass die Zahlen an den Räumen/Läden im Hintergrund mitlaufen
     if (typeof renderSidebars === "function") {
         await renderSidebars();
     }
 
-    // 1. Abbrechen, wenn Müll-Tab offen oder gerade ein Update läuft
     if(curTab==='trash' || isUpdatingFood) return;
 
-    // 2. Logik für Aufgaben
     if(curTab==='todo') { 
         renderTodoList(); 
         return; 
     }
 
-    // 3. Logik für Essensplan
+    // --- ESSENSPLAN LADE-LOGIK (KORRIGIERT) ---
     if(curTab==='food') {
         for(let i=0; i<7; i++) {
             try {
@@ -1209,7 +1074,8 @@ async function load() {
                     });
                 }
 
-                if(inp && document.activeElement !== inp) {
+                // WICHTIGE SPERRE: Überschreibt das Feld nur, wenn es nicht aktiv bearbeitet wird
+                if(inp && document.activeElement !== inp && !isUpdatingFood) {
                     const raw = (d.state==='unknown'||d.state==='---') ? '' : d.state;
                     if (raw.includes(' | ')) {
                         const parts = raw.split(' | ');
@@ -1226,7 +1092,6 @@ async function load() {
         return; 
     }
 
-    // 4. Logik für Einkaufsliste
     if(curTab === 'shop') {
         try {
             const cfg = SYNC_CONFIG.shopping;
@@ -1254,7 +1119,6 @@ async function load() {
         }
     }
 
-    // --- BADGE UPDATE AM ENDE (für die untere Leiste) ---
     if (typeof updateAppBadges === "function") {
         updateAppBadges();
     }
@@ -1264,7 +1128,6 @@ async function delItem(t) {
     try {
         const cfg = SYNC_CONFIG.shopping;
         
-        // 1. Die aktuelle Liste aus dem Trigger-Sensor laden
         const r = await fetch(`${HA_URL}/api/states/${cfg.entity}`, { 
             headers: {'Authorization': `Bearer ${HA_TOKEN}`} 
         });
@@ -1276,10 +1139,8 @@ async function delItem(t) {
             currentList = (typeof rawData === 'string') ? JSON.parse(rawData) : rawData;
         }
 
-        // 2. Den Artikel aus der Liste filtern (löschen)
         const newList = currentList.filter(x => x !== t);
 
-        // 3. Die aktualisierte Liste per Event an HA senden
         const response = await fetch(`${HA_URL}/api/events/${cfg.event}`, {
             method: 'POST',
             headers: {
@@ -1293,11 +1154,8 @@ async function delItem(t) {
 
         if (response.ok) {
             console.log(`✅ Artikel "${t}" gelöscht und Liste synchronisiert.`);
-            
-            // 4. Liste im UI neu laden
             await load();
             
-            // --- BADGE UPDATE SOFORT AUSFÜHREN ---
             if (typeof updateAppBadges === "function") {
                 updateAppBadges();
             }
@@ -1329,7 +1187,6 @@ async function delItem(t) {
         chip.className = 'fav-chip'; 
         chip.innerHTML = `<span>${f.n}</span>`;
     
-        // Lösch-Button für eigene Favoriten
         if(isCustom) { 
             const del = document.createElement('span'); 
             del.innerHTML = " ×"; 
@@ -1338,20 +1195,16 @@ async function delItem(t) {
             chip.appendChild(del); 
         }
     
-        // Klick-Logik
         chip.onclick = () => { 
             if(curTab === 'shop') {
                 addShop(f.n); 
             } else if(curTab === 'food') {
-                 // Fragt nach dem Tag (0=Mo bis 6=So)
                 const d = prompt("Für welchen Tag? (0=Mo, 1=Di, 2=Mi, 3=Do, 4=Fr, 5=Sa, 6=So)", new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
             
                 if(d !== null && d !== "") {
                      const dayIdx = parseInt(d);
                     if(dayIdx >= 0 && dayIdx <= 6) {
-                       // Trägt den Favoriten in das Textfeld ein
                         document.getElementById('plan-' + dayIdx).value = f.n;
-                        // Ruft saveFood auf, damit auch der Koch aus dem Dropdown mitgespeichert wird
                         saveFood(dayIdx); 
                     } else {
                         alert("Bitte eine Zahl zwischen 0 und 6 eingeben.");
@@ -1368,7 +1221,6 @@ async function delItem(t) {
     function tab(t) { 
         curTab = t; 
         sessionStorage.setItem("current_tab", t); 
-        // Liste um 'finance' erweitert
         ['shop','food','todo','trash','finance'].forEach(v => { 
             const view = document.getElementById('v-'+v);
             const tabBtn = document.getElementById('t-'+v);
@@ -1379,7 +1231,7 @@ async function delItem(t) {
         if(t==='trash') { 
             loadTrash(); 
         } else if(t==='finance') {
-            loadFinance(); // Ruft deine neue Funktion aus finance.js auf
+            loadFinance();
         } else { 
             render(); 
             load(); 
@@ -1387,19 +1239,17 @@ async function delItem(t) {
         } 
     }
 
-    let tempShopItem = ""; // Merkt sich den Artikelnamen
+    let tempShopItem = "";
 
     async function addShop(manual) {
         const i = document.getElementById("in-shop");
         tempShopItem = manual || i.value.trim();
     
         if (tempShopItem) {
-        // Titel im Popup anpassen (z.B. "Wieviel Äpfel?")
         document.getElementById("shopQtyTitle").innerText = `Menge für "${tempShopItem}"`;
         document.getElementById("shopQtyValue").value = "1"; 
         document.getElementById("shopQtyModal").style.display = "flex";
         
-        // Fokus auf das Feld setzen und Text markieren
         setTimeout(() => {
             const valInput = document.getElementById("shopQtyValue");
             valInput.focus();
@@ -1414,30 +1264,24 @@ async function confirmShopAdd() {
     const q = document.getElementById("shopQtyValue");
     let qty = parseInt(q.value) || 1;
 
-    // Formatierung: z.B. "3x Milch" oder einfach nur "Brot"
     const vollerName = (qty > 1) ? `${qty}x ${tempShopItem}` : tempShopItem;
 
     try {
         const cfg = SYNC_CONFIG.shopping;
 
-        // 1. Aktuelle Liste vom neuen Trigger-Sensor holen
         const r = await fetch(`${HA_URL}/api/states/${cfg.entity}`, { 
             headers: {'Authorization': `Bearer ${HA_TOKEN}`} 
         });
         const data = await r.json();
 
         let currentList = [];
-        // Daten aus dem Attribut holen (shopping_json)
         if (data && data.attributes && data.attributes[cfg.attr]) {
             const rawData = data.attributes[cfg.attr];
             currentList = (typeof rawData === 'string') ? JSON.parse(rawData) : rawData;
         }
 
-        // 2. Neuen Artikel mit Laden-Kürzel (@Aldi etc.) hinzufügen
         currentList.push(`${vollerName} @${activeStore}`);
 
-        // 3. Die gesamte Liste per Event an Home Assistant senden
-        // WICHTIG: Das Event heißt "set_shopping_data", die Daten liegen in "json_data"
         const response = await fetch(`${HA_URL}/api/events/${cfg.event}`, {
             method: 'POST',
             headers: {
@@ -1452,7 +1296,6 @@ async function confirmShopAdd() {
         if (response.ok) {
             console.log(`✅ "${vollerName}" zu ${activeStore} hinzugefügt.`);
             
-            // Modal schließen und Liste im Dashboard sofort aktualisieren
             document.getElementById("shopQtyModal").style.display = "none";
             load(); 
         } else {
@@ -1465,19 +1308,22 @@ async function confirmShopAdd() {
     }
 }
 
+    // --- ESSENSPLAN SPEICHER-LOGIK (KORRIGIERT) ---
     async function saveFood(idx) {
         isUpdatingFood = true;
     
-        // Holt das Gericht aus dem Textfeld
-        const dish = document.getElementById(`plan-${idx}`).value.trim();
-        // Holt den Koch aus dem neuen Dropdown
-        const cook = document.getElementById(`cook-${idx}`).value;
+        const dishElem = document.getElementById(`plan-${idx}`);
+        const cookElem = document.getElementById(`cook-${idx}`);
+        
+        if (!dishElem) return;
+
+        const dish = dishElem.value.trim();
+        const cook = cookElem ? cookElem.value : "";
     
-        // Kombiniert beides: "Pizza | Domenic" oder nur "Pizza", wenn kein Koch gewählt ist
         const finalValue = cook ? `${dish} | ${cook}` : dish;
 
         try {
-            await fetch(`${HA_URL}/api/services/input_text/set_value`, { 
+            const response = await fetch(`${HA_URL}/api/services/input_text/set_value`, { 
                 method: 'POST', 
                 headers: {
                     'Authorization': `Bearer ${HA_TOKEN}`, 
@@ -1488,15 +1334,22 @@ async function confirmShopAdd() {
                      value: finalValue 
                 }) 
             });
+
+            if (response.ok) {
+                console.log(`✅ Essensplan Tag ${idx} gespeichert: ${finalValue}`);
+            } else {
+                console.error(`❌ Speichern fehlgeschlagen: Status ${response.status}`);
+            }
         } catch (e) {
             console.error("Fehler beim Speichern des Essensplans:", e);
         }
     
-        // Kurze Sperre aufheben, damit der Sync wieder laufen kann
+        // 2 Sekunden Puffer, damit der HA-State im Backend ankommt vor dem nächsten Sync
         setTimeout(() => {
             isUpdatingFood = false;
-        }, 500);
+        }, 2000);
     }
+
     function highlightToday() { let d=new Date().getDay(); let idx=d===0?6:d-1; document.querySelectorAll('.day-card').forEach(c=>c.classList.remove('today')); if(document.getElementById('card-'+idx)) document.getElementById('card-'+idx).classList.add('today'); }
     function clearWeek() { if(confirm("Ganze Woche löschen?")) { for(let i=0; i<7; i++) { document.getElementById('plan-'+i).value=''; saveFood(i); } } }
 
@@ -1520,7 +1373,6 @@ async function loadTrash() {
             if (rohDatum && rohDatum !== "unknown" && rohDatum !== "unavailable") {
                 if (rohDatum.includes('.')) {
                     dF = rohDatum; 
-                    // Konvertiert DD.MM.YYYY zu Date Objekt für die Logik unten
                     const p = rohDatum.split('.');
                     dateObj = new Date(p[2], p[1]-1, p[0]);
                 } else {
@@ -1533,36 +1385,30 @@ async function loadTrash() {
                 }
             }
 
-            // --- NEU: AUTOMATIK-LOGIK FÜR TODO ---
             if (dateObj && !isNaN(dateObj.getTime())) {
                 const taskName = `🗑️ ${s.name} rausstellen`;
                 
-                // Wir planen die Aufgabe für den ABEND DAVOR (18:00 Uhr)
                 let reminderDate = new Date(dateObj);
                 reminderDate.setDate(reminderDate.getDate() - 1);
                 reminderDate.setHours(18, 0, 0, 0);
 
-                // Prüfen, ob genau diese Aufgabe für diesen Termin schon in der todoDb ist
                 const taskExists = todoDb.some(t => t.name === taskName && t.nextDate.startsWith(reminderDate.toISOString().split('T')[0]));
 
-                // Nur hinzufügen, wenn der Termin noch in der Zukunft liegt und noch nicht existiert
                 if (!taskExists && reminderDate > new Date()) {
                     const newTrashTodo = {
                         id: "trash-" + s.name + "-" + reminderDate.getTime(),
                         name: taskName,
-                        room: "Müllabfuhr", // Muss exakt einer deiner Räume sein
+                        room: "Müllabfuhr",
                         assignedTo: "Alle",
-                        intervalHours: 0, // Einmalig
+                        intervalHours: 0,
                         lastDone: null,
                         nextDate: reminderDate.toISOString()
                     };
                     
                     todoDb.push(newTrashTodo);
-                    // Leises Speichern ohne Benachrichtigung
                     saveTodoDb(taskName, "automatisch geplant 🤖"); 
                 }
             }
-            // --- ENDE AUTOMATIK ---
 
             let dV = parseInt(tage);
             let col = isNaN(dV) ? "var(--text)" : (dV <= 1 ? "var(--danger)" : (dV <= 3 ? "var(--accent)" : "var(--text)"));
@@ -1577,7 +1423,6 @@ async function loadTrash() {
         } 
         document.getElementById("trash-content").innerHTML = h; 
         
-        // ToDo Liste aktualisieren, falls wir im ToDo Tab sind
         if(curTab === 'todo') renderTodoList();
 
     } catch (e) { 
@@ -1587,40 +1432,35 @@ async function loadTrash() {
 }
     
 async function syncTrashToTodos() {
-    // Wir gehen alle Müllsorten aus deiner TRASH_CONFIG durch
     for (const s of TRASH_CONFIG) {
         try {
-            // 1. Hol das Datum vom HA Sensor
             const rDate = await fetch(`${HA_URL}/api/states/${s.dateId}`, { headers: {'Authorization': `Bearer ${HA_TOKEN}`} });
             const dDate = await rDate.json();
             const rohDatum = dDate.state;
 
             if (rohDatum && rohDatum !== "unknown" && rohDatum !== "unavailable") {
                 let termin = new Date(rohDatum);
-                // Wir setzen den Termin auf den ABEND DAVOR (z.B. 18 Uhr), damit man den Müll rausstellt
                 termin.setDate(termin.getDate() - 1); 
                 termin.setHours(18, 0, 0, 0);
 
                 const taskName = `🗑️ ${s.name} rausstellen`;
                 
-                // 2. Prüfen, ob diese Aufgabe für dieses Datum schon existiert
                 const exists = todoDb.some(t => t.name === taskName && t.nextDate.startsWith(termin.toISOString().split('T')[0]));
 
                 if (!exists) {
                     console.log(`🤖 Automatik: Neue Aufgabe für ${s.name} am ${termin.toLocaleDateString()} erstellt.`);
                     
                     const newTrashTodo = {
-                        id: Date.now() + Math.random(), // Eindeutige ID
+                        id: Date.now() + Math.random(),
                         name: taskName,
-                        room: "Müllabfuhr", // Muss exakt so heißen wie einer deiner rooms
+                        room: "Müllabfuhr",
                         assignedTo: "Alle",
-                        intervalHours: 0, // Kein festes Intervall, da vom Kalender gesteuert
+                        intervalHours: 0,
                         lastDone: null,
                         nextDate: termin.toISOString()
                     };
 
                     todoDb.push(newTrashTodo);
-                    // Wir speichern das ohne Handy-Benachrichtigung, damit es nicht nervt
                     await saveTodoDb(taskName, "automatisch geplant 🤖"); 
                 }
             }
@@ -1650,7 +1490,6 @@ async function syncTrashToTodos() {
     }
 
 async function updateAppBadges() {
-    // --- 1. SHOP GLOBAL ZÄHLEN (Alle Läden zusammen) ---
     try {
         const cfg = SYNC_CONFIG.shopping;
         const r = await fetch(`${HA_URL}/api/states/${cfg.entity}`, { 
@@ -1662,7 +1501,6 @@ async function updateAppBadges() {
         if (d && d.attributes && d.attributes[cfg.attr]) {
             const rawData = d.attributes[cfg.attr];
             const allItems = (typeof rawData === 'string') ? JSON.parse(rawData) : rawData;
-            // Wir zählen einfach ALLES, was in der Liste steht
             totalShopCount = allItems.length;
         }
 
@@ -1675,12 +1513,9 @@ async function updateAppBadges() {
         console.error("Fehler beim globalen Shop-Count", e);
     }
 
-    // --- 2. TODO ZÄHLEN (Wie bisher) ---
     const now = new Date();
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
     
-    // Hier zählen wir alle Aufgaben (außer Raum "Müll"), damit die Badge 
-    // auch bei leeren Räumen aktiv bleibt
     const urgentCount = (todoDb || []).filter(t => {
         const isUrgent = new Date(t.nextDate) <= todayEnd;
         const isRelevant = t.room !== "Müll"; 
@@ -1693,5 +1528,3 @@ async function updateAppBadges() {
         todoBadge.classList.toggle('visible', urgentCount > 0);
     }
 }
-
-    
