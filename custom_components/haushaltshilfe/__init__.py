@@ -63,13 +63,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # 3. Sensoren laden
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # 4. Sidebar Panel in Home Assistant registrieren
+    # 4. Sidebar Panel korrigiert registrieren
     frontend.async_register_built_in_panel(
         hass,
         component_name="iframe",
         sidebar_title="Haushaltshilfe",
         sidebar_icon="mdi:home-assistant",
-        url_path="haushaltshilfe",
+        panel_name="haushaltshilfe",
         config={"url": "/local/haushaltshilfe/index.html"},
         require_admin=False,
     )
