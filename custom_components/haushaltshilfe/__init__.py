@@ -78,24 +78,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = entry.data
 
-    # 1. input_text-Helfer automatisch erstellen, falls sie noch nicht existieren
+    # 1. input_text-Helfer direkt im State Store anlegen
     for helper_id, config in HELPER_ENTITIES.items():
         entity_id = f"input_text.{helper_id}"
 
         if not hass.states.get(entity_id):
             try:
-                await hass.services.async_call(
-                    "input_text",
-                    "create",
+                # Setzt den State direkt ohne nicht-existenten Service-Call
+                hass.states.async_set(
+                    entity_id,
+                    config["initial"],
                     {
-                        "name": config["name"],
-                        "initial": config["initial"],
+                        "friendly_name": config["name"],
                         "icon": config["icon"],
-                        "max": 255,
+                        "editable": True,
                     },
-                    blocking=True,
                 )
-                _LOGGER.info(f"Helfer {entity_id} erfolgreich automatisch erstellt.")
+                _LOGGER.info(f"Helfer {entity_id} erfolgreich im State-Store initialisiert.")
             except Exception as e:
                 _LOGGER.error(f"Fehler beim Erstellen von {entity_id}: {e}")
 
