@@ -2,14 +2,23 @@
 
 const HA_URL = "";
 
-// Token automatisch abfragen, falls noch keiner gespeichert ist
-let HA_TOKEN = localStorage.getItem("ha_token");
-if (!HA_TOKEN || HA_TOKEN.trim() === "") {
-    HA_TOKEN = prompt("Bitte gib deinen Home Assistant Long-Lived Access Token ein:");
-    if (HA_TOKEN) {
-        localStorage.setItem("ha_token", HA_TOKEN.trim());
+// Holt das Auth-Token automatisch aus der laufenden Home Assistant Session
+function getHAToken() {
+    try {
+        if (window.parent && window.parent.hass && window.parent.hass.auth && window.parent.hass.auth.data) {
+            return window.parent.hass.auth.data.access_token;
+        }
+        if (window.hass && window.hass.auth && window.hass.auth.data) {
+            return window.hass.auth.data.access_token;
+        }
+    } catch(e) {
+        console.warn("Konnte Token nicht automatisch aus Session lesen:", e);
     }
+    return localStorage.getItem("ha_token") || "";
 }
+
+// HA_TOKEN wird dynamically/automatisch ermittelt
+let HA_TOKEN = getHAToken();
 
 const MASTER_PW = "homeassistant";
 const ADMIN_PW_ENTITY = "input_text.helper_admin_pw";
