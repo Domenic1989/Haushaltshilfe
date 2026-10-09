@@ -6,6 +6,7 @@ import json
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components import frontend
+from homeassistant.helpers import entity_registry as er
 
 from .const import DOMAIN
 
@@ -13,7 +14,7 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ["sensor"]
 
-# Alle input_text Helfer aus config.js mit korrekten JSON-Initialwerten:
+# Alle input_text Helfer mit exakten JSON-Initialwerten für dein Frontend:
 HELPER_ENTITIES = {
     # Administration & Grundlagen
     "helper_admin_pw": {
@@ -28,7 +29,7 @@ HELPER_ENTITIES = {
     },
     "helper_shop_stores": {
         "name": "Haushalt Shop Stores",
-        "initial": json.dumps(["Aldi", "Rewe", "Lidl"]),
+        "initial": json.dumps(["Aldi", "Lidl", "Rewe"]),
         "icon": "mdi:store",
     },
     "helper_room_list": {
@@ -36,7 +37,7 @@ HELPER_ENTITIES = {
         "initial": json.dumps(["Küche", "Bad", "Wohnzimmer"]),
         "icon": "mdi:home-floor-1",
     },
-    # Favoriten & Kategorien Storage (falls als input_text genutzt)
+    # Favoriten & Kategorien Storage
     "helper_shop_favs": {
         "name": "Haushalt Shop Favs",
         "initial": json.dumps({"cats": ["Alle", "Gemüse", "Fleisch", "Vorrat", "Haus"], "favs": []}),
@@ -52,7 +53,7 @@ HELPER_ENTITIES = {
         "initial": json.dumps({"cats": ["Alle", "Haus", "Bad", "Wohnen", "Küche", "Garten"], "favs": []}),
         "icon": "mdi:checkbox-marked-circle-outline",
     },
-    # Essensplan Wochentage (FOOD_ENTITIES aus config.js)
+    # Essensplan Wochentage
     "essen_montag": {
         "name": "Essen Montag",
         "initial": "",
@@ -95,13 +96,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = entry.data
 
-    # 1. input_text-Helfer direkt im State Store anlegen
+    registry = er.async_get(hass)
+
+    # 1. Registrieren und Erhalten der input_text Helfer
     for helper_id, config in HELPER_ENTITIES.items():
         entity_id = f"input_text.{helper_id}"
 
-        if not hass.states.get(entity_id):
+        # In der Entity Registry registrieren, damit HA die Entität fest kennt
+        registry.async_get_or_create(
+            domain="input_text",
+            platform=DOMAIN,
+            unique_id=f"haushalt_input_text_{helper_id}",
+            suggested_object_id=helper_id,
+            original_name=config["name"],
+            original_icon=config["icon"],
+        )
+
+        # Nur wenn im State Store aktuell KEIN Zustand existiert (erster Start),
+        # wird der Initialwert gesetzt. Bei Neustarts bleibt der echte State erhalten!
+        existing_state = hass.states.get(entity_id)
+        if existing_state is None or existing_state.state in ("unknown", "unavailable"):
             try:
-                # Setzt den State direkt ohne nicht-existenten Service-Call
                 hass.states.async_set(
                     entity_id,
                     config["initial"],
@@ -111,9 +126,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         "editable": True,
                     },
                 )
-                _LOGGER.info(f"Helfer {entity_id} erfolgreich im State-Store initialisiert.")
+                _LOGGER.info(f"Helfer {entity_id} mit Initialwert angelegt.")
             except Exception as e:
-                _LOGGER.error(f"Fehler beim Erstellen von {entity_id}: {e}")
+                _LOGGER.error(f"Fehler beim Initialisieren von {entity_id}: {e}")
 
     # 2. Frontend-Dateien aus /www nach /config/www/haushaltshilfe kopieren
     source_dir = hass.config.path("custom_components", DOMAIN, "www")
