@@ -1,5 +1,7 @@
 {
-  "name": "Haushaltshilfe",
+  "name": "Haushaltshilfe Pro",
   "render_readme": true,
-  "domains": ["haushaltshilfe"]
+  "zip_release": false,
+  "content_in_root": false
 }
+
