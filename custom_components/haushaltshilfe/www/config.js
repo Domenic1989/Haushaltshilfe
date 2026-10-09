@@ -1,5 +1,6 @@
 // ---- KONFIGURATION & PASSWÖRTER ----
-const HA_URL = window.location.origin;
+
+const HA_URL = "";
 let HA_TOKEN = localStorage.getItem("ha_token") || "";
 
 const MASTER_PW = "homeassistant";
