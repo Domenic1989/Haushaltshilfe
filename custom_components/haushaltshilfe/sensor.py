@@ -1,6 +1,7 @@
-"""Sensor platform for Haushaltshilfe Pro."""
+"""Sensor platform for Haushaltshilfe Pro with persistent storage."""
 import logging
 from homeassistant.components.sensor import SensorEntity
+from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.config_entries import ConfigEntry
@@ -29,14 +30,14 @@ async def async_setup_entry(
         HaushaltshilfeDataSensor(hass, "Shop Favs Storage", "shop_favs_storage", "shop_favs_json", EVENT_SET_SHOP_FAVS, {"cats": ["Alle"], "favs": []}),
         HaushaltshilfeDataSensor(hass, "Food Favs Storage", "food_favs_storage", "food_favs_json", EVENT_SET_FOOD_FAVS, {"cats": ["Alle"], "favs": []}),
         HaushaltshilfeDataSensor(hass, "Todo Favs Storage", "todo_favs_storage", "todo_favs_json", EVENT_SET_TODO_FAVS, {"cats": ["Alle"], "favs": []}),
-        HaushaltshilfeDataSensor(hass, "Finance DB", "finance_db", "data", EVENT_SET_FINANCE, []),
+        HaushaltshilfeDataSensor(hass, "Finance DB", "finance_db", "data", EVENT_SET_FINANCE, {"months": []}),
     ]
     
     async_add_entities(sensors)
 
 
-class HaushaltshilfeDataSensor(SensorEntity):
-    """Representation of a Haushaltshilfe Storage Sensor."""
+class HaushaltshilfeDataSensor(RestoreEntity, SensorEntity):
+    """Representation of a persistent Haushaltshilfe Storage Sensor."""
 
     def __init__(self, hass: HomeAssistant, name: str, key: str, attr_name: str, event_type: str, default_val):
         self._hass = hass
@@ -58,12 +59,19 @@ class HaushaltshilfeDataSensor(SensorEntity):
         return {self._attr_key: self._data}
 
     async def async_added_to_hass(self):
-        """Register event listener on startup."""
+        """Restore previous state on startup and register event listener."""
+        await super().async_added_to_hass()
+        
+        # Daten aus der HA-Datenbank wiederherstellen
+        last_state = await self.async_get_last_state()
+        if last_state and self._attr_key in last_state.attributes:
+            self._data = last_state.attributes[self._attr_key]
+            _LOGGER.info(f"Restored state for {self._attr_name}")
+
         @callback
         def handle_event(event):
             data = event.data
             
-            # Überprüfe flexibel alle gängigen Event-Payload-Schlüssel
             if "data" in data:
                 self._data = data["data"]
             elif "json_data" in data:
