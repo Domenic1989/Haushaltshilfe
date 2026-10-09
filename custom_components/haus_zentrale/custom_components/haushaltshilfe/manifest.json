@@ -1,6 +1,6 @@
 {
-  "domain": "haus_zentrale",
-  "name": "Haus-Zentrale Pro",
+  "domain": "haushaltshilfe",
+  "name": "Haushaltshilfe Pro",
   "codeowners": ["@Domenic1989"],
   "config_flow": true,
   "documentation": "https://github.com/Domenic1989/haus-zentrale",
