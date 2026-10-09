@@ -62,14 +62,18 @@ class HaushaltshilfeDataSensor(SensorEntity):
         @callback
         def handle_event(event):
             data = event.data
-            if self._event_type == EVENT_SET_SHOPPING and "json_data" in data:
+            
+            # Überprüfe flexibel alle gängigen Event-Payload-Schlüssel
+            if "data" in data:
+                self._data = data["data"]
+            elif "json_data" in data:
                 self._data = data["json_data"]
-            elif self._event_type == EVENT_SET_TASKS and "tasks" in data:
+            elif "tasks" in data:
                 self._data = data["tasks"]
             elif "favs" in data:
                 self._data = data["favs"]
-            elif "data" in data:
-                self._data = data["data"]
+            elif self._attr_key in data:
+                self._data = data[self._attr_key]
 
             self.async_write_ha_state()
 
