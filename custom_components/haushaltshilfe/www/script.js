@@ -4,7 +4,7 @@
     
     let curTab = sessionStorage.getItem("current_tab") || "shop";
     let curTheme = localStorage.getItem("app_theme") || "theme-light";
-    let users = ["Domenic:Sabrina1707.", "Sabrina:Sabrina1707.", "Tablet:Sabrina1707."]; 
+    let users = ["Admin:admin", "Tablet:tablet"]; 
     
     let curCat = "Alle", lastActivity = Date.now(), isUpdatingFood = false;
     let activeStore = "Aldi", activeRoom = "Küche";
