@@ -1,7 +1,15 @@
 // ---- KONFIGURATION & PASSWÖRTER ----
 
 const HA_URL = "";
-let HA_TOKEN = localStorage.getItem("ha_token") || "";
+
+// Token automatisch abfragen, falls noch keiner gespeichert ist
+let HA_TOKEN = localStorage.getItem("ha_token");
+if (!HA_TOKEN || HA_TOKEN.trim() === "") {
+    HA_TOKEN = prompt("Bitte gib deinen Home Assistant Long-Lived Access Token ein:");
+    if (HA_TOKEN) {
+        localStorage.setItem("ha_token", HA_TOKEN.trim());
+    }
+}
 
 const MASTER_PW = "homeassistant";
 const ADMIN_PW_ENTITY = "input_text.helper_admin_pw";
