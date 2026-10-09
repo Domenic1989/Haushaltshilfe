@@ -2,6 +2,7 @@
 import logging
 import os
 import shutil
+import json
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components import frontend
@@ -12,7 +13,7 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ["sensor"]
 
-# Alle input_text Helfer aus config.js, die automatisch angelegt werden sollen:
+# Alle input_text Helfer aus config.js mit korrekten JSON-Initialwerten:
 HELPER_ENTITIES = {
     # Administration & Grundlagen
     "helper_admin_pw": {
@@ -22,18 +23,34 @@ HELPER_ENTITIES = {
     },
     "helper_user_list": {
         "name": "Haushalt User List",
-        "initial": "Admin:admin,Tablet:tablet",
+        "initial": json.dumps(["Admin:admin", "Tablet:tablet"]),
         "icon": "mdi:account-group",
     },
     "helper_shop_stores": {
         "name": "Haushalt Shop Stores",
-        "initial": "Aldi,Rewe,Lidl",
+        "initial": json.dumps(["Aldi", "Rewe", "Lidl"]),
         "icon": "mdi:store",
     },
     "helper_room_list": {
         "name": "Haushalt Room List",
-        "initial": "Küche,Bad,Wohnzimmer",
+        "initial": json.dumps(["Küche", "Bad", "Wohnzimmer"]),
         "icon": "mdi:home-floor-1",
+    },
+    # Favoriten & Kategorien Storage (falls als input_text genutzt)
+    "helper_shop_favs": {
+        "name": "Haushalt Shop Favs",
+        "initial": json.dumps({"cats": ["Alle", "Gemüse", "Fleisch", "Vorrat", "Haus"], "favs": []}),
+        "icon": "mdi:cart-outline",
+    },
+    "helper_food_favs": {
+        "name": "Haushalt Food Favs",
+        "initial": json.dumps({"cats": ["Alle", "Schnell", "Italienisch", "Leicht"], "favs": []}),
+        "icon": "mdi:silverware-variant",
+    },
+    "helper_todo_favs": {
+        "name": "Haushalt Todo Favs",
+        "initial": json.dumps({"cats": ["Alle", "Haus", "Bad", "Wohnen", "Küche", "Garten"], "favs": []}),
+        "icon": "mdi:checkbox-marked-circle-outline",
     },
     # Essensplan Wochentage (FOOD_ENTITIES aus config.js)
     "essen_montag": {
