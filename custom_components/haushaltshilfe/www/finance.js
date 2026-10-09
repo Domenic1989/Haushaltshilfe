@@ -11,15 +11,21 @@ async function fetchHA(entity) {
     }
 }
 
-async function callService(domain, service, data) {
+// Korrigierte Speicher-Funktion: Sendet das Event set_finance_db direkt an die HA API
+async function saveToHA(dataObj) {
     try {
-        await fetch(`${HA_URL}/api/services/${domain}/${service}`, {
+        await fetch(`${HA_URL}/api/events/set_finance_db`, {
             method: 'POST',
-            headers: {'Authorization': `Bearer ${HA_TOKEN}`, 'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
+            headers: {
+                'Authorization': `Bearer ${HA_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                data: dataObj
+            })
         });
     } catch(e) { 
-        console.error("HA Service Error:", e); 
+        console.error("HA Save Error:", e); 
     }
 }
 
@@ -80,7 +86,10 @@ async function openFinanceModal(mIdx) {
     const content = document.getElementById('modal-content');
     
     const s = await fetchHA('sensor.haushalt_finance_db');
-    let m = (s.attributes.data || s.attributes).months[mIdx];
+    if (!s || !s.attributes) return;
+    let root = s.attributes.data || s.attributes;
+    let m = (root.months || [])[mIdx];
+    if (!m) return;
 
     const isMobile = window.innerWidth < 768;
     const accent = "var(--primary-color)";
@@ -110,7 +119,7 @@ async function openFinanceModal(mIdx) {
         }
     }, 10);
 
-    // 1. NUR DER HEADER (Titel ohne feste Farbvorgabe im Style)
+    // 1. NUR DER HEADER
     headerFixed.style.padding = isMobile ? "30px 15px" : "20px 15px";
     headerFixed.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-right:110px;">
@@ -158,12 +167,6 @@ function closeFinanceModal() {
     loadFinance();
 }
 
-async function saveToHA(dataObj) {
-    await callService('browser_mod', 'javascript', { 
-        code: `hass.connection.sendMessage({type: "fire_event", event_type: "set_finance_data", event_data: {json_data: ${JSON.stringify(dataObj)}}});`
-    });
-}
-
 async function addEntry(mIdx) {
     const aIn = document.getElementById(`amt-${mIdx}`);
     const nIn = document.getElementById(`name-${mIdx}`);
@@ -173,6 +176,7 @@ async function addEntry(mIdx) {
     if (!a || !n) return;
 
     const s = await fetchHA('sensor.haushalt_finance_db');
+    if (!s || !s.attributes) return;
     let root = s.attributes.data || s.attributes;
     
     if(!root.months[mIdx][t]) root.months[mIdx][t] = [];
@@ -180,50 +184,44 @@ async function addEntry(mIdx) {
     
     await saveToHA(root);
     aIn.value = ""; nIn.value = "";
-    setTimeout(loadFinance, 800);
+    setTimeout(loadFinance, 500);
 }
 
 async function delEntry(mIdx, type, iIdx) {
     if(!confirm("Eintrag löschen?")) return;
     const s = await fetchHA('sensor.haushalt_finance_db');
+    if (!s || !s.attributes) return;
     let root = s.attributes.data || s.attributes;
     root.months[mIdx][type].splice(iIdx, 1);
     await saveToHA(root);
-    setTimeout(loadFinance, 800);
+    setTimeout(loadFinance, 500);
 }
 
 async function addNewMonth() {
-    // 1. Abfrage des Namens beim Nutzer
-    const inputName = prompt("Welcher Monat soll hinzugefügt werden?", "April 2026");
+    const inputName = prompt("Welcher Monat soll hinzugefügt werden?", "Oktober 2026");
     
-    // Abbrechen, wenn nichts eingegeben wurde
     if (!inputName || inputName.trim() === "") return;
 
-    // 2. Daten vom Sensor laden
     const s = await fetchHA('sensor.haushalt_finance_db');
-    if (!s) return;
-    let root = s.attributes.data || s.attributes;
+    let root = (s && s.attributes) ? (s.attributes.data || s.attributes) : { months: [] };
     if (!root.months) root.months = [];
 
-    // 3. Neuen Monat zum Array hinzufügen
     root.months.push({
         month_name: inputName.trim(),
         fixum: [],
         spendings: []
     });
 
-    // 4. Zurück an Home Assistant senden
     await saveToHA(root);
-    
-    // UI neu laden
-    setTimeout(loadFinance, 800);
+    setTimeout(loadFinance, 500);
 }
 
 async function deleteMonth(mIdx) {
     if(!confirm("Gesamten Monat löschen?")) return;
     const s = await fetchHA('sensor.haushalt_finance_db');
+    if (!s || !s.attributes) return;
     let root = s.attributes.data || s.attributes;
     root.months.splice(mIdx, 1);
     await saveToHA(root);
-    setTimeout(loadFinance, 800);
+    setTimeout(loadFinance, 500);
 }
