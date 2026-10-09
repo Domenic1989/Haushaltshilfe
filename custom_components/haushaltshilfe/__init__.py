@@ -12,8 +12,14 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ["sensor"]
 
-# Liste der automatisch anzulegenden Text-Helfer
+# Alle input_text Helfer aus config.js, die automatisch angelegt werden sollen:
 HELPER_ENTITIES = {
+    # Administration & Grundlagen
+    "helper_admin_pw": {
+        "name": "Haushalt Admin PW",
+        "initial": "1234",
+        "icon": "mdi:lock",
+    },
     "helper_user_list": {
         "name": "Haushalt User List",
         "initial": "Admin:admin,Tablet:tablet",
@@ -29,10 +35,41 @@ HELPER_ENTITIES = {
         "initial": "Küche,Bad,Wohnzimmer",
         "icon": "mdi:home-floor-1",
     },
-    "helper_admin_pw": {
-        "name": "Haushalt Admin PW",
-        "initial": "1234",
-        "icon": "mdi:lock",
+    # Essensplan Wochentage (FOOD_ENTITIES aus config.js)
+    "essen_montag": {
+        "name": "Essen Montag",
+        "initial": "",
+        "icon": "mdi:silverware-fork-knife",
+    },
+    "essen_dienstag": {
+        "name": "Essen Dienstag",
+        "initial": "",
+        "icon": "mdi:silverware-fork-knife",
+    },
+    "essen_mittwoch": {
+        "name": "Essen Mittwoch",
+        "initial": "",
+        "icon": "mdi:silverware-fork-knife",
+    },
+    "essen_donnerstag": {
+        "name": "Essen Donnerstag",
+        "initial": "",
+        "icon": "mdi:silverware-fork-knife",
+    },
+    "essen_freitag": {
+        "name": "Essen Freitag",
+        "initial": "",
+        "icon": "mdi:silverware-fork-knife",
+    },
+    "essen_samstag": {
+        "name": "Essen Samstag",
+        "initial": "",
+        "icon": "mdi:silverware-fork-knife",
+    },
+    "essen_sonntag": {
+        "name": "Essen Sonntag",
+        "initial": "",
+        "icon": "mdi:silverware-fork-knife",
     },
 }
 
@@ -44,7 +81,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # 1. input_text-Helfer automatisch erstellen, falls sie noch nicht existieren
     for helper_id, config in HELPER_ENTITIES.items():
         entity_id = f"input_text.{helper_id}"
-        
+
         if not hass.states.get(entity_id):
             try:
                 await hass.services.async_call(
@@ -83,7 +120,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # 3. Sensoren laden
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # 4. Sidebar-Panel mit exaktem Keyword frontend_url_path registrieren
+    # 4. Sidebar-Panel registrieren
     frontend.async_register_built_in_panel(
         hass,
         component_name="iframe",
