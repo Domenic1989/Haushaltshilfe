@@ -1,4 +1,4 @@
-"""Constants for the Haus-Zentrale Pro integration."""
+"""Constants for the Haushaltshilfe Pro integration."""
 
 DOMAIN = "haus_zentrale"
 
