@@ -2,12 +2,12 @@
   "config": {
     "step": {
       "user": {
-        "title": "Haus-Zentrale Pro Einrichten",
+        "title": "Haushaltshilfe Einrichten",
         "description": "Erstellt alle nötigen Sensoren und kopiert das Dashboard automatisch in die Seitenleiste."
       }
     },
     "abort": {
-      "single_instance_allowed": "Die Haus-Zentrale ist bereits eingerichtet."
+      "single_instance_allowed": "Die Haushaltshilfe ist bereits eingerichtet."
     }
   }
 }
