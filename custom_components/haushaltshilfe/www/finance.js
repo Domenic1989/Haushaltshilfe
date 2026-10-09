@@ -11,17 +11,29 @@ async function fetchHA(entity) {
     }
 }
 
-// Korrigierte Speicher-Funktion: Sendet das Event set_finance_db direkt an die HA API
+// Dauerhaftes Speichern: Sendet Event an Integration UND schreibt State für Neustartsicherheit
 async function saveToHA(dataObj) {
     try {
+        // 1. Event feuern für die Live-Aktualisierung im Sensor (Python Integration)
         await fetch(`${HA_URL}/api/events/set_finance_db`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${HA_TOKEN}`,
                 'Content-Type': 'application/json'
             },
+            body: JSON.stringify({ data: dataObj })
+        });
+
+        // 2. Zustand direkt in HA State API schreiben (dauerhafte Sicherung)
+        await fetch(`${HA_URL}/api/states/sensor.haushalt_finance_db`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${HA_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
-                data: dataObj
+                state: 'OK',
+                attributes: { data: dataObj }
             })
         });
     } catch(e) { 
@@ -119,7 +131,7 @@ async function openFinanceModal(mIdx) {
         }
     }, 10);
 
-    // 1. NUR DER HEADER
+    // 1. HEADER & EINGABEZEILE
     headerFixed.style.padding = isMobile ? "30px 15px" : "20px 15px";
     headerFixed.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-right:110px;">
@@ -147,7 +159,7 @@ async function openFinanceModal(mIdx) {
         </div>
     `;
 
-    // 2. RESTLICHER INHALT
+    // 2. LISTEN-ANZEIGE
     content.innerHTML = `
         <div style="margin-bottom:20px; margin-top:20px;">
             <small style="font-weight:bold; opacity:0.5;">📌 FIXKOSTEN</small>
@@ -167,6 +179,7 @@ function closeFinanceModal() {
     loadFinance();
 }
 
+// --- EINTRAG HINZUFÜGEN ---
 async function addEntry(mIdx) {
     const aIn = document.getElementById(`amt-${mIdx}`);
     const nIn = document.getElementById(`name-${mIdx}`);
@@ -187,6 +200,7 @@ async function addEntry(mIdx) {
     setTimeout(loadFinance, 500);
 }
 
+// --- EINTRAG LÖSCHEN ---
 async function delEntry(mIdx, type, iIdx) {
     if(!confirm("Eintrag löschen?")) return;
     const s = await fetchHA('sensor.haushalt_finance_db');
@@ -197,6 +211,7 @@ async function delEntry(mIdx, type, iIdx) {
     setTimeout(loadFinance, 500);
 }
 
+// --- MONAT HINZUFÜGEN ---
 async function addNewMonth() {
     const inputName = prompt("Welcher Monat soll hinzugefügt werden?", "Oktober 2026");
     
@@ -216,6 +231,7 @@ async function addNewMonth() {
     setTimeout(loadFinance, 500);
 }
 
+// --- MONAT LÖSCHEN ---
 async function deleteMonth(mIdx) {
     if(!confirm("Gesamten Monat löschen?")) return;
     const s = await fetchHA('sensor.haushalt_finance_db');
