@@ -39,7 +39,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     # 3. Sidebar Panel ohne fehlerhafte Keyboards registrieren
-    # Parameter-Reihenfolge: (hass, component_name, sidebar_title, sidebar_icon, frontend_url_path, config, require_admin)
+    # Reihenfolge: (hass, component_name, sidebar_title, sidebar_icon, url_path, config, require_admin)
     frontend.async_register_built_in_panel(
         hass,
         "iframe",
@@ -47,7 +47,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "mdi:home-assistant",
         "haushaltshilfe",
         {"url": "/local/haushaltshilfe/index.html"},
-        False
+        False,
     )
 
     return True
