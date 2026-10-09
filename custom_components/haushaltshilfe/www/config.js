@@ -1,60 +1,63 @@
-// HA-URL wird automatisch ermittelt
-let HA_URL = window.location.origin;
-
-// Token & Passwörter
+// ---- KONFIGURATION & PASSWÖRTER ----
+const HA_URL = window.location.origin; // Deine Home Assistant URL
 let HA_TOKEN = localStorage.getItem("ha_token") || "";
-let MASTER_PW = "Haushaltsassistent";
+
+// Das Master-Passwort für System-Einstellungen
+const MASTER_PW = "homeassistant";
+
+// Admin-Passwort-Steuerung via Helfer
+const ADMIN_PW_ENTITY = "input_text.helper_admin_pw";
 let ADMIN_PW = "1234";
 
-// Entitäten-Mapping (Passend zur Haushaltshilfe Integration)
-const USER_LIST_ENTITY = "input_text.haushalt_users";
-const STORES_ENTITY = "input_text.haushalt_stores";
-const ZIMMER_ENTITÄT = "input_text.haushalt_rooms";
-const ADMIN_PW_ENTITY = "input_text.haushalt_admin_pw";
+// ---- ENTITÄTEN-ÜBERSICHT (STORES & ROOMS) ----
+const USER_LIST_ENTITY = "input_text.helper_user_list";
+const STORES_ENTITY = "input_text.helper_shop_stores";
+const ROOMS_ENTITY = "input_text.helper_room_list";
 
-const TODO_DATA_ENTITY = "sensor.haushalt_todo_storage";
+// ---- DIE SICHEREN SPEICHER (Trigger-Sensoren ohne 255-Zeichen-Limit) ----
+// 1. Aufgaben & Termine
+const TODO_DATA_ENTITY = "sensor.haushalt_tasks_storage";
+const ENTITY_FINANCE = "sensor.haushalt_finance_db";
 
+// 2. Favoriten & Kategorien & Einkaufsliste (NEU: Shopping mit Attribut)
 const SYNC_CONFIG = {
-    Einkaufen: {
-        entity: "sensor.haushalt_shopping_data",
-        attr: "shopping_json",
-        event: "set_shopping_data"
-    },
-    Geschäft: {
+    shop: {
         entity: "sensor.haushalt_shop_favs_storage",
-        attr: "data",
+        attr: "shop_favs_json",
         event: "set_shop_favs"
     },
     todo: {
         entity: "sensor.haushalt_todo_favs_storage",
-        attr: "data",
+        attr: "todo_favs_json",
         event: "set_todo_favs"
     },
-    Essen: {
+    food: {
         entity: "sensor.haushalt_food_favs_storage",
-        attr: "data",
+        attr: "food_favs_json",
         event: "set_food_favs"
     },
-    Finanzen: {
-        entity: "sensor.haushalt_finance_db",
-        attr: "data",
-        event: "set_finance_db"
+    // NEUER SPEICHER FÜR DIE EINKAUFSLISTE
+    shopping: {
+        entity: "sensor.haushalt_shopping_db",
+        attr: "shopping_json",
+        event: "set_shopping_data"
     }
 };
 
-const LEBENSMITTELEINHEITEN = [
-    "input_text.haushalt_food_mo",
-    "input_text.haushalt_food_di",
-    "input_text.haushalt_food_mi",
-    "input_text.haushalt_food_do",
-    "input_text.haushalt_food_fr",
-    "input_text.haushalt_food_sa",
-    "input_text.haushalt_food_so"
+// ---- ESSENSPLAN (Wie gewünscht die 7 alten behalten) ----
+const FOOD_ENTITIES = [
+    "input_text.essen_montag",
+    "input_text.essen_dienstag",
+    "input_text.essen_mittwoch",
+    "input_text.essen_donnerstag",
+    "input_text.essen_freitag",
+    "input_text.essen_samstag",
+    "input_text.essen_sonntag"
 ];
 
-// Müll-Konfiguration (an deine lokalen Sensoren anpassbar)
+// ---- MÜLL-KONFIGURATION ----
 const TRASH_CONFIG = [
-    { Ausweis: "sensor.gelber_sack", dateId: "sensor.gelber_sack_datum", Name: "Gelber Sack", Symbol: "🟡" },
-    { Ausweis: "sensor.papier", dateId: "sensor.papier_datum", Name: "Altpapier", Symbol: "📦" },
-    { Ausweis: "sensor.restmull", dateId: "sensor.restmull_datum", Name: "Restmüll", Symbol: "🗑️" }
+    { id: "sensor.gelber_sack", dateId: "sensor.gelber_sack_datum", name: "Gelber Sack", icon: "🟡" },
+    { id: "sensor.papier", dateId: "sensor.papier_datum", name: "Altpapier", icon: "📦" },
+    { id: "sensor.restmull", dateId: "sensor.restmull_datum", name: "Restmüll", icon: "🗑️" }
 ];
