@@ -1,25 +1,20 @@
 // ---- KONFIGURATION & PASSWÖRTER ----
-const HA_URL = window.location.origin; // Deine Home Assistant URL
+const HA_URL = window.location.origin;
 let HA_TOKEN = localStorage.getItem("ha_token") || "";
 
-// Das Master-Passwort für System-Einstellungen
 const MASTER_PW = "homeassistant";
-
-// Admin-Passwort-Steuerung via Helfer
 const ADMIN_PW_ENTITY = "input_text.helper_admin_pw";
 let ADMIN_PW = "1234";
 
-// ---- ENTITÄTEN-ÜBERSICHT (STORES & ROOMS) ----
+// ---- ENTITÄTEN-ÜBERSICHT ----
 const USER_LIST_ENTITY = "input_text.helper_user_list";
 const STORES_ENTITY = "input_text.helper_shop_stores";
 const ROOMS_ENTITY = "input_text.helper_room_list";
 
-// ---- DIE SICHEREN SPEICHER (Trigger-Sensoren ohne 255-Zeichen-Limit) ----
-// 1. Aufgaben & Termine
+// ---- SPEICHER-ENTITÄTEN ----
 const TODO_DATA_ENTITY = "sensor.haushalt_tasks_storage";
 const ENTITY_FINANCE = "sensor.haushalt_finance_db";
 
-// 2. Favoriten & Kategorien & Einkaufsliste (NEU: Shopping mit Attribut)
 const SYNC_CONFIG = {
     shop: {
         entity: "sensor.haushalt_shop_favs_storage",
@@ -36,7 +31,6 @@ const SYNC_CONFIG = {
         attr: "food_favs_json",
         event: "set_food_favs"
     },
-    // NEUER SPEICHER FÜR DIE EINKAUFSLISTE
     shopping: {
         entity: "sensor.haushalt_shopping_db",
         attr: "shopping_json",
@@ -44,7 +38,6 @@ const SYNC_CONFIG = {
     }
 };
 
-// ---- ESSENSPLAN (Wie gewünscht die 7 alten behalten) ----
 const FOOD_ENTITIES = [
     "input_text.essen_montag",
     "input_text.essen_dienstag",
