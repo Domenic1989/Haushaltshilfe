@@ -3,8 +3,8 @@
   "name": "Haus-Zentrale Pro",
   "codeowners": ["@Domenic1989"],
   "config_flow": true,
-  "documentation": "https://github.com/DEIN_GITHUB_USERNAME/haus-zentrale",
+  "documentation": "https://github.com/Domenic1989/haus-zentrale",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/DEIN_GITHUB_USERNAME/haus-zentrale/issues",
+  "issue_tracker": "https://github.com/Domenic1989haus-zentrale/issues",
   "version": "1.0.0"
 }
