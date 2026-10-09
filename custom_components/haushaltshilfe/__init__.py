@@ -12,12 +12,57 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ["sensor"]
 
+# Liste der automatisch anzulegenden Text-Helfer
+HELPER_ENTITIES = {
+    "helper_user_list": {
+        "name": "Haushalt User List",
+        "initial": "Admin:admin,Tablet:tablet",
+        "icon": "mdi:account-group",
+    },
+    "helper_shop_stores": {
+        "name": "Haushalt Shop Stores",
+        "initial": "Aldi,Rewe,Lidl",
+        "icon": "mdi:store",
+    },
+    "helper_room_list": {
+        "name": "Haushalt Room List",
+        "initial": "Küche,Bad,Wohnzimmer",
+        "icon": "mdi:home-floor-1",
+    },
+    "helper_admin_pw": {
+        "name": "Haushalt Admin PW",
+        "initial": "1234",
+        "icon": "mdi:lock",
+    },
+}
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Haushaltshilfe Pro from a config entry."""
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = entry.data
 
-    # 1. Frontend-Dateien aus /www nach /config/www/haushaltshilfe kopieren
+    # 1. input_text-Helfer automatisch erstellen, falls sie noch nicht existieren
+    for helper_id, config in HELPER_ENTITIES.items():
+        entity_id = f"input_text.{helper_id}"
+        
+        if not hass.states.get(entity_id):
+            try:
+                await hass.services.async_call(
+                    "input_text",
+                    "create",
+                    {
+                        "name": config["name"],
+                        "initial": config["initial"],
+                        "icon": config["icon"],
+                        "max": 255,
+                    },
+                    blocking=True,
+                )
+                _LOGGER.info(f"Helfer {entity_id} erfolgreich automatisch erstellt.")
+            except Exception as e:
+                _LOGGER.error(f"Fehler beim Erstellen von {entity_id}: {e}")
+
+    # 2. Frontend-Dateien aus /www nach /config/www/haushaltshilfe kopieren
     source_dir = hass.config.path("custom_components", DOMAIN, "www")
     target_dir = hass.config.path("www", "haushaltshilfe")
 
@@ -35,10 +80,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await hass.async_add_executor_job(copy_frontend_files)
         _LOGGER.info("Haushaltshilfe Frontend-Dateien erfolgreich synchronisiert.")
 
-    # 2. Sensoren laden
+    # 3. Sensoren laden
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # 3. Sidebar-Panel mit exaktem Keyword frontend_url_path registrieren
+    # 4. Sidebar-Panel mit exaktem Keyword frontend_url_path registrieren
     frontend.async_register_built_in_panel(
         hass,
         component_name="iframe",
