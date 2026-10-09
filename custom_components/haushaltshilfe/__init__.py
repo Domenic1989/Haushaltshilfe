@@ -4,7 +4,7 @@ import os
 import shutil
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.components import frontend
+from homeassistant.components import panel_custom
 
 from .const import DOMAIN
 
@@ -35,42 +35,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await hass.async_add_executor_job(copy_frontend_files)
         _LOGGER.info("Haushaltshilfe Frontend-Dateien erfolgreich synchronisiert.")
 
-    # 2. Benötigte input_text Helfer automatisch anlegen
-    default_text_helpers = {
-        "haushalt_users": '["Domenic:Sabrina1707.","Sabrina:Sabrina1707.","Tablet:Sabrina1707."]',
-        "haushalt_stores": '["Aldi","Lidl","Rewe"]',
-        "haushalt_rooms": '["Küche","Bad","Wohnen","Garten"]',
-        "haushalt_admin_pw": "admin",
-        "haushalt_food_mo": "",
-        "haushalt_food_di": "",
-        "haushalt_food_mi": "",
-        "haushalt_food_do": "",
-        "haushalt_food_fr": "",
-        "haushalt_food_sa": "",
-        "haushalt_food_so": "",
-    }
-
-    for entity_suffix, default_val in default_text_helpers.items():
-        entity_id = f"input_text.{entity_suffix}"
-        if not hass.states.get(entity_id):
-            await hass.services.async_call(
-                "input_text",
-                "set_value",
-                {"entity_id": entity_id, "value": default_val},
-                blocking=False,
-            )
-
-    # 3. Sensoren laden
+    # 2. Sensoren laden
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # 4. Sidebar Panel ohne fehlerhafte Keywords registrieren
-    frontend.async_register_built_in_panel(
+    # 3. Sidebar-Panel registrieren (Fehlerfreie panel_custom Methode)
+    panel_custom.async_register_panel(
         hass,
-        "iframe",
-        "Haushaltshilfe",
-        "mdi:home-assistant",
-        "haushaltshilfe",
-        {"url": "/local/haushaltshilfe/index.html"},
+        webcomponent_name="haushaltshilfe-panel",
+        sidebar_title="Haushaltshilfe",
+        sidebar_icon="mdi:home-assistant",
+        url_path="haushaltshilfe",
+        module_url="/local/haushaltshilfe/index.html",
+        embed_iframe=True,
         require_admin=False,
     )
 
@@ -78,9 +54,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
+    panel_custom.async_unregister_panel(hass, "haushaltshilfe")
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
-        frontend.async_remove_panel(hass, "haushaltshilfe")
 
     return unload_ok
