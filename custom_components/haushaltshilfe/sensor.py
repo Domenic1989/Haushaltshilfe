@@ -12,6 +12,7 @@ from .const import (
     EVENT_SET_SHOP_FAVS,
     EVENT_SET_FOOD_FAVS,
     EVENT_SET_TODO_FAVS,
+    EVENT_SET_FINANCE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,11 +24,12 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Haushaltshilfe sensors."""
     sensors = [
-        HaushaltshilfeDataSensor(hass, "Shopping Data", "shopping_data", "shopping_json", EVENT_SET_SHOPPING, []),
-        HaushaltshilfeDataSensor(hass, "Todo Storage", "todo_storage", "tasks_json", EVENT_SET_TASKS, []),
-        HaushaltshilfeDataSensor(hass, "Shop Favs Storage", "shop_favs_storage", "data", EVENT_SET_SHOP_FAVS, {"cats": ["Alle"], "favs": []}),
-        HaushaltshilfeDataSensor(hass, "Food Favs Storage", "food_favs_storage", "data", EVENT_SET_FOOD_FAVS, {"cats": ["Alle"], "favs": []}),
-        HaushaltshilfeDataSensor(hass, "Todo Favs Storage", "todo_favs_storage", "data", EVENT_SET_TODO_FAVS, {"cats": ["Alle"], "favs": []}),
+        HaushaltshilfeDataSensor(hass, "Shopping DB", "shopping_db", "shopping_json", EVENT_SET_SHOPPING, []),
+        HaushaltshilfeDataSensor(hass, "Tasks Storage", "tasks_storage", "tasks_json", EVENT_SET_TASKS, []),
+        HaushaltshilfeDataSensor(hass, "Shop Favs Storage", "shop_favs_storage", "shop_favs_json", EVENT_SET_SHOP_FAVS, {"cats": ["Alle"], "favs": []}),
+        HaushaltshilfeDataSensor(hass, "Food Favs Storage", "food_favs_storage", "food_favs_json", EVENT_SET_FOOD_FAVS, {"cats": ["Alle"], "favs": []}),
+        HaushaltshilfeDataSensor(hass, "Todo Favs Storage", "todo_favs_storage", "todo_favs_json", EVENT_SET_TODO_FAVS, {"cats": ["Alle"], "favs": []}),
+        HaushaltshilfeDataSensor(hass, "Finance DB", "finance_db", "data", EVENT_SET_FINANCE, []),
     ]
     
     async_add_entities(sensors)
@@ -66,6 +68,8 @@ class HaushaltshilfeDataSensor(SensorEntity):
                 self._data = data["tasks"]
             elif "favs" in data:
                 self._data = data["favs"]
+            elif "data" in data:
+                self._data = data["data"]
 
             self.async_write_ha_state()
 
