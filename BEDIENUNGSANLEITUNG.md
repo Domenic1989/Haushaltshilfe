@@ -1,13 +1,4 @@
----
 
-### 2. Datei: `BEDIENUNGSANLEITUNG.md`
-
-```markdown
-# 📖 Bedienungsanleitung: Haus-Zentrale Pro
-
-Diese Bedienungsanleitung erklärt alle Funktionen des Frontends und zeigt Schritt für Schritt, wie Benutzer, Aufgaben, Wochenpläne, Einkäufe und Finanzen verwaltet werden.
-
----
 
 ## 🔑 Übersicht der Standard-Passwörter
 
