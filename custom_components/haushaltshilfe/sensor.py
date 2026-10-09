@@ -1,5 +1,7 @@
 """Sensor platform for Haushaltshilfe Pro with persistent storage."""
 import logging
+import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.core import HomeAssistant, callback
@@ -23,7 +25,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the Haushaltshilfe sensors."""
+    """Set up the Haushaltshilfe sensors and register save action."""
     sensors = [
         HaushaltshilfeDataSensor(hass, "Shopping DB", "shopping_db", "shopping_json", EVENT_SET_SHOPPING, []),
         HaushaltshilfeDataSensor(hass, "Tasks Storage", "tasks_storage", "tasks_json", EVENT_SET_TASKS, []),
@@ -34,6 +36,24 @@ async def async_setup_entry(
     ]
     
     async_add_entities(sensors)
+
+    # Globale Action/Service anbieten, um Daten per Action ODER Event zu speichern
+    async def handle_save_data(call):
+        target_event = call.data.get("event")
+        payload = call.data.get("data")
+        if target_event and payload is not None:
+            hass.bus.async_fire(target_event, {"data": payload})
+
+    if not hass.services.has_service(DOMAIN, "save_data"):
+        hass.services.async_register(
+            DOMAIN,
+            "save_data",
+            handle_save_data,
+            schema=vol.Schema({
+                vol.Required("event"): cv.string,
+                vol.Required("data"): vol.Coerce(object),
+            }),
+        )
 
 
 class HaushaltshilfeDataSensor(RestoreEntity, SensorEntity):
@@ -72,6 +92,7 @@ class HaushaltshilfeDataSensor(RestoreEntity, SensorEntity):
         def handle_event(event):
             data = event.data
             
+            # Alle gängigen Datenstrukturen abfangen
             if "data" in data:
                 self._data = data["data"]
             elif "json_data" in data:
@@ -82,6 +103,9 @@ class HaushaltshilfeDataSensor(RestoreEntity, SensorEntity):
                 self._data = data["favs"]
             elif self._attr_key in data:
                 self._data = data[self._attr_key]
+            else:
+                # Falls das Event direkt das Daten-Objekt/Array sendet
+                self._data = data
 
             self.async_write_ha_state()
 
