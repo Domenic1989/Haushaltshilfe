@@ -16,6 +16,11 @@ from .const import (
     EVENT_SET_FOOD_FAVS,
     EVENT_SET_TODO_FAVS,
     EVENT_SET_FINANCE,
+    EVENT_SET_ROOMS,
+    EVENT_SET_STORES,
+    EVENT_SET_USERS,
+    EVENT_SET_ADMIN_PW,
+    EVENT_SET_FOOD_PLAN,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,19 +30,27 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the Haushaltshilfe sensors and register save action."""
+    """Set up all Haushaltshilfe persistent sensors."""
     sensors = [
+        # Bisherige Listen & Favoriten
         HaushaltshilfeDataSensor(hass, "Shopping DB", "shopping_db", "shopping_json", EVENT_SET_SHOPPING, []),
         HaushaltshilfeDataSensor(hass, "Tasks Storage", "tasks_storage", "tasks_json", EVENT_SET_TASKS, []),
         HaushaltshilfeDataSensor(hass, "Shop Favs Storage", "shop_favs_storage", "shop_favs_json", EVENT_SET_SHOP_FAVS, {"cats": ["Alle"], "favs": []}),
         HaushaltshilfeDataSensor(hass, "Food Favs Storage", "food_favs_storage", "food_favs_json", EVENT_SET_FOOD_FAVS, {"cats": ["Alle"], "favs": []}),
         HaushaltshilfeDataSensor(hass, "Todo Favs Storage", "todo_favs_storage", "todo_favs_json", EVENT_SET_TODO_FAVS, {"cats": ["Alle"], "favs": []}),
         HaushaltshilfeDataSensor(hass, "Finance DB", "finance_db", "data", EVENT_SET_FINANCE, {"months": []}),
+        
+        # NEU: Räume, Läden, Benutzer, Passwort & Essensplan
+        HaushaltshilfeDataSensor(hass, "Room List Storage", "room_list_storage", "rooms_json", EVENT_SET_ROOMS, ["Küche", "Bad", "Wohnzimmer"]),
+        HaushaltshilfeDataSensor(hass, "Shop Stores Storage", "shop_stores_storage", "stores_json", EVENT_SET_STORES, ["Aldi", "Rewe", "Lidl"]),
+        HaushaltshilfeDataSensor(hass, "User List Storage", "user_list_storage", "users_json", EVENT_SET_USERS, ["Admin:admin", "Tablet:tablet"]),
+        HaushaltshilfeDataSensor(hass, "Admin PW Storage", "admin_pw_storage", "admin_pw", EVENT_SET_ADMIN_PW, "1234"),
+        HaushaltshilfeDataSensor(hass, "Food Plan Storage", "food_plan_storage", "food_plan_json", EVENT_SET_FOOD_PLAN, ["", "", "", "", "", "", ""]),
     ]
     
     async_add_entities(sensors)
 
-    # Globale Action/Service anbieten, um Daten per Action ODER Event zu speichern
+    # Universelle Action zum Speichern
     async def handle_save_data(call):
         target_event = call.data.get("event")
         payload = call.data.get("data")
@@ -82,7 +95,6 @@ class HaushaltshilfeDataSensor(RestoreEntity, SensorEntity):
         """Restore previous state on startup and register event listener."""
         await super().async_added_to_hass()
         
-        # Daten aus der HA-Datenbank wiederherstellen
         last_state = await self.async_get_last_state()
         if last_state and self._attr_key in last_state.attributes:
             self._data = last_state.attributes[self._attr_key]
@@ -92,7 +104,6 @@ class HaushaltshilfeDataSensor(RestoreEntity, SensorEntity):
         def handle_event(event):
             data = event.data
             
-            # Alle gängigen Datenstrukturen abfangen
             if "data" in data:
                 self._data = data["data"]
             elif "json_data" in data:
@@ -104,7 +115,6 @@ class HaushaltshilfeDataSensor(RestoreEntity, SensorEntity):
             elif self._attr_key in data:
                 self._data = data[self._attr_key]
             else:
-                # Falls das Event direkt das Daten-Objekt/Array sendet
                 self._data = data
 
             self.async_write_ha_state()
