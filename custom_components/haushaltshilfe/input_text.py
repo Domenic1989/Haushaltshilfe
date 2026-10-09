@@ -24,7 +24,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     for entity_id_name, name, initial_val in helpers:
         entities.append(HaushaltshilfeInputText(entity_id_name, name, initial_val))
 
-    async_add_entities(entities)
+    async_add_entities(entities, True)
 
 class HaushaltshilfeInputText(InputText):
     """Representation of a Haushaltshilfe Input Text Helper."""
@@ -34,7 +34,3 @@ class HaushaltshilfeInputText(InputText):
         self._attr_name = name
         self._attr_native_value = initial_value
         self._attr_icon = "mdi:card-text-outline"
-
-    @property
-    def should_poll(self):
-        return False
