@@ -4,7 +4,7 @@ import os
 import shutil
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.components import panel_custom
+from homeassistant.components import frontend
 
 from .const import DOMAIN
 
@@ -38,25 +38,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # 2. Sensoren laden
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # 3. Sidebar-Panel registrieren (Fehlerfreie panel_custom Methode)
-    panel_custom.async_register_panel(
+    # 3. Sidebar Panel ohne fehlerhafte Keyboards registrieren
+    # Parameter-Reihenfolge: (hass, component_name, sidebar_title, sidebar_icon, frontend_url_path, config, require_admin)
+    frontend.async_register_built_in_panel(
         hass,
-        webcomponent_name="haushaltshilfe-panel",
-        sidebar_title="Haushaltshilfe",
-        sidebar_icon="mdi:home-assistant",
-        url_path="haushaltshilfe",
-        module_url="/local/haushaltshilfe/index.html",
-        embed_iframe=True,
-        require_admin=False,
+        "iframe",
+        "Haushaltshilfe",
+        "mdi:home-assistant",
+        "haushaltshilfe",
+        {"url": "/local/haushaltshilfe/index.html"},
+        False
     )
 
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    panel_custom.async_unregister_panel(hass, "haushaltshilfe")
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
+        frontend.async_remove_panel(hass, "haushaltshilfe")
 
     return unload_ok
