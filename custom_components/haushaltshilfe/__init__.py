@@ -17,30 +17,37 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = entry.data
 
-    # 1. input_text Helfer im State Store anlegen/erhalten
-    for helper_id, config in HELPER_ENTITIES.items():
-        entity_id = f"input_text.{helper_id}"
+    # 1. Abfangen aller Service-Aufrufe/Events vom Frontend & Weiterleiten an die Helfer
+    async def handle_call_service_event(event):
+        data = event.data
+        domain = data.get("domain")
+        service = data.get("service")
+        service_data = data.get("service_data", {})
 
-        existing_state = hass.states.get(entity_id)
-        if existing_state is None or existing_state.state in ("unknown", "unavailable"):
-            try:
-                hass.states.async_set(
-                    entity_id,
-                    config["initial"],
-                    {
-                        "editable": True,
-                        "min": 0,
-                        "max": 10000,
-                        "pattern": None,
-                        "mode": "text",
-                        "friendly_name": config["name"],
-                    },
-                )
-                _LOGGER.info(f"Helfer {entity_id} angelegt.")
-            except Exception as e:
-                _LOGGER.error(f"Fehler beim Erstellen von {entity_id}: {e}")
+        if domain == "input_text" and service == "set_value":
+            entity_id = service_data.get("entity_id")
+            value = service_data.get("value")
 
-    # 2. Frontend-Dateien synchronisieren
+            # Falls entity_id als Liste übergeben wurde
+            if isinstance(entity_id, list) and entity_id:
+                entity_id = entity_id[0]
+
+            if entity_id and value is not None:
+                # Setzt den Zustand direkt im HA State Store
+                current_state = hass.states.get(entity_id)
+                attrs = current_state.attributes.copy() if current_state else {
+                    "editable": True,
+                    "min": 0,
+                    "max": 10000,
+                    "mode": "text",
+                }
+                hass.states.async_set(entity_id, str(value), attrs)
+                _LOGGER.info(f"Frontend-Wert erfolgreich an {entity_id} übertragen: {value}")
+
+    # Registriere den Event-Listener für Service-Calls
+    hass.bus.async_listen("call_service", handle_call_service_event)
+
+    # 2. Synchronisation der Frontend-Dateien
     source_dir = hass.config.path("custom_components", DOMAIN, "www")
     target_dir = hass.config.path("www", "haushaltshilfe")
 
@@ -60,7 +67,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # 3. Sensoren laden
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # 4. Sidebar-Panel registrieren (mit Absicherung)
+    # 4. Sidebar-Panel registrieren
     try:
         frontend.async_remove_panel(hass, "haushaltshilfe")
     except Exception:
