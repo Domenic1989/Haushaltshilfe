@@ -1,27 +1,12 @@
-"""Sensor platform for Haushaltshilfe Pro with persistent storage."""
+"""Sensor platform for Haushaltshilfe Pro using File Storage backup."""
 import logging
-import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
+import json
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.config_entries import ConfigEntry
 
-from .const import (
-    DOMAIN,
-    EVENT_SET_SHOPPING,
-    EVENT_SET_TASKS,
-    EVENT_SET_SHOP_FAVS,
-    EVENT_SET_FOOD_FAVS,
-    EVENT_SET_TODO_FAVS,
-    EVENT_SET_FINANCE,
-    EVENT_SET_ROOMS,
-    EVENT_SET_STORES,
-    EVENT_SET_USERS,
-    EVENT_SET_ADMIN_PW,
-    EVENT_SET_FOOD_PLAN,
-)
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,63 +15,126 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up all Haushaltshilfe persistent sensors."""
+    """Set up persistent storage sensors reading from permanent Store."""
+    store_data = hass.data[DOMAIN].get("data", {})
+
     sensors = [
-        # Bisherige Listen & Favoriten
-        HaushaltshilfeDataSensor(hass, "Shopping DB", "shopping_db", "shopping_json", EVENT_SET_SHOPPING, [], ["input_text.helper_shopping"]),
-        HaushaltshilfeDataSensor(hass, "Tasks Storage", "tasks_storage", "tasks_json", EVENT_SET_TASKS, [], ["input_text.helper_tasks"]),
-        HaushaltshilfeDataSensor(hass, "Shop Favs Storage", "shop_favs_storage", "shop_favs_json", EVENT_SET_SHOP_FAVS, {"cats": ["Alle"], "favs": []}, ["input_text.helper_shop_favs"]),
-        HaushaltshilfeDataSensor(hass, "Food Favs Storage", "food_favs_storage", "food_favs_json", EVENT_SET_FOOD_FAVS, {"cats": ["Alle"], "favs": []}, ["input_text.helper_food_favs"]),
-        HaushaltshilfeDataSensor(hass, "Todo Favs Storage", "todo_favs_storage", "todo_favs_json", EVENT_SET_TODO_FAVS, {"cats": ["Alle"], "favs": []}, ["input_text.helper_todo_favs"]),
-        HaushaltshilfeDataSensor(hass, "Finance DB", "finance_db", "data", EVENT_SET_FINANCE, {"months": []}, []),
-        
-        # Räume, Läden, Benutzer, Passwort & Essensplan
-        HaushaltshilfeDataSensor(hass, "Room List Storage", "room_list_storage", "rooms_json", EVENT_SET_ROOMS, ["Küche", "Bad", "Wohnzimmer"], ["input_text.helper_room_list"]),
-        HaushaltshilfeDataSensor(hass, "Shop Stores Storage", "shop_stores_storage", "stores_json", EVENT_SET_STORES, ["Aldi", "Rewe", "Lidl"], ["input_text.helper_shop_stores"]),
-        HaushaltshilfeDataSensor(hass, "User List Storage", "user_list_storage", "users_json", EVENT_SET_USERS, ["Admin:admin", "Tablet:tablet"], ["input_text.helper_user_list"]),
-        HaushaltshilfeDataSensor(hass, "Admin PW Storage", "admin_pw_storage", "admin_pw", EVENT_SET_ADMIN_PW, "1234", ["input_text.helper_admin_pw"]),
-        HaushaltshilfeDataSensor(hass, "Food Plan Storage", "food_plan_storage", "food_plan_json", EVENT_SET_FOOD_PLAN, ["", "", "", "", "", "", ""], [
-            "input_text.essen_montag", "input_text.essen_dienstag", "input_text.essen_mittwoch",
-            "input_text.essen_donnerstag", "input_text.essen_freitag", "input_text.essen_samstag", "input_text.essen_sonntag"
-        ]),
+        # 1. Tasks Storage
+        HaushaltshilfeStoreSensor(
+            hass=hass,
+            entity_id_name="haushalt_tasks_storage",
+            friendly_name="Haushalt Tasks Storage",
+            unique_id="haushalt_tasks_storage_v2",
+            event_type="set_tasks_data",
+            storage_key="tasks_data",
+            attr_key="tasks_json",
+            default_val="[]",
+            icon="mdi:clipboard-check-outline",
+            store_data=store_data,
+        ),
+        # 2. Shop Favoriten
+        HaushaltshilfeStoreSensor(
+            hass=hass,
+            entity_id_name="haushalt_shop_favs_storage",
+            friendly_name="Haushalt Shop Favs Storage",
+            unique_id="haushalt_shop_storage_v2",
+            event_type="set_shop_favs",
+            storage_key="shop_favs",
+            attr_key="shop_favs_json",
+            default_val='{"cats":["Alle","Gemüse","Fleisch","Vorrat","Haus"],"favs":[]}',
+            icon="mdi:cart-outline",
+            store_data=store_data,
+        ),
+        # 3. Todo Favoriten (Haushalt Kategorien & Buttons)
+        HaushaltshilfeStoreSensor(
+            hass=hass,
+            entity_id_name="haushalt_todo_favs_storage",
+            friendly_name="Haushalt Todo Favs Storage",
+            unique_id="haushalt_todo_favs_storage_v2",
+            event_type="set_todo_favs",
+            storage_key="todo_favs",
+            attr_key="todo_favs_json",
+            default_val='{"cats":["Alle","Haus","Bad","Wohnen","Küche","Garten"],"favs":[]}',
+            icon="mdi:check-all",
+            store_data=store_data,
+        ),
+        # 4. Food Favoriten
+        HaushaltshilfeStoreSensor(
+            hass=hass,
+            entity_id_name="haushalt_food_favs_storage",
+            friendly_name="Haushalt Food Favs Storage",
+            unique_id="haushalt_food_storage_v2",
+            event_type="set_food_favs",
+            storage_key="food_favs",
+            attr_key="food_favs_json",
+            default_val='{"cats":["Alle","Schnell","Italienisch","Leicht"],"favs":[]}',
+            icon="mdi:silverware-fork-knife",
+            store_data=store_data,
+        ),
+        # 5. Finance DB
+        HaushaltshilfeStoreSensor(
+            hass=hass,
+            entity_id_name="haushalt_finance_db",
+            friendly_name="Haushalt Finance DB",
+            unique_id="haushalt_finance_db_sensor",
+            event_type="set_finance_data",
+            storage_key="finance_db",
+            attr_key="data",
+            default_val='{"months":[]}',
+            icon="mdi:finance",
+            store_data=store_data,
+            is_finance=True,
+        ),
+        # 6. Shopping DB
+        HaushaltshilfeStoreSensor(
+            hass=hass,
+            entity_id_name="haushalt_shopping_db",
+            friendly_name="Haushalt Shopping DB",
+            unique_id="haushalt_shopping_db_sensor",
+            event_type="set_shopping_data",
+            storage_key="shopping_db",
+            attr_key="shopping_json",
+            default_val="[]",
+            icon="mdi:cart-basket",
+            store_data=store_data,
+        ),
     ]
     
     async_add_entities(sensors)
 
-    # Universelle Action zum Speichern
-    async def handle_save_data(call):
-        target_event = call.data.get("event")
-        payload = call.data.get("data")
-        if target_event and payload is not None:
-            hass.bus.async_fire(target_event, {"data": payload})
 
-    if not hass.services.has_service(DOMAIN, "save_data"):
-        hass.services.async_register(
-            DOMAIN,
-            "save_data",
-            handle_save_data,
-            schema=vol.Schema({
-                vol.Required("event"): cv.string,
-                vol.Required("data"): vol.Coerce(object),
-            }),
-        )
+class HaushaltshilfeStoreSensor(SensorEntity):
+    """Sensor reading directly from the permanent JSON Store."""
 
+    _attr_has_entity_name = False
 
-class HaushaltshilfeDataSensor(RestoreEntity, SensorEntity):
-    """Representation of a persistent Haushaltshilfe Storage Sensor."""
-
-    def __init__(self, hass: HomeAssistant, name: str, key: str, attr_name: str, event_type: str, default_val, alt_entities=None):
-        self._hass = hass
-        self._attr_name_str = name
-        self._key = key
-        self._attr_key = attr_name
+    def __init__(
+        self, 
+        hass: HomeAssistant, 
+        entity_id_name: str, 
+        friendly_name: str, 
+        unique_id: str, 
+        event_type: str, 
+        storage_key: str,
+        attr_key: str, 
+        default_val: str,
+        icon: str,
+        store_data: dict,
+        is_finance: bool = False
+    ):
+        self.hass = hass
+        self._attr_key = attr_key
         self._event_type = event_type
+        self._storage_key = storage_key
+        self._store_data = store_data
         self._default_val = default_val
-        self._data = default_val
-        self._alt_entities = alt_entities or []
-        self._attr_unique_id = f"haushalt_{key}"
-        self._attr_name = f"Haushalt {name}"
-        self._attr_icon = "mdi:database"
+        self._is_finance = is_finance
+        
+        # Erzwingt die exakte Entity ID für Home Assistant
+        self.entity_id = f"sensor.{entity_id_name}"
+        self._attr_name = friendly_name
+        self._attr_unique_id = unique_id
+        self._attr_icon = icon
 
     @property
     def native_value(self):
@@ -94,75 +142,35 @@ class HaushaltshilfeDataSensor(RestoreEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self):
-        # Stellt die Daten unter dem Haupt-Attribut ODER als "value" bereit, damit jedes Skript sie lesen kann
+        saved = self._store_data.get(self._storage_key, self._default_val)
+        
+        if self._is_finance:
+            parsed = json.loads(saved) if isinstance(saved, str) else saved
+            str_val = json.dumps(saved) if isinstance(saved, (dict, list)) else str(saved)
+            return {
+                "data": parsed,
+                "value": str_val
+            }
+
+        str_val = json.dumps(saved) if isinstance(saved, (dict, list)) else str(saved)
         return {
-            self._attr_key: self._data,
-            "value": self._data,
-            "json_data": self._data
+            self._attr_key: str_val,
+            "value": str_val,
+            "data": str_val
         }
 
     async def async_added_to_hass(self):
-        """Restore previous state on startup and register event listener."""
-        await super().async_added_to_hass()
-        
-        last_state = await self.async_get_last_state()
-        if last_state and self._attr_key in last_state.attributes:
-            self._data = last_state.attributes[self._attr_key]
-            _LOGGER.info(f"Restored state for {self._attr_name}")
-        elif last_state and "value" in last_state.attributes:
-            self._data = last_state.attributes["value"]
+        """Register state and listen to incoming update events."""
+        self.async_write_ha_state()
 
         @callback
         def handle_event(event):
-            data = event.data
-            
-            if "data" in data:
-                self._data = data["data"]
-            elif "json_data" in data:
-                self._data = data["json_data"]
-            elif "tasks" in data:
-                self._data = data["tasks"]
-            elif "favs" in data:
-                self._data = data["favs"]
-            elif self._attr_key in data:
-                self._data = data[self._attr_key]
-            elif "value" in data:
-                self._data = data["value"]
-            else:
-                self._data = data
-
             self.async_write_ha_state()
 
-        # 1. Auf primäres Event lauschen (z.B. set_rooms_data)
         self.async_on_remove(
-            self._hass.bus.async_listen(self._event_type, handle_event)
+            self.hass.bus.async_listen(self._event_type, handle_event)
         )
-
-        # 2. Zusätzlich auf State-Changes der alten input_text Entitäten lauschen!
-        # Sobald das Frontend in ein input_text schreibt, speichert dieser Sensor es persistent ab.
-        @callback
-        def handle_state_change(event):
-            new_state = event.data.get("new_state")
-            if new_state and new_state.state not in (None, "unknown", "unavailable"):
-                # Spezialfall Essensplan: Zusammenbauen der einzelnen Tage
-                if self._key == "food_plan_storage":
-                    if not isinstance(self._data, list) or len(self._data) != 7:
-                        self._data = ["", "", "", "", "", "", ""]
-                    
-                    entity_id = event.data.get("entity_id", "")
-                    days = [
-                        "input_text.essen_montag", "input_text.essen_dienstag", "input_text.essen_mittwoch",
-                        "input_text.essen_donnerstag", "input_text.essen_freitag", "input_text.essen_samstag", "input_text.essen_sonntag"
-                    ]
-                    if entity_id in days:
-                        idx = days.index(entity_id)
-                        self._data[idx] = new_state.state
-                else:
-                    self._data = new_state.state
-
-                self.async_write_ha_state()
-
-        for alt_entity in self._alt_entities:
+        if self._is_finance:
             self.async_on_remove(
-                self._hass.bus.async_listen("state_changed", lambda evt, ent=alt_entity: handle_state_change(evt) if evt.data.get("entity_id") == ent else None)
+                self.hass.bus.async_listen("set_finance_db", handle_event)
             )
