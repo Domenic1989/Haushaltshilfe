@@ -3,7 +3,7 @@ import json
 
 DOMAIN = "haushaltshilfe"
 
-# Persistent Speicher-Events
+# Persistent Speicher-Events (abgestimmt auf deine script.js)
 EVENT_SET_SHOPPING = "set_shopping_data"
 EVENT_SET_TASKS = "set_tasks_data"
 EVENT_SET_SHOP_FAVS = "set_shop_favs"
@@ -26,6 +26,8 @@ HELPER_ENTITIES = {
     "helper_shop_favs": {"name": "helper shop favs", "initial": json.dumps({"cats": ["Alle", "Gemüse", "Fleisch", "Vorrat", "Haus"], "favs": []})},
     "helper_food_favs": {"name": "helper food favs", "initial": json.dumps({"cats": ["Alle", "Schnell", "Italienisch", "Leicht"], "favs": []})},
     "helper_todo_favs": {"name": "helper todo favs", "initial": json.dumps({"cats": ["Alle", "Haus", "Bad", "Wohnen", "Küche", "Garten"], "favs": []})},
+    "helper_tasks": {"name": "helper tasks", "initial": json.dumps([])},
+    "helper_shopping": {"name": "helper shopping", "initial": json.dumps([])},
     "essen_montag": {"name": "essen montag", "initial": ""},
     "essen_dienstag": {"name": "essen dienstag", "initial": ""},
     "essen_mittwoch": {"name": "essen mittwoch", "initial": ""},
