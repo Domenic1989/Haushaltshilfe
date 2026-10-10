@@ -2,10 +2,11 @@
 import logging
 import os
 import shutil
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, CoreState, callback
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components import frontend
 from homeassistant.helpers import entity_registry as er
+from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 
 from .const import DOMAIN, HELPER_ENTITIES
 
@@ -20,11 +21,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     registry = er.async_get(hass)
 
-    # 1. Helfer fest in der Entity Registry verankern & bei Neustart wiederherstellen
+    # 1. Registrieren der Helfer in der Entity Registry
     for helper_id, config in HELPER_ENTITIES.items():
-        entity_id = f"input_text.{helper_id}"
-
-        # In der Entity Registry registrieren, damit HA die ID fest speichert
         registry.async_get_or_create(
             domain="input_text",
             platform=DOMAIN,
@@ -33,35 +31,41 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             original_name=config["name"],
         )
 
-        # Beim Neustart versuchen, den letzten Zustand aus dem Persistent Sensor zu laden
-        sensor_id = f"sensor.{helper_id}"
-        last_sensor_state = hass.states.get(sensor_id)
-        
-        # Welcher Wert soll geladen werden? (1. Letzter Sensor-Wert, 2. Aktueller State, 3. Initialwert)
-        initial_val = config["initial"]
-        if last_sensor_state and last_sensor_state.state not in (None, "unknown", "unavailable", "OK"):
-            initial_val = last_sensor_state.state
-        elif last_sensor_state and "value" in last_sensor_state.attributes:
-            initial_val = last_sensor_state.attributes["value"]
+    # Funktion zum Wiederherstellen der Daten aus den Datenbank-Sensoren
+    @callback
+    def restore_helper_states(_=None):
+        for helper_id, config in HELPER_ENTITIES.items():
+            entity_id = f"input_text.{helper_id}"
+            sensor_id = f"sensor.{helper_id}"
 
-        existing_state = hass.states.get(entity_id)
-        if existing_state is None or existing_state.state in ("unknown", "unavailable"):
-            try:
-                hass.states.async_set(
-                    entity_id,
-                    initial_val,
-                    {
-                        "editable": True,
-                        "min": 0,
-                        "max": 10000,
-                        "pattern": None,
-                        "mode": "text",
-                        "friendly_name": config["name"],
-                    },
-                )
-                _LOGGER.info(f"Helfer {entity_id} persistent wiederhergestellt mit Wert: {initial_val}")
-            except Exception as e:
-                _LOGGER.error(f"Fehler beim Initialisieren von {entity_id}: {e}")
+            # Wert aus dem Datenbank-Sensor auslesen
+            sensor_state = hass.states.get(sensor_id)
+            restored_val = config["initial"]
+
+            if sensor_state and sensor_state.state not in (None, "unknown", "unavailable", "OK"):
+                restored_val = sensor_state.state
+            elif sensor_state and "value" in sensor_state.attributes:
+                restored_val = sensor_state.attributes["value"]
+
+            # Zustand im State Store sicherstellen
+            current_state = hass.states.get(entity_id)
+            attrs = current_state.attributes.copy() if current_state else {
+                "editable": True,
+                "min": 0,
+                "max": 10000,
+                "pattern": None,
+                "mode": "text",
+                "friendly_name": config["name"],
+            }
+
+            hass.states.async_set(entity_id, str(restored_val), attrs)
+            _LOGGER.info(f"Helfer {entity_id} nach Neustart geladen mit Wert: {restored_val}")
+
+    # Falls HA bereits läuft (z.B. Reload), sofort laden, sonst auf Start-Event warten
+    if hass.state == CoreState.running:
+        restore_helper_states()
+    else:
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, restore_helper_states)
 
     # 2. Live-Abfangen aller Service-Aufrufe vom Frontend
     async def handle_call_service_event(event):
@@ -83,18 +87,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     "editable": True,
                     "min": 0,
                     "max": 10000,
+                    "pattern": None,
                     "mode": "text",
                 }
-                # Zustand live im Speicher setzen
+                # Sofort im RAM aktualisieren
                 hass.states.async_set(entity_id, str(value), attrs)
                 
-                # Und sofort an den Persistent-Sensor spiegeln, damit es die DB überlebt
+                # Parallel an den RestoreEntity-Sensor spiegeln
                 clean_id = entity_id.replace("input_text.", "")
                 hass.bus.async_fire("haushaltshilfe_save_data", {
                     "key": clean_id,
                     "value": str(value),
                 })
-                _LOGGER.info(f"Wert an {entity_id} und Datenbank gesendet: {value}")
 
     hass.bus.async_listen("call_service", handle_call_service_event)
 
