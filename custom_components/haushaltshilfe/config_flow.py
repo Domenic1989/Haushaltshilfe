@@ -18,7 +18,7 @@ class HaushaltshilfeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_create_entry(title="Haushaltshilfe Pro", data=user_input)
 
         data_schema = vol.Schema({
-            vol.Optional(CONF_ADMIN_PW, default="admin"): str,
+            vol.Optional(CONF_ADMIN_PW, default="1234"): str,
         })
 
         return self.async_show_form(
