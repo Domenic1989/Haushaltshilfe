@@ -7,7 +7,7 @@
 | **Master-Passwort** | `homeassistant` | Zugriff auf die System-Einstellungen (`⚙️` oben rechts am Login-Bildschirm). |
 | **Admin-Passwort** | `1234` | Zugriff auf die Benutzerverwaltung (`⚙️ Verwaltung` zum Löschen von Benutzern). |
 | **Standard-Benutzer `Admin`** | `admin` | Erstes Standard-Konto bei Neuinstallation. |
-| **Standard-Benutzer `Tablet`** | `tablet` | Zweites Standard-Konto (z. B. für Wandtablets). |
+| **Standard-Benutzer `Tablet`** | `tablet` | Zweites Standard-Konto (z. B. für Wandtablets). Meldet sich nicht von alleine ab. |
 
 > 💡 **Hinweis:** Das Master-Passwort schützt die Grundeinstellungen (Access-Token & Admin-Passwort). Sämtliche Passwörter können nach dem ersten Start in den System-Einstellungen angepasst werden.
 
