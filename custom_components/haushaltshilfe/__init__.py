@@ -96,16 +96,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if ev_type in EVENT_MAPPING:
             storage_key = EVENT_MAPPING[ev_type]
             
-            # WICHTIG: Holt 'tasks', 'favs', 'json_data' oder 'data' aus dem Event
-            raw_val = (
-                event.data.get("tasks") 
-                or event.data.get("favs") 
-                or event.data.get("json_data") 
-                or event.data.get("data")
-            )
+            # Liest Werte ohne 'or'-Falle aus (akzeptiert auch leere [] und {})
+            raw_val = None
+            for key in ("tasks", "favs", "json_data", "data"):
+                if event.data.get(key) is not None:
+                    raw_val = event.data.get(key)
+                    break
             
             if raw_val is not None:
-                # Falls es bereits ein String ist (wie bei saveTodoDb), direkt speichern
+                # Falls es bereits ein String ist, direkt speichern
                 if isinstance(raw_val, str):
                     store_data[storage_key] = raw_val
                 else:
@@ -140,7 +139,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass,
         component_name="iframe",
         sidebar_title="Haushaltshilfe",
-        sidebar_icon="mdi:home-assistant",
+        sidebar_icon="mdi:home-heart",
         frontend_url_path="haushaltshilfe",
         config={"url": "/local/haushaltshilfe/index.html"},
         require_admin=False,
