@@ -71,12 +71,12 @@ Du kannst das Panel der Haushaltshilfe Pro auf zwei Arten aufrufen:
 
 Solltest du bereits die HACS-Integration *Waste Collection Schedule* nutzen, passt du in der Datei `www/haushaltshilfe/config.js` einfach die Entitäten-IDs deiner Müll-Sensoren an:
 
-```javascript
-const TRASH_CONFIG = [
+
+  const TRASH_CONFIG = [
     { id: "sensor.gelber_sack", dateId: "sensor.gelber_sack_datum", name: "Gelber Sack", icon: "🟡" },
     { id: "sensor.papier", dateId: "sensor.papier_datum", name: "Altpapier", icon: "📦" },
     { id: "sensor.restmull", dateId: "sensor.restmull_datum", name: "Restmüll", icon: "🗑️" }
-];
+  ];
 
 # 📖 Bedienungsanleitung – Haus-Zentrale Pro 🏠
 
