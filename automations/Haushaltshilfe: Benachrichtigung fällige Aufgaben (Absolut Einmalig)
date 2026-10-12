@@ -1,0 +1,62 @@
+alias: "Haushilfe: Benachrichtigung fällige Aufgaben (Absolut Einmalig)"
+triggers:
+  - trigger: time_pattern
+    minutes: /1
+  - trigger: state
+    entity_id: sensor.haushalt_tasks_storage
+conditions:
+  - condition: template
+    value_template: >
+      {# Aktuelle Zeit ohne Sekunden/Millisekunden für sauberen Vergleich #} {%
+      set aktueller_zeitpunkt = now().strftime('%Y-%m-%dT%H:%M') %}
+
+      {% set data = state_attr('sensor.haushalt_tasks_storage', 'tasks_json') %}
+      {% set tasks = data if data is iterable and data is not string else data |
+      from_json %}
+
+      {# Prüfen, ob GENAU JETZT eine Aufgabe fällig ist #} {# Wir schauen, ob
+      die Aufgabe im aktuellen Zeitfenster (Minute) liegt #} {% set
+      fällige_tasks = tasks 
+         | selectattr('nextDate', 'defined') 
+         | selectattr('nextDate', 'search', aktueller_zeitpunkt) 
+         | list %}
+         
+      {{ fällige_tasks | length > 0 }}
+actions:
+  - parallel:
+      - action: notify.mobile_app_dein_handy_1
+        data:
+          title: "🏠 Haus-Zentrale: Aufgabe jetzt fällig"
+          message: >
+            {% set aktueller_zeitpunkt = now().strftime('%Y-%m-%dT%H:%M') %} {%
+            set data = state_attr('sensor.haushalt_tasks_storage', 'tasks_json')
+            %} {% set tasks = data if data is iterable and data is not string
+            else data | from_json %}
+
+            {% for task in tasks if task.nextDate and aktueller_zeitpunkt in
+            task.nextDate -%}
+              🔔 {{ task.name }} ist jetzt fällig!
+            {%- endfor %}
+          data:
+            push:
+              sound: default
+              importance: high
+      - action: notify.mobile_app_dein_handy_2
+        data:
+          title: "🏠 Haus-Zentrale: Aufgabe jetzt fällig"
+          message: >
+            {% set aktueller_zeitpunkt = now().strftime('%Y-%m-%dT%H:%M') %} {%
+            set data = state_attr('sensor.haushalt_tasks_storage', 'tasks_json')
+            %} {% set tasks = data if data is iterable and data is not string
+            else data | from_json %}
+
+            {% for task in tasks if task.nextDate and aktueller_zeitpunkt in
+            task.nextDate -%}
+              🔔 {{ task.name }} ist jetzt fällig!
+            {%- endfor %}
+          data:
+            push:
+              sound: default
+              importance: high
+        enabled: true
+mode: single
