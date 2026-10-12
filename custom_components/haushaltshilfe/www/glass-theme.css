@@ -85,3 +85,33 @@ body.theme-glass .admin-close-btn { background: #ff3b30 !important; color: #ffff
 body.theme-glass .theme-dropdown { background: rgba(100, 80, 200, 0.4) !important; backdrop-filter: blur(25px) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; }
 body.theme-glass .theme-dropdown div { color: #ffffff !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important; }
 body.theme-glass .theme-dropdown div:hover { background: rgba(255, 255, 255, 0.15) !important; }
+
+/* --- GLASS THEME (LILA): FIXKOSTEN MODAL & STEUERUNG (NEBENEINANDER) --- */
+
+/* Modal-Fenster Hintergrund & Starker Glass-Effekt */
+body.theme-glass #fixkostenModal > div { background: rgba(40, 40, 60, 0.8) !important; backdrop-filter: blur(30px) saturate(180%) !important; -webkit-backdrop-filter: blur(30px) saturate(180%) !important; border: 1px solid rgba(255, 255, 255, 0.3) !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important; color: #ffffff !important; }
+
+/* Modal Überschriften & Beschriftungen */
+body.theme-glass #fixkostenModal h2 { color: #CF00FF !important; font-weight: 900 !important; text-shadow: 0 0 10px rgba(207, 0, 255, 0.3); }
+body.theme-glass #fixkostenModal label, body.theme-glass #fixkostenModal p { color: #CF00FF !important; font-weight: 800 !important; opacity: 0.9 !important; }
+
+/* Eingabefelder (Bezeichnung, Betrag, Intervall-Select) */
+body.theme-glass #fixkostenModal input, body.theme-glass #fixkostenModal select { background: rgba(255, 255, 255, 0.15) !important; border: 2px solid #CF00FF !important; color: #CF00FF !important; font-weight: 800 !important; border-radius: 12px !important; outline: none; backdrop-filter: blur(10px); }
+body.theme-glass #fixkostenModal input::placeholder { color: rgba(207, 0, 255, 0.5) !important; }
+
+/* Speichern-Button im Fixkosten-Modal */
+body.theme-glass #fixkostenModal button[onclick*="addFixkostenTemplate"] { background: #5856d6 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(88, 86, 214, 0.6) !important; font-weight: 800 !important; }
+
+/* Schließen-Buttons im Fixkosten-Modal (X-Button & unten) */
+body.theme-glass #fixkostenModal button[onclick*="fixkostenModal"] { color: #CF00FF !important; background: rgba(255, 255, 255, 0.1) !important; border: 1px solid rgba(207, 0, 255, 0.3) !important; font-weight: 800 !important; }
+
+/* Vorlagen-Einträge in der Liste */
+body.theme-glass #fixkostenList > div { background: rgba(255, 255, 255, 0.1) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; backdrop-filter: blur(10px); }
+body.theme-glass #fixkostenList strong { color: #ffffff !important; }
+body.theme-glass #fixkostenList span[style*="var(--primary)"] { color: #CF00FF !important; font-weight: 900 !important; }
+body.theme-glass #fixkostenList div[style*="var(--gray)"] { color: #CF00FF !important; opacity: 0.8 !important; font-weight: 700 !important; }
+body.theme-glass #fixkostenList div[style*="text-align:center"] { background: rgba(255, 255, 255, 0.05) !important; color: #CF00FF !important; border: 1px dashed rgba(207, 0, 255, 0.3) !important; }
+
+/* Hauptansicht Buttons */
+body.theme-glass .finance-controls button[onclick*="addNewMonth"] { background: #5856d6 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(88, 86, 214, 0.6) !important; }
+body.theme-glass .finance-controls button[onclick*="fixkostenModal"] { background: rgba(255, 255, 255, 0.4) !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.4) !important; backdrop-filter: blur(20px); font-weight: 700 !important; }
