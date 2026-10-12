@@ -35,9 +35,10 @@
     </div>
 </div>
 
+<!-- LOGIN OVERLAY -->
 <div id="loginOverlay">
     <div class="login-card">
-        <button onclick="openSystemSettings()" style="position:absolute; top:0; right:0; background:#f2f2f7; border:none; border-bottom-left-radius:20px; border-top-right-radius:30px; width:60px; height:60px; font-size:1.3rem; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; color:#8e8e93; box-shadow: -2px 2px 5px rgba(0,0,0,0.05);">⚙️</button>
+        <button type="button" onclick="openSystemSettings()" style="position:absolute; top:0; right:0; background:#f2f2f7; border:none; border-bottom-left-radius:20px; border-top-right-radius:30px; width:60px; height:60px; font-size:1.3rem; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; color:#8e8e93; box-shadow: -2px 2px 5px rgba(0,0,0,0.05);">⚙️</button>
         <div style="font-size: 80px; margin-top: 40px; margin-bottom: 10px;">🏠</div>
         <h2 style="margin-bottom: 25px;">Haushaltshilfe</h2>
         
@@ -58,10 +59,11 @@
             </span>
         </div>
 
-        <button class="btn-add btn-login-gradient" style="width:100%; border-radius:15px; font-weight: bold; height: 60px;" onclick="doLogin()">Anmelden</button>
+        <button type="button" class="btn-add btn-login-gradient" style="width:100%; border-radius:15px; font-weight: bold; height: 60px;" onclick="doLogin()">Anmelden</button>
     </div>
 </div>
 
+<!-- SYSTEM SETTINGS OVERLAY -->
 <div id="settingsOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); align-items:center; justify-content:center; z-index:3000; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
     <div class="login-card" style="width:90%; max-width:500px; text-align:left; padding: 30px; border: 1px solid rgba(255,255,255,0.2); max-height: 90vh; overflow-y: auto;">
         <h3 style="margin-top:0; margin-bottom: 20px; color: var(--text); display: flex; align-items: center; gap: 10px;">
@@ -104,9 +106,11 @@
     </div>
 </div>
 
+<!-- HAUPT-APP -->
 <div id="app" style="display:none;">
     <div class="status-bar" id="statusInfo"></div>
 
+    <!-- EINKAUF TAB -->
     <div id="v-shop">
         <header><h1>Einkauf 🛒</h1></header>
         <div class="split-container">
@@ -121,6 +125,7 @@
         </div>
     </div>
 
+    <!-- WOCHENPLAN TAB -->
     <div id="v-food" style="display:none;">
         <header><h1>Wochenplan 🍽️</h1></header>
         <div class="admin-row"><button class="admin-btn" onclick="addNewCat('food')">📂 + Kategorie</button><button class="admin-btn" onclick="addNewFav('food')">⭐️ + Favoriten</button></div>
@@ -138,6 +143,7 @@
         <button class="admin-btn" style="margin-top:25px; width:100%; border-style:solid; color:var(--danger); background:#fff5f5; padding: 15px;" onclick="clearWeek()">Woche zurücksetzen 🧹</button>
     </div>
 
+    <!-- HAUS / TODO TAB -->
     <div id="v-todo" style="display:none;">
         <header><h1>Haus 🏠</h1></header>
         <div class="split-container">
@@ -152,39 +158,107 @@
         </div>
     </div>
     
+    <!-- FINANZEN TAB -->
     <div id="v-finance" style="display:none; padding-top: 20px;">
         <header style="margin-bottom: 20px; padding: 0 15px;">
             <h1 style="margin: 0;">Finanz-Historie 📅</h1>
         </header>
-    
-        <div class="finance-controls" style="margin: 10px 15px 20px 15px;">
-            <button class="admin-btn" onclick="addNewMonth()" style="width: 100%; background: var(--primary); color: white; border: none; padding: 15px; border-radius: 15px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                ➕ Monat manuell hinzufügen
+        
+        <!-- Controls: Sauberes Flex-Layout für beide Buttons -->
+        <div class="finance-controls" style="margin: 10px 15px 20px 15px; display: flex; gap: 12px; width: calc(100% - 30px); box-sizing: border-box;">
+            <button type="button" onclick="addNewMonth()" style="flex: 1; min-width: 0; background: var(--primary); color: white; border: none; padding: 15px 10px; border-radius: 15px; font-weight: bold; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                ➕ Monat hinzufügen
+            </button>
+            <button type="button" onclick="if(typeof openFixkostenModal === 'function') { openFixkostenModal(); } else { document.getElementById('fixkostenModal').style.display='flex'; }" style="flex: 1; min-width: 0; background: var(--card); color: var(--text); border: 1px solid rgba(0,0,0,0.15); padding: 15px 10px; border-radius: 15px; font-weight: bold; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                ⚙️ Fixkosten verwalten
             </button>
         </div>
 
         <div id="months-container" style="margin: 0 15px; display: grid; gap: 15px;"></div>
 
+        <!-- MODAL 1: FINANZ-DETAILS / MONAT -->
         <div id="finance-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:10001; backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:20px;">
-        
             <div style="background:var(--card); width:100%; max-width:550px; border-radius:30px; position:relative; max-height:90vh; display:flex; flex-direction:column; box-shadow: 0 20px 50px rgba(0,0,0,0.3); overflow:hidden;">
-            
-                <button onclick="closeFinanceModal()" style="position:absolute; top:30px; right:20px; background:var(--bg); border:none; border-radius:50%; width:50px; height:50px; cursor:pointer; color:var(--text); font-weight:bold; z-index:100;">✕</button>
+                <button type="button" onclick="closeFinanceModal()" style="position:absolute; top:20px; right:20px; background:var(--bg); border:none; border-radius:50%; width:40px; height:40px; cursor:pointer; color:var(--text); font-weight:bold; z-index:100;">✕</button>
 
                 <div id="modal-header-fixed" style="padding:10px; background:var(--card); border-bottom:1px solid rgba(0,0,0,0.1); z-index:10;">
-                    </div>
+                </div>
 
                 <div id="modal-content" style="overflow-y:auto; flex:1; padding:10px 25px 25px 25px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL 2: EIGENE FIXKOSTEN-VORLAGEN VERWALTEN -->
+        <div id="fixkostenModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:10002; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:20px;">
+            <div style="background:var(--card); width:100%; max-width:550px; border-radius:30px; position:relative; max-height:90vh; display:flex; flex-direction:column; box-shadow: 0 20px 50px rgba(0,0,0,0.3); overflow:hidden; padding: 25px; box-sizing: border-box;">
+                
+                <button type="button" onclick="document.getElementById('fixkostenModal').style.display='none'" style="position:absolute; top:20px; right:20px; background:var(--bg); border:none; border-radius:50%; width:40px; height:40px; cursor:pointer; color:var(--text); font-weight:bold; z-index:100;">✕</button>
+
+                <h2 style="margin-top:0; color:var(--text); font-size:1.3rem; display:flex; align-items:center; gap:10px;">
+                    ⚙️ Standard-Fixkosten
+                </h2>
+                <p style="font-size:0.8rem; color:var(--gray); margin-bottom:15px; line-height: 1.3;">
+                    Erstelle deine eigenen wiederkehrenden Posten. Diese werden beim Anlegen eines neuen Monats automatisch eingefügt.
+                </p>
+                
+                <!-- Eingabefelder für NEUEN Eintrag -->
+                <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px; background:var(--bg); padding:15px; border-radius:20px;">
+                    <div>
+                        <label style="font-size:0.7rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:4px;">BEZEICHNUNG</label>
+                        <input type="text" id="tpl_title" placeholder="z. B. Miete, Strom, Internet, KFZ" style="width:100%; padding:12px; border-radius:12px; border:1px solid rgba(0,0,0,0.1); box-sizing:border-box; outline:none; font-size:0.9rem; background:var(--card); color:var(--text);">
                     </div>
+                    
+                    <div style="display:flex; gap:10px;">
+                        <div style="flex:1;">
+                            <label style="font-size:0.7rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:4px;">BETRAG (€)</label>
+                            <input type="number" step="0.01" id="tpl_amount" placeholder="0.00" style="width:100%; padding:12px; border-radius:12px; border:1px solid rgba(0,0,0,0.1); box-sizing:border-box; outline:none; font-size:0.9rem; background:var(--card); color:var(--text);">
+                        </div>
+                        <div style="flex:1.4;">
+                            <label style="font-size:0.7rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:4px;">ANFALLES-INTERVALL</label>
+                            <select id="tpl_months" style="width:100%; padding:12px; border-radius:12px; border:1px solid rgba(0,0,0,0.1); box-sizing:border-box; outline:none; font-size:0.9rem; background:var(--card); color:var(--text);">
+                                <option value="all">Jeden Monat</option>
+                                <option value="1,4,7,10">Quartalsweise (Jan, Apr, Jul, Okt)</option>
+                                <option value="1,7">Halbjährlich (Jan, Jul)</option>
+                                <option value="1">Nur im Januar</option>
+                                <option value="2">Nur im Februar</option>
+                                <option value="3">Nur im März</option>
+                                <option value="4">Nur im April</option>
+                                <option value="5">Nur im Mai</option>
+                                <option value="6">Nur im Juni</option>
+                                <option value="7">Nur im Juli</option>
+                                <option value="8">Nur im August</option>
+                                <option value="9">Nur im September</option>
+                                <option value="10">Nur im Oktober</option>
+                                <option value="11">Nur im November</option>
+                                <option value="12">Nur im Dezember</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="addFixkostenTemplate()" style="background:var(--primary); color:white; padding:14px; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:0.95rem; margin-top:5px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                        ➕ Fixkosten-Eintrag speichern
+                    </button>
+                </div>
+
+                <!-- Liste deiner bereits gespeicherten Vorlagen -->
+                <label style="font-size:0.7rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px;">DEINE VORLAGEN</label>
+                <div id="fixkostenList" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:8px; margin-bottom:15px; padding-right:5px;"></div>
+
+                <button type="button" onclick="document.getElementById('fixkostenModal').style.display='none'" style="width:100%; background:var(--bg); color:var(--text); padding:14px; border:none; border-radius:15px; font-weight:bold; cursor:pointer;">
+                    Schließen
+                </button>
             </div>
         </div>
     </div>
 
+    <!-- MÜLL TAB -->
     <div id="v-trash" style="display:none;">
         <header><h1>Müllabfuhr 🚛</h1></header>
         <div id="trash-content" style="background:var(--card); border-radius:25px; padding:25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); color: var(--text);">Lädt...</div>
     </div>
 
+    <!-- TAB BAR -->
     <nav class="tab-bar">
         <button class="tab-item" id="t-shop" onclick="tab('shop')">
             <span class="icon">🛒</span>
@@ -206,6 +280,7 @@
     </nav>
 </div>
 
+<!-- INTERVALL MODAL -->
 <div id="intervalModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:4000; backdrop-filter: blur(5px);">
     <div class="modal-content" style="background:var(--card); padding:25px; border-radius:25px; text-align:center; width:90%; max-width:400px; color: var(--text); position: relative;">
         <h3 id="modalTitle" style="margin-bottom:10px;">Aufgabe Details</h3>
@@ -254,6 +329,7 @@
     </div>
 </div>
 
+<!-- EDIT MODAL -->
 <div id="editModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); align-items:center; justify-content:center; z-index:5000; backdrop-filter: blur(8px);">
     <div class="modal-content" style="background:var(--card); padding:25px; border-radius:25px; width:90%; max-width:400px; color: var(--text); box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align:center;">
         
@@ -307,6 +383,7 @@
     </div>
 </div>
 
+<!-- SHOP QTY MODAL -->
 <div id="shopQtyModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:4000; backdrop-filter: blur(5px);">
     <div class="modal-content" style="background:var(--card); padding:25px; border-radius:25px; text-align:center; width:90%; max-width:400px; color: var(--text); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
         
@@ -327,8 +404,9 @@
     </div>
 </div>
 
+<!-- SKRIPTE WITH CACHE-BUSTING -->
 <script src="config.js"></script>
 <script src="script.js"></script>
-<script src="finance.js"></script>
+<script src="finance.js?v=2.0"></script>
 </body>
 </html>
