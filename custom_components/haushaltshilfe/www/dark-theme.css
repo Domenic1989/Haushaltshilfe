@@ -111,3 +111,33 @@ body.theme-dark #list-todo li div {
 }
 /* BEENDEN KNOPF */
 body.theme-dark .admin-close-btn, body.theme-dark button[onclick*="closeUserAdmin"] { background: #ff453a !important; color: #ffffff !important; border-radius: 12px !important; }
+
+/* --- DARK THEME: FIXKOSTEN MODAL & STEUERUNG (NEBENEINANDER) --- */
+
+/* Modal-Fenster Hintergrund & Dark-Glass */
+body.theme-dark #fixkostenModal > div { background: #1c1c1e !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8) !important; color: #ffffff !important; }
+
+/* Modal Überschriften & Beschriftungen */
+body.theme-dark #fixkostenModal h2 { color: #ffffff !important; font-weight: 800 !important; }
+body.theme-dark #fixkostenModal label, body.theme-dark #fixkostenModal p { color: #ffffff !important; font-weight: 700 !important; opacity: 0.9 !important; }
+
+/* Eingabefelder (Bezeichnung, Betrag, Intervall-Select) */
+body.theme-dark #fixkostenModal input, body.theme-dark #fixkostenModal select { background: #2c2c2e !important; border: 2px solid rgba(255, 255, 255, 0.3) !important; color: #ffffff !important; font-weight: 800 !important; border-radius: 12px !important; outline: none; }
+body.theme-dark #fixkostenModal input::placeholder { color: rgba(255, 255, 255, 0.4) !important; }
+
+/* Speichern-Button im Fixkosten-Modal */
+body.theme-dark #fixkostenModal button[onclick*="addFixkostenTemplate"] { background: #ffffff !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1) !important; font-weight: 800 !important; }
+
+/* Schließen-Buttons im Fixkosten-Modal (X-Button & unten) */
+body.theme-dark #fixkostenModal button[onclick*="fixkostenModal"] { color: #ffffff !important; background: rgba(255, 255, 255, 0.1) !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; font-weight: 800 !important; }
+
+/* Vorlagen-Einträge in der Liste */
+body.theme-dark #fixkostenList > div { background: #2c2c2e !important; border: 1px solid rgba(255, 255, 255, 0.15) !important; }
+body.theme-dark #fixkostenList strong { color: #ffffff !important; }
+body.theme-dark #fixkostenList span[style*="var(--primary)"] { color: #ffffff !important; font-weight: 800 !important; }
+body.theme-dark #fixkostenList div[style*="var(--gray)"] { color: #ffffff !important; opacity: 0.6 !important; font-weight: 700 !important; }
+body.theme-dark #fixkostenList div[style*="text-align:center"] { background: rgba(255, 255, 255, 0.05) !important; color: #ffffff !important; border: 1px dashed rgba(255, 255, 255, 0.2) !important; }
+
+/* Hauptansicht Buttons */
+body.theme-dark .finance-controls button[onclick*="addNewMonth"] { background: #ffffff !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1) !important; }
+body.theme-dark .finance-controls button[onclick*="fixkostenModal"] { background: rgba(44, 44, 46, 0.8) !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.2) !important; backdrop-filter: blur(10px); }
