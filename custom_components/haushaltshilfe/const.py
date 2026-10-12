@@ -3,13 +3,14 @@ import json
 
 DOMAIN = "haushaltshilfe"
 
-# Persistent Speicher-Events (abgestimmt auf deine script.js)
+# Persistent Speicher-Events (abgestimmt auf deine script.js & finance.js)
 EVENT_SET_SHOPPING = "set_shopping_data"
 EVENT_SET_TASKS = "set_tasks_data"
 EVENT_SET_SHOP_FAVS = "set_shop_favs"
 EVENT_SET_FOOD_FAVS = "set_food_favs"
 EVENT_SET_TODO_FAVS = "set_todo_favs"
 EVENT_SET_FINANCE = "set_finance_db"
+EVENT_SET_FINANCE_TEMPLATES = "set_finance_templates"  # <-- NEU HINZUGEFÜGT
 EVENT_SET_ROOMS = "set_rooms_data"
 EVENT_SET_STORES = "set_stores_data"
 EVENT_SET_USERS = "set_users_data"
@@ -30,6 +31,7 @@ HELPER_ENTITIES = {
     "helper_todo_favs": {"name": "helper todo favs", "initial": json.dumps({"cats": ["Alle", "Haus", "Bad", "Wohnen", "Küche", "Garten"], "favs": []})},
     "helper_tasks": {"name": "helper tasks", "initial": json.dumps([])},
     "helper_shopping": {"name": "helper shopping", "initial": json.dumps([])},
+    "helper_finance_templates": {"name": "helper finance templates", "initial": json.dumps([])}, # <-- NEU HINZUGEFÜGT
     "essen_montag": {"name": "essen montag", "initial": ""},
     "essen_dienstag": {"name": "essen dienstag", "initial": ""},
     "essen_mittwoch": {"name": "essen mittwoch", "initial": ""},
