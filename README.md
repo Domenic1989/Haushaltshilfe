@@ -6,6 +6,7 @@
 [![Last Commit](https://img.shields.io/github/last-commit/Domenic1989/Haushaltshilfe)](https://github.com/Domenic1989/Haushaltshilfe/commits/main)
 [![Issues](https://img.shields.io/github/issues/Domenic1989/Haushaltshilfe)](https://github.com/Domenic1989/Haushaltshilfe/issues)
 [![License](https://img.shields.io/github/license/Domenic1989/Haushaltshilfe?color=blue)](https://github.com/Domenic1989/Haushaltshilfe/blob/main/LICENSE)
+![GitHub Downloads](https://img.shields.io/github/downloads/Domenic1989/Haushaltshilfe/total?color=blue&style=for-the-badge)
 
 
 # 🏠 Haushaltshilfe Pro für Home Assistant
