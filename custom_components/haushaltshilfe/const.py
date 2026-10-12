@@ -17,6 +17,8 @@ EVENT_SET_ADMIN_PW = "set_admin_pw_data"
 EVENT_SET_FOOD_PLAN = "set_food_plan_data"
 
 CONF_ADMIN_PW = "admin_pw"
+CONF_MASTER_PW = "master_pw"
+CONF_VISIBLE_TABS = "visible_tabs"
 
 HELPER_ENTITIES = {
     "helper_admin_pw": {"name": "helper admin pw", "initial": "1234"},
