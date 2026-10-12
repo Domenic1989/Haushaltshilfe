@@ -88,6 +88,13 @@
 - **Einträge verwalten**: Klicke auf eine Monatskarte, um das Detail-Modal (`finance-modal`) zu öffnen.
 - **Fixum & Spendings**: Trage Fixkosten (Miete, Internet) oder variable Ausgaben (Einkauf, Tanken) mit Betrag (`€`) und Beschreibung ein.
 - **Eintrag löschen**: Klicke auf das **`✕`** neben dem jeweiligen Eintrag.
+  
+### 5.1 Fixkosten-Vorlagen verwalten
+
+1. Öffne das **Finanz-Tab**.
+2. Klicke auf **⚙️ Fixkosten verwalten**.
+3. Erstelle deine wiederkehrenden Ausgaben (Miete, Strom etc.) und wähle das passende Intervall.
+4. Klicke auf **Speichern**. Beim Anlegen eines neuen Monats über **➕ Monat hinzufügen** werden deine Fixkosten nun automatisch eingetragen.
 
 ---
 
