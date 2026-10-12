@@ -1,9 +1,15 @@
 // --- HA BASIS FUNKTIONEN (DIREKT IN FINANCE) ---
 async function fetchHA(entity) {
     try {
-        const r = await fetch(`${HA_URL}/api/states/${entity}`, { 
-            headers: {'Authorization': `Bearer ${HA_TOKEN}`} 
+        const token = (typeof HA_TOKEN !== "undefined" && HA_TOKEN) ? HA_TOKEN : (localStorage.getItem("ha_token") || "");
+        const url = (typeof HA_URL !== "undefined" && HA_URL) ? HA_URL : window.location.origin;
+
+        if (!token) return null;
+
+        const r = await fetch(`${url}/api/states/${entity}`, { 
+            headers: {'Authorization': `Bearer ${token}`} 
         });
+        if (!r.ok) return null;
         return await r.json();
     } catch(e) { 
         console.error("HA Fetch Error:", e); 
@@ -14,21 +20,26 @@ async function fetchHA(entity) {
 // Dauerhaftes Speichern: Sendet Event an Integration UND schreibt State für Neustartsicherheit
 async function saveToHA(dataObj) {
     try {
+        const token = (typeof HA_TOKEN !== "undefined" && HA_TOKEN) ? HA_TOKEN : (localStorage.getItem("ha_token") || "");
+        const url = (typeof HA_URL !== "undefined" && HA_URL) ? HA_URL : window.location.origin;
+
+        if (!token) return;
+
         // 1. Event feuern für die Live-Aktualisierung im Sensor (Python Integration)
-        await fetch(`${HA_URL}/api/events/set_finance_db`, {
+        await fetch(`${url}/api/events/set_finance_db`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${HA_TOKEN}`,
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ data: dataObj })
         });
 
         // 2. Zustand direkt in HA State API schreiben (dauerhafte Sicherung)
-        await fetch(`${HA_URL}/api/states/sensor.haushalt_finance_db`, {
+        await fetch(`${url}/api/states/sensor.haushalt_finance_db`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${HA_TOKEN}`,
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -39,6 +50,206 @@ async function saveToHA(dataObj) {
     } catch(e) { 
         console.error("HA Save Error:", e); 
     }
+}
+
+// --- FIXKOSTEN VORLAGEN LOGIK & HA SYNC ---
+
+let fixkostenTemplates = [];
+
+// Vorlagen aus HA oder LocalStorage laden
+async function loadFixkostenTemplates() {
+    try {
+        const s = await fetchHA('sensor.haushalt_finance_templates');
+        if (s && s.attributes && s.attributes.templates) {
+            fixkostenTemplates = typeof s.attributes.templates === 'string' 
+                ? JSON.parse(s.attributes.templates) 
+                : s.attributes.templates;
+        } else {
+            const local = localStorage.getItem("ha_fixkosten_templates");
+            if (local) fixkostenTemplates = JSON.parse(local);
+        }
+    } catch(e) {
+        console.warn("Konnte Fixkosten-Vorlagen nicht aus HA laden:", e);
+        const local = localStorage.getItem("ha_fixkosten_templates");
+        if (local) {
+            try { fixkostenTemplates = JSON.parse(local); } catch(err) {}
+        }
+    }
+}
+
+// Vorlagen in HA und LocalStorage speichern
+async function saveFixkostenTemplates() {
+    const jsonStr = JSON.stringify(fixkostenTemplates);
+    localStorage.setItem("ha_fixkosten_templates", jsonStr);
+
+    try {
+        const token = (typeof HA_TOKEN !== "undefined" && HA_TOKEN) ? HA_TOKEN : (localStorage.getItem("ha_token") || "");
+        const url = (typeof HA_URL !== "undefined" && HA_URL) ? HA_URL : window.location.origin;
+
+        if (!token) return;
+
+        // Event an Integration
+        await fetch(`${url}/api/events/set_finance_templates`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ templates: fixkostenTemplates })
+        });
+
+        // State sichern
+        await fetch(`${url}/api/states/sensor.haushalt_finance_templates`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                state: 'OK',
+                attributes: { templates: fixkostenTemplates }
+            })
+        });
+    } catch(e) {
+        console.error("Fehler beim Speichern der Fixkosten-Vorlagen:", e);
+    }
+}
+
+// Modal für Fixkosten-Vorlagen öffnen (Explizit an window gebunden)
+window.openFixkostenModal = async function() {
+    try {
+        await loadFixkostenTemplates();
+    } catch(e) {
+        console.warn("Vorlagen-Laden fehlgeschlagen, öffne Modal dennoch:", e);
+    }
+    
+    renderFixkostenList();
+    
+    const modal = document.getElementById('fixkostenModal');
+    if (modal) {
+        modal.style.display = 'flex';
+    } else {
+        alert("Modal 'fixkostenModal' wurde nicht im HTML-Code gefunden!");
+    }
+};
+
+// Liste der Vorlagen im Modal rendern
+function renderFixkostenList() {
+    const listEl = document.getElementById("fixkostenList");
+    if (!listEl) return;
+    listEl.innerHTML = "";
+
+    if (!fixkostenTemplates || fixkostenTemplates.length === 0) {
+        listEl.innerHTML = "<div style='font-size:0.85rem; color:var(--gray); text-align:center; padding:15px; background:var(--bg); border-radius:12px;'>Noch keine Fixkosten-Vorlagen hinterlegt.</div>";
+        return;
+    }
+
+    const monthLabels = {
+        "all": "Jeden Monat",
+        "1,4,7,10": "Quartalsweise (Jan, Apr, Jul, Okt)",
+        "1,7": "Halbjährlich (Jan, Jul)",
+        "1": "Nur Januar", "2": "Nur Februar", "3": "Nur März", "4": "Nur April",
+        "5": "Nur Mai", "6": "Nur Juni", "7": "Nur Juli", "8": "Nur August",
+        "9": "Nur September", "10": "Nur Oktober", "11": "Nur November", "12": "Nur Dezember"
+    };
+
+    fixkostenTemplates.forEach((tpl, index) => {
+        const div = document.createElement("div");
+        div.style = "display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:12px 15px; border-radius:12px;";
+        div.innerHTML = `
+            <div>
+                <strong style="color:var(--text); font-size:0.95rem;">${tpl.title}</strong> — <span style="font-weight:bold; color:var(--primary);">${parseFloat(tpl.amount).toFixed(2)} €</span>
+                <div style="font-size:0.75rem; color:var(--gray); margin-top:2px;">${monthLabels[tpl.months] || tpl.months}</div>
+            </div>
+            <button type="button" onclick="deleteFixkostenTemplate(${index})" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-weight:bold; font-size:1.2rem; padding:5px;">✕</button>
+        `;
+        listEl.appendChild(div);
+    });
+}
+
+// Neue Vorlage aus dem Modal-Formular hinzufügen (Global verfügbar)
+window.addFixkostenTemplate = async function() {
+    const titleInput = document.getElementById("tpl_title");
+    const amountInput = document.getElementById("tpl_amount");
+    const monthsSelect = document.getElementById("tpl_months");
+
+    if (!titleInput || !amountInput || !monthsSelect) {
+        console.error("Eingabefelder für Fixkosten im HTML nicht gefunden!");
+        return;
+    }
+
+    const title = titleInput.value.trim();
+    const amount = parseFloat(amountInput.value);
+    const months = monthsSelect.value;
+
+    if (!title || isNaN(amount)) {
+        alert("Bitte eine Bezeichnung und einen gültigen Betrag eingeben!");
+        return;
+    }
+
+    if (!Array.isArray(fixkostenTemplates)) fixkostenTemplates = [];
+
+    fixkostenTemplates.push({ title: title, amount: amount, months: months });
+
+    await saveFixkostenTemplates();
+
+    titleInput.value = "";
+    amountInput.value = "";
+    renderFixkostenList();
+};
+
+// Vorlage aus Liste löschen (Global verfügbar)
+window.deleteFixkostenTemplate = async function(index) {
+    if (!Array.isArray(fixkostenTemplates)) return;
+    fixkostenTemplates.splice(index, 1);
+    await saveFixkostenTemplates();
+    renderFixkostenList();
+};
+
+// Hilfsfunktion: Erkennt die Monatsnummer (1–12) aus dem Text (z.B. "Oktober 2026" -> 10)
+function parseMonthIndex(monthString) {
+    const str = monthString.toLowerCase();
+    const months = ["januar", "februar", "märz", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "dezember"];
+    
+    for (let i = 0; i < months.length; i++) {
+        if (str.includes(months[i])) {
+            return i + 1;
+        }
+    }
+    const match = str.match(/\b(1[0-2]|[1-9])\b/);
+    if (match) return parseInt(match[0]);
+
+    return new Date().getMonth() + 1;
+}
+
+// Ermittelt die auf den neuen Monat passenden Fixkosten-Vorlagen
+async function getFixkostenForMonthName(monthName) {
+    await loadFixkostenTemplates();
+    const monthNum = parseMonthIndex(monthName);
+    let autoFixum = [];
+
+    if (Array.isArray(fixkostenTemplates)) {
+        fixkostenTemplates.forEach(tpl => {
+            let isMatch = false;
+            if (tpl.months === "all") {
+                isMatch = true;
+            } else {
+                const allowed = tpl.months.toString().split(",").map(m => parseInt(m.trim()));
+                if (allowed.includes(monthNum)) {
+                    isMatch = true;
+                }
+            }
+
+            if (isMatch) {
+                autoFixum.push({
+                    name: tpl.title,
+                    amount: parseFloat(tpl.amount)
+                });
+            }
+        });
+    }
+
+    return autoFixum;
 }
 
 // --- FINANCE LOGIK ---
@@ -54,11 +265,10 @@ function renderFinanceItems(items, mIdx, type) {
         </div>`).join('');
 }
 
-// Variable um zu merken, welcher Monat gerade im Popup offen ist
 let currentOpenMonthIdx = null;
 
 // --- 1. ÜBERSICHT LADEN (DASHBOARD) ---
-async function loadFinance() {
+window.loadFinance = async function() {
     const container = document.getElementById('months-container');
     if (!container) return;
     
@@ -86,12 +296,11 @@ async function loadFinance() {
         </div>`;
     });
 
-    // Falls das Modal offen ist, Inhalt dort auch aktualisieren
     if (currentOpenMonthIdx !== null) openFinanceModal(currentOpenMonthIdx);
-}
+};
 
 // --- 2. POPUP ÖFFNEN ---
-async function openFinanceModal(mIdx) {
+window.openFinanceModal = async function(mIdx) {
     currentOpenMonthIdx = mIdx;
     const modal = document.getElementById('finance-modal');
     const headerFixed = document.getElementById('modal-header-fixed');
@@ -109,7 +318,6 @@ async function openFinanceModal(mIdx) {
 
     modal.style.display = 'flex';
 
-    // --- BUTTON VERSCHIEBUNG ---
     setTimeout(() => {
         const closeBtn = modal.querySelector('button[onclick="closeFinanceModal()"]');
         if (closeBtn) {
@@ -131,7 +339,6 @@ async function openFinanceModal(mIdx) {
         }
     }, 10);
 
-    // 1. HEADER & EINGABEZEILE
     headerFixed.style.padding = isMobile ? "30px 15px" : "20px 15px";
     headerFixed.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-right:110px;">
@@ -159,7 +366,6 @@ async function openFinanceModal(mIdx) {
         </div>
     `;
 
-    // 2. LISTEN-ANZEIGE
     content.innerHTML = `
         <div style="margin-bottom:20px; margin-top:20px;">
             <small style="font-weight:bold; opacity:0.5;">📌 FIXKOSTEN</small>
@@ -171,16 +377,17 @@ async function openFinanceModal(mIdx) {
         </div>
         <button onclick="deleteMonth(${mIdx})" style="margin-top:30px; background:none; border:none; color:var(--danger); font-size:0.8rem; width:100%; text-align:center; cursor:pointer;">× Gesamten Monat löschen ×</button>
     `;
-}
+};
 
-function closeFinanceModal() {
+window.closeFinanceModal = function() {
     currentOpenMonthIdx = null;
-    document.getElementById('finance-modal').style.display = 'none';
+    const modal = document.getElementById('finance-modal');
+    if (modal) modal.style.display = 'none';
     loadFinance();
-}
+};
 
 // --- EINTRAG HINZUFÜGEN ---
-async function addEntry(mIdx) {
+window.addEntry = async function(mIdx) {
     const aIn = document.getElementById(`amt-${mIdx}`);
     const nIn = document.getElementById(`name-${mIdx}`);
     const tIn = document.getElementById(`type-${mIdx}`);
@@ -198,10 +405,10 @@ async function addEntry(mIdx) {
     await saveToHA(root);
     aIn.value = ""; nIn.value = "";
     setTimeout(loadFinance, 500);
-}
+};
 
 // --- EINTRAG LÖSCHEN ---
-async function delEntry(mIdx, type, iIdx) {
+window.delEntry = async function(mIdx, type, iIdx) {
     if(!confirm("Eintrag löschen?")) return;
     const s = await fetchHA('sensor.haushalt_finance_db');
     if (!s || !s.attributes) return;
@@ -209,35 +416,45 @@ async function delEntry(mIdx, type, iIdx) {
     root.months[mIdx][type].splice(iIdx, 1);
     await saveToHA(root);
     setTimeout(loadFinance, 500);
-}
+};
 
-// --- MONAT HINZUFÜGEN ---
-async function addNewMonth() {
+// --- MONAT HINZUFÜGEN (INCL. AUTOMATISCHER FIXKOSTEN-VORLAGEN-ÜBERNAHME) ---
+window.addNewMonth = async function() {
     const inputName = prompt("Welcher Monat soll hinzugefügt werden?", "Oktober 2026");
     
     if (!inputName || inputName.trim() === "") return;
+
+    const monthTitle = inputName.trim();
+
+    // Passende Fixkosten aus den gespeicherten Vorlagen ermitteln
+    const autoFixum = await getFixkostenForMonthName(monthTitle);
 
     const s = await fetchHA('sensor.haushalt_finance_db');
     let root = (s && s.attributes) ? (s.attributes.data || s.attributes) : { months: [] };
     if (!root.months) root.months = [];
 
     root.months.push({
-        month_name: inputName.trim(),
-        fixum: [],
+        month_name: monthTitle,
+        fixum: autoFixum,
         spendings: []
     });
 
     await saveToHA(root);
     setTimeout(loadFinance, 500);
-}
+};
 
 // --- MONAT LÖSCHEN ---
-async function deleteMonth(mIdx) {
-    if(!confirm("Gesamten Monat löschen?")) return;
+window.deleteMonth = async function(mIdx) {
+    if (!confirm("Gesamten Monat löschen?")) return;
+    
     const s = await fetchHA('sensor.haushalt_finance_db');
     if (!s || !s.attributes) return;
+    
     let root = s.attributes.data || s.attributes;
     root.months.splice(mIdx, 1);
+    
     await saveToHA(root);
-    setTimeout(loadFinance, 500);
-}
+    
+    // Popup sofort schließen und Ansicht aktualisieren
+    closeFinanceModal();
+};
