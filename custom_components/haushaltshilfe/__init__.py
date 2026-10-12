@@ -23,6 +23,7 @@ AUTO_INPUT_TEXTS = {
     "helper_visible_tabs": {"name": "Sichtbare Tabs", "initial": '["shop","todo","food","trash","finance"]'},
     "helper_shop_stores": {"name": "Geschäfte", "initial": '["Aldi", "Lidl", "Rewe"]'},
     "helper_room_list": {"name": "Räume", "initial": '["Küche", "Bad", "Wohnen"]'},
+    "helper_finance_templates": {"name": "Fixkosten Vorlagen", "initial": "[]"},
     "essen_montag": {"name": "Essen Montag", "initial": ""},
     "essen_dienstag": {"name": "Essen Dienstag", "initial": ""},
     "essen_mittwoch": {"name": "Essen Mittwoch", "initial": ""},
@@ -133,6 +134,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "set_shopping_data": "shopping_db",
         "set_finance_data": "finance_db",
         "set_finance_db": "finance_db",
+        "set_finance_templates": "finance_templates",
     }
 
     @callback
