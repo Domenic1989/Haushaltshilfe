@@ -23,10 +23,19 @@ Eine elegante, benutzerfreundliche All-in-One-Lösung für die Organisation dein
 - 🗑️ **Müllabfuhr-Übersicht**: Direkte Anbindung an bestehende Müll-Sensoren über ein zentrales Konfigurations-Makro.
 - 🔄 **Neustart-sicher**: Alle Daten (Finanzen, Einkäufe, Aufgaben) bleiben auch nach einem Home Assistant Neustart dauerhaft gespeichert.
 - 🔑 **Multi-Device Login & Token-Speicherung**: Einmalig auf jedem Gerät (Smartphone, Tablet, PC) einrichten – die Sitzung bleibt dauerhaft gespeichert!
-- Ab Version 1.0.1
 - 🎛️ **Dynamische Tab-Steuerung**: Blende einzelne Navigations-Tabs ganz nach Bedarf aus oder ein – entweder direkt im Dashboard-Overlay oder über die Home Assistant Integrations-Einstellungen.
 - 🔐 **Passwort- & System-Verwaltung**: Master-Passwort, Admin-Passwort und Access-Tokens bequem über die Benutzeroberfläche oder in Home Assistant anpassen.
 - 🔄 **Vollständige Bidirektionale Synchronisation**: Egal ob du Passwörter oder die Tab-Sichtbarkeit im Dashboard-Overlay oder in den HA-Integrationsoptionen änderst – beide Stellen halten sich automatisch gegenseitig synchron!
+
+  ### 💰 Finanzen & Fixkosten-Vorlagen
+* Monatsübersicht für Ausgaben und Fixkosten.
+* Vorlagen-Verwaltung mit flexiblen Intervallen (monatlich, quartalsweise, jährlich) für die automatische Übernahme in neue Monate.
+* Geräteübergreifende Synchronisation via Home Assistant Helper (`helper_finance_templates`).
+
+  ### 🔔 Home Assistant Automatisierungen & Push-Benachrichtigungen
+* **Aufgaben-Bestätigung:** Push-Nachricht bei Erledigung/Bearbeitung einer Aufgabe mit Raum- und Namenangabe.
+* **Fälligkeits-Erinnerung:** Minuten-genaue Push-Erinnerung, wenn eine Aufgabe fällig wird.
+* Die fertigen YAML-Vorlagen dafür findest du im Ordner [`automations/`](automations/).
 
 ---
 
