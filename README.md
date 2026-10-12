@@ -7,7 +7,6 @@
 [![Issues](https://img.shields.io/github/issues/Domenic1989/Haushaltshilfe)](https://github.com/Domenic1989/Haushaltshilfe/issues)
 [![License](https://img.shields.io/github/license/Domenic1989/Haushaltshilfe?color=blue)](https://github.com/Domenic1989/Haushaltshilfe/blob/main/LICENSE)
 
-# 🏠 Haushaltshilfe Pro für Home Assistant
 
 # 🏠 Haushaltshilfe Pro für Home Assistant
 
