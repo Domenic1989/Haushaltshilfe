@@ -23,38 +23,252 @@
         todo: [{n:"🗑️ Müll raus",c:"Haus"},{n:"🧺 Wäsche",c:"Haus"},{n:"🧼 Bad putzen",c:"Bad"},{n:"🧹 Saugen",c:"Wohnen"},{n:"🪴 Blumen",c:"Garten"},{n:"🍽️ Spüler",c:"Küche"}]
     };
 
-    // --- SYSTEM FUNKTIONEN ---
-    function openSystemSettings() {
-        const eingabe = prompt("SYSTEM-ZUGRIFF: Master-Passwort eingeben:");
-        if (eingabe === MASTER_PW || eingabe === "admin") {
-            document.getElementById("set_token").value = HA_TOKEN || "";
-            document.getElementById("set_admin_pw").value = ADMIN_PW || "";
-            document.getElementById("settingsOverlay").style.display = "flex";
-        } else {
-            alert("Master-Passwort falsch! Zugriff verweigert.");
+// ---- MASTER-PASSWORT DYNAMISCH HOLEN ----
+const TABS_ENTITY = "input_text.helper_visible_tabs";
+
+// ---- HELFER: MASTER-PASSWORT ABFRAGEN ----
+async function getMasterPw() {
+    const token = (typeof getHAToken === "function") ? getHAToken() : (localStorage.getItem("ha_token") || "");
+    const masterEntity = (typeof MASTER_PW_ENTITY !== "undefined") ? MASTER_PW_ENTITY : "input_text.helper_master_pw";
+    const baseUrl = (typeof HA_URL !== "undefined" && HA_URL !== "") ? HA_URL : window.location.origin;
+
+    try {
+        const res = await fetch(`${baseUrl}/api/states/${masterEntity}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.state && data.state !== "unknown" && data.state !== "unavailable") {
+                return data.state;
+            }
+        }
+    } catch (e) {
+        console.warn("Konnte Master-Passwort nicht aus HA lesen:", e);
+    }
+
+    return localStorage.getItem("ha_master_pw") || (typeof MASTER_PW !== "undefined" ? MASTER_PW : "homeassistant");
+}
+
+// ---- HELFER: SICHTBARE TABS ABFRAGEN & ANWENDEN ----
+async function applyVisibleTabs() {
+    let visibleTabs = null;
+    const token = (typeof getHAToken === "function") ? getHAToken() : (localStorage.getItem("ha_token") || "");
+    const baseUrl = (typeof HA_URL !== "undefined" && HA_URL !== "") ? HA_URL : window.location.origin;
+
+    // 1. ZUERST aus Home Assistant abfragen
+    try {
+        const res = await fetch(`${baseUrl}/api/states/${TABS_ENTITY}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.state && data.state.startsWith("[")) {
+                visibleTabs = JSON.parse(data.state);
+                localStorage.setItem("ha_visible_tabs", JSON.stringify(visibleTabs));
+            }
+        }
+    } catch (e) {
+        console.warn("Konnte Tabs nicht live aus HA lesen:", e);
+    }
+
+    // 2. Fallback auf LocalStorage nur wenn HA offline
+    if (!visibleTabs || !Array.isArray(visibleTabs)) {
+        const local = localStorage.getItem("ha_visible_tabs");
+        if (local) {
+            try { visibleTabs = JSON.parse(local); } catch(e) {}
         }
     }
 
-    async function saveSystemSettings() {
-        const newToken = document.getElementById("set_token").value.trim();
-        const newAdminPw = document.getElementById("set_admin_pw").value.trim();
-        if (newToken && newAdminPw) {
-            localStorage.setItem("ha_token", newToken);
-            HA_TOKEN = newToken;
+    // Standard-Fallback
+    if (!visibleTabs || !Array.isArray(visibleTabs)) {
+        visibleTabs = ["shop", "todo", "food", "trash", "finance"];
+    }
+
+    // DOM anpassen
+    const tabMap = {
+        "shop": "t-shop",
+        "food": "t-food",
+        "todo": "t-todo",
+        "finance": "t-finance",
+        "trash": "t-trash"
+    };
+
+    Object.keys(tabMap).forEach(tabKey => {
+        const btnId = tabMap[tabKey];
+        const btnEl = document.getElementById(btnId);
+
+        if (btnEl) {
+            if (visibleTabs.includes(tabKey)) {
+                btnEl.style.setProperty("display", "inline-flex", "important");
+            } else {
+                btnEl.style.setProperty("display", "none", "important");
+            }
+        }
+    });
+
+    return visibleTabs;
+}
+
+// Global verfügbar machen
+window.applyVisibleTabs = applyVisibleTabs;
+
+// Automatischer Observer: Reagiert sofort, sobald das Hauptmenü (#app) eingeblendet wird
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. Einmal direkt ausführen
+    applyVisibleTabs();
+
+    // 2. Observer auf <div id="app"> ansetzen
+    const appEl = document.getElementById("app");
+    if (appEl) {
+        const appObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === "style" || mutation.attributeName === "class") {
+                    applyVisibleTabs();
+                }
+            });
+        });
+        appObserver.observe(appEl, { attributes: true });
+    }
+});
+
+// Global verfügbar machen, damit es auch nach doLogin() aufgerufen werden kann
+window.applyVisibleTabs = applyVisibleTabs;
+
+// Beim Start ausführen
+document.addEventListener("DOMContentLoaded", () => {
+    applyVisibleTabs();
+});
+
+// Bei Mutation Observer (reagiert sofort, wenn #app von display:none auf display:block wechselt)
+const appObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.attributeName === "style") {
+            applyVisibleTabs();
+        }
+    });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const appEl = document.getElementById("app");
+    if (appEl) {
+        appObserver.observe(appEl, { attributes: true });
+    }
+});
+
+// ---- EINSTELLUNGEN ÖFFNEN (Global registrieren) ----
+window.openSystemSettings = async function() {
+    try {
+        const currentMasterPw = await getMasterPw();
+        const eingabe = prompt("SYSTEM-ZUGRIFF: Master-Passwort eingeben:");
+
+        if (eingabe === currentMasterPw || eingabe === "admin") {
+            const currentToken = (typeof getHAToken === "function") ? getHAToken() : (localStorage.getItem("ha_token") || "");
             
-            // Speichert das Admin Passwort global im Home Assistant Helfer
-            await fetch(`${HA_URL}/api/services/input_text/set_value`, {
-                method: 'POST',
-                headers: {'Authorization': `Bearer ${HA_TOKEN}`, 'Content-Type': 'application/json'},
-                body: JSON.stringify({ entity_id: ADMIN_PW_ENTITY, value: newAdminPw })
+            // Aktuellen Tab-Zustand abrufen
+            const visibleTabs = await applyVisibleTabs();
+            
+            const elToken = document.getElementById("set_token");
+            const elMaster = document.getElementById("set_master_pw");
+            const elAdmin = document.getElementById("set_admin_pw");
+
+            if (elToken) elToken.value = currentToken;
+            if (elMaster) elMaster.value = currentMasterPw;
+            if (elAdmin) elAdmin.value = (typeof ADMIN_PW !== "undefined") ? ADMIN_PW : "1234";
+
+            // Checkboxen exakt nach aktuellem Stand anhaken oder abhaken
+            document.querySelectorAll(".tab-toggle").forEach(cb => {
+                cb.checked = visibleTabs.includes(cb.value);
             });
 
-            alert("Systemeinstellungen gespeichert! Lade neu...");
-            location.reload();
-        } else {
-            alert("Bitte alle Felder ausfüllen!");
+            const overlay = document.getElementById("settingsOverlay");
+            if (overlay) overlay.style.display = "flex";
+        } else if (eingabe !== null) {
+            alert("Master-Passwort falsch! Zugriff verweigert.");
         }
+    } catch (err) {
+        alert("Fehler beim Öffnen der Einstellungen: " + err.message);
     }
+};
+
+// ---- EINSTELLUNGEN SPEICHERN (Global registrieren) ----
+window.saveSystemSettings = async function() {
+    try {
+        const elToken = document.getElementById("set_token");
+        const elMaster = document.getElementById("set_master_pw");
+        const elAdmin = document.getElementById("set_admin_pw");
+
+        if (!elToken || !elMaster || !elAdmin) {
+            alert("Fehler: Eingabefelder konnten im HTML nicht gefunden werden!");
+            return;
+        }
+
+        const newToken = elToken.value.trim();
+        const newMasterPw = elMaster.value.trim();
+        const newAdminPw = elAdmin.value.trim();
+
+        // Nur aktiv gesetzte Häkchen sammeln
+        const selectedTabs = Array.from(document.querySelectorAll(".tab-toggle:checked")).map(cb => cb.value);
+        const tabsJson = JSON.stringify(selectedTabs);
+
+        if (!newToken || !newMasterPw || !newAdminPw) {
+            alert("Bitte alle drei Felder ausfüllen!");
+            return;
+        }
+
+        // 1. Lokalen Speicher sofort synchron aktualisieren (verhindert das Zurückspringen beim Neuladen)
+        localStorage.setItem("ha_token", newToken);
+        localStorage.setItem("ha_master_pw", newMasterPw);
+        localStorage.setItem("ha_visible_tabs", tabsJson);
+        
+        if (typeof HA_TOKEN !== "undefined") HA_TOKEN = newToken;
+        if (typeof MASTER_PW !== "undefined") window.MASTER_PW = newMasterPw;
+        if (typeof ADMIN_PW !== "undefined") window.ADMIN_PW = newAdminPw;
+
+        const baseUrl = (typeof HA_URL !== "undefined" && HA_URL !== "") ? HA_URL : window.location.origin;
+        const masterEntity = (typeof MASTER_PW_ENTITY !== "undefined") ? MASTER_PW_ENTITY : "input_text.helper_master_pw";
+        const adminEntity = (typeof ADMIN_PW_ENTITY !== "undefined") ? ADMIN_PW_ENTITY : "input_text.helper_admin_pw";
+
+        const headers = {
+            'Authorization': `Bearer ${newToken}`,
+            'Content-Type': 'application/json'
+        };
+
+        // 2. HA REST API Aufrufe durchführen
+        await Promise.all([
+            fetch(`${baseUrl}/api/services/input_text/set_value`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ entity_id: masterEntity, value: newMasterPw })
+            }),
+            fetch(`${baseUrl}/api/services/input_text/set_value`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ entity_id: adminEntity, value: newAdminPw })
+            }),
+            fetch(`${baseUrl}/api/services/input_text/set_value`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ entity_id: TABS_ENTITY, value: tabsJson })
+            })
+        ]).catch(e => console.error("Fehler beim API-Speichern:", e));
+
+        alert("Einstellungen erfolgreich gespeichert!");
+        
+        const overlay = document.getElementById("settingsOverlay");
+        if (overlay) overlay.style.display = "none";
+        
+        location.reload();
+
+    } catch (err) {
+        alert("Schwerwiegender Fehler beim Speichern: " + err.message);
+    }
+};
 
     function toggleUserAdmin() { 
         const check = prompt("ADMIN-BEREICH: Admin-Passwort eingeben:");
