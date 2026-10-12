@@ -39,7 +39,7 @@
     <div class="login-card">
         <button onclick="openSystemSettings()" style="position:absolute; top:0; right:0; background:#f2f2f7; border:none; border-bottom-left-radius:20px; border-top-right-radius:30px; width:60px; height:60px; font-size:1.3rem; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; color:#8e8e93; box-shadow: -2px 2px 5px rgba(0,0,0,0.05);">⚙️</button>
         <div style="font-size: 80px; margin-top: 40px; margin-bottom: 10px;">🏠</div>
-        <h2 style="margin-bottom: 25px;">Haus-Zentrale</h2>
+        <h2 style="margin-bottom: 25px;">Haushaltshilfe</h2>
         
         <div id="userGrid" class="user-grid-login"></div>
 
@@ -63,17 +63,43 @@
 </div>
 
 <div id="settingsOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); align-items:center; justify-content:center; z-index:3000; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
-    <div class="login-card" style="width:90%; max-width:500px; text-align:left; padding: 30px; border: 1px solid rgba(255,255,255,0.2);">
+    <div class="login-card" style="width:90%; max-width:500px; text-align:left; padding: 30px; border: 1px solid rgba(255,255,255,0.2); max-height: 90vh; overflow-y: auto;">
         <h3 style="margin-top:0; margin-bottom: 20px; color: var(--text); display: flex; align-items: center; gap: 10px;">
             <span style="font-size: 1.4rem;">⚙️</span> System-Einstellungen
         </h3>
+        
         <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">LONG LIVED ACCESS TOKEN</label>
-        <textarea id="set_token" placeholder="Token hier einfügen..." style="width:100%; height:140px; margin-bottom:20px; border-radius:12px; border:1px solid #ddd; padding:12px; font-size:0.65rem; box-sizing:border-box; font-family: monospace; background: #f9f9fb; outline: none; resize: none;"></textarea>
-        <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">ADMIN PASSWORT</label>
-        <input type="text" id="set_admin_pw" placeholder="Passwort festlegen..." style="width:100%; padding:15px; margin-bottom:25px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; font-size: 1rem; background: #f9f9fb; outline: none;">
+        <textarea id="set_token" placeholder="Token hier einfügen..." style="width:100%; height:80px; margin-bottom:15px; border-radius:12px; border:1px solid #ddd; padding:12px; font-size:0.65rem; box-sizing:border-box; font-family: monospace; background: #f9f9fb; outline: none; resize: none;"></textarea>
+        
+        <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">MASTER-PASSWORT</label>
+        <input type="password" id="set_master_pw" placeholder="Master-Passwort..." style="width:100%; padding:12px; margin-bottom:15px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; font-size: 0.9rem; background: #f9f9fb; outline: none;">
+
+        <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">ADMIN-PASSWORT</label>
+        <input type="text" id="set_admin_pw" placeholder="Admin-Passwort..." style="width:100%; padding:12px; margin-bottom:20px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; font-size: 0.9rem; background: #f9f9fb; outline: none;">
+
+        <!-- TABS AUSWAHL -->
+        <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:10px; letter-spacing: 0.5px;">SICHTBARE TABS IN DER LEISTE</label>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:25px; background:#f9f9fb; padding:12px; border-radius:12px; border:1px solid #ddd;">
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                <input type="checkbox" class="tab-toggle" value="shop" checked> 🛒 Einkaufsliste
+            </label>
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                <input type="checkbox" class="tab-toggle" value="todo" checked> 📋 Haushalt / Aufgaben
+            </label>
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                <input type="checkbox" class="tab-toggle" value="food" checked> 🍽️ Essensplan
+            </label>
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                <input type="checkbox" class="tab-toggle" value="trash" checked> 🗑️ Müllkalender
+            </label>
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                <input type="checkbox" class="tab-toggle" value="finance" checked> 💶 Finanzen
+            </label>
+        </div>
+        
         <div style="display:flex; gap:12px;">
-            <button style="flex:1; background:var(--primary); height:55px; border-radius:15px; font-weight:bold; color: white; border: none; cursor: pointer;" onclick="saveSystemSettings()">Speichern</button>
-            <button style="flex:1; background:var(--gray); height:55px; border-radius:15px; font-weight:bold; color: white; border: none; cursor: pointer;" onclick="document.getElementById('settingsOverlay').style.display='none'">Abbrechen</button>
+            <button type="button" style="flex:1; background:var(--primary); height:50px; border-radius:15px; font-weight:bold; color: white; border: none; cursor: pointer;" onclick="saveSystemSettings()">Speichern</button>
+            <button type="button" style="flex:1; background:var(--gray); height:50px; border-radius:15px; font-weight:bold; color: white; border: none; cursor: pointer;" onclick="document.getElementById('settingsOverlay').style.display='none'">Abbrechen</button>
         </div>
     </div>
 </div>
