@@ -1,3 +1,5 @@
+![HACS Downloads](https://img.shields.io/badge/HACS-Custom-orange.svg)
+
 # 🏠 Haushaltshilfe Pro für Home Assistant
 
 Eine elegante, benutzerfreundliche All-in-One-Lösung für die Organisation deines Haushalts direkt in Home Assistant. Verwalte Einkaufslisten, Finanzen, Aufgaben, Essenspläne und Müllabfuhr-Termine in einem übersichtlichen Custom Panel.
