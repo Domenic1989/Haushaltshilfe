@@ -1,4 +1,6 @@
-![HACS Downloads](https://img.shields.io/badge/HACS-Custom-orange.svg)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/default)
+[![GitHub Release](https://img.shields.io/github/v/release/Domenic1989/Haushaltshilfe)](https://github.com/Domenic1989/Haushaltshilfe/releases)
+[![GitHub Downloads](https://img.shields.io/github/downloads/Domenic1989/Haushaltshilfe/total)](https://github.com/Domenic1989/Haushaltshilfe/releases)
 
 # 🏠 Haushaltshilfe Pro für Home Assistant
 
