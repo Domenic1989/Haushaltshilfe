@@ -9,6 +9,8 @@
 
 # 🏠 Haushaltshilfe Pro für Home Assistant
 
+# 🏠 Haushaltshilfe Pro für Home Assistant
+
 Eine elegante, benutzerfreundliche All-in-One-Lösung für die Organisation deines Haushalts direkt in Home Assistant. Verwalte Einkaufslisten, Finanzen, Aufgaben, Essenspläne und Müllabfuhr-Termine in einem übersichtlichen Custom Panel.
 
 ---
@@ -22,6 +24,10 @@ Eine elegante, benutzerfreundliche All-in-One-Lösung für die Organisation dein
 - 🗑️ **Müllabfuhr-Übersicht**: Direkte Anbindung an bestehende Müll-Sensoren über ein zentrales Konfigurations-Makro.
 - 🔄 **Neustart-sicher**: Alle Daten (Finanzen, Einkäufe, Aufgaben) bleiben auch nach einem Home Assistant Neustart dauerhaft gespeichert.
 - 🔑 **Multi-Device Login & Token-Speicherung**: Einmalig auf jedem Gerät (Smartphone, Tablet, PC) einrichten – die Sitzung bleibt dauerhaft gespeichert!
+- Ab Version 1.0.1
+- 🎛️ **Dynamische Tab-Steuerung**: Blende einzelne Navigations-Tabs ganz nach Bedarf aus oder ein – entweder direkt im Dashboard-Overlay oder über die Home Assistant Integrations-Einstellungen.
+- 🔐 **Passwort- & System-Verwaltung**: Master-Passwort, Admin-Passwort und Access-Tokens bequem über die Benutzeroberfläche oder in Home Assistant anpassen.
+- 🔄 **Vollständige Bidirektionale Synchronisation**: Egal ob du Passwörter oder die Tab-Sichtbarkeit im Dashboard-Overlay oder in den HA-Integrationsoptionen änderst – beide Stellen halten sich automatisch gegenseitig synchron!
 
 ---
 
@@ -89,16 +95,20 @@ Solltest du bereits die HACS-Integration *Waste Collection Schedule* nutzen, pas
 
 # 📖 Bedienungsanleitung – Haus-Zentrale Pro 🏠
 
-## 🔑 Übersicht der Standard-Passwörter
+## 🔑 Übersicht der Standard-Passwörter & Einstellungen
 
 | Funktion / Rolle | Standard-Passwort | Beschreibung / Einsatzort |
 | :--- | :--- | :--- |
 | **Master-Passwort** | `homeassistant` | Zugriff auf die System-Einstellungen (`⚙️` oben rechts am Login-Bildschirm). |
 | **Admin-Passwort** | `1234` | Zugriff auf die Benutzerverwaltung (`⚙️ Verwaltung` zum Löschen von Benutzern). |
 | **Standard-Benutzer `Admin`** | `admin` | Erstes Standard-Konto bei Neuinstallation. |
-| **Standard-Benutzer `Tablet`** | `tablet` | Zweites Standard-Konto (z. B. für Wandtablets). Meldet sich nicht von alleine ab |
+| **Standard-Benutzer `Tablet`** | `tablet` | Zweites Standard-Konto (z. B. für Wandtablets). |
 
-> 💡 **Hinweis:** Das Master-Passwort schützt die Grundeinstellungen (Access-Token & Admin-Passwort). Sämtliche Passwörter können nach dem ersten Start in den System-Einstellungen angepasst werden.
+> 💡 **Hinweis zu Passwörtern & Tabs:** Sämtliche Passwörter sowie die Sichtbarkeit der einzelnen Tabs können flexibel auf zwei Wegen angepasst werden:
+> 1. **Über das Dashboard**: Im Login-Bildschirm oben rechts auf das Zahnrad `⚙️` klicken.
+> 2. **Über Home Assistant**: Unter **Einstellungen ➔ Geräte & Dienste ➔ Haushaltshilfe Pro ➔ Konfigurieren**.
+> 
+> Beide Einstellungen halten sich vollständig automatisch in beide Richtungen synchron!
 
 ---
 
@@ -134,6 +144,19 @@ Solltest du bereits die HACS-Integration *Waste Collection Schedule* nutzen, pas
    - Den **Long-Lived Access Token** eintragen oder aktualisieren.
    - Das **Admin-Passwort** für die Benutzerverwaltung neu festlegen.
 4. Klicke auf **Speichern**.
+
+## 🎛️ Tab-Sichtbarkeit anpassen
+
+Sämtliche Navigations-Tabs (🛒 Einkaufsliste, 📋 Aufgaben, 🍽️ Essensplan, 🗑️ Müll, 💶 Finanzen) können flexibel auf zwei Wegen ein- oder ausgeblendet werden:
+
+1. **Über das Dashboard**: 
+   - Klicke auf der Anmeldeseite oben rechts auf das Zahnrad **`⚙️`**.
+   - Gib das Master-Passwort ein und passe die Häkchen im Bereich **„Sichtbare Tabs in der Leiste“** an.
+2. **Über Home Assistant**: 
+   - Gehe zu **Einstellungen ➔ Geräte & Dienste ➔ Haushaltshilfe Pro ➔ Konfigurieren**.
+   - Wähle dort die gewünschten Tabs in der Mehrfachauswahl aus.
+
+> 💡 **Hinweis:** Beide Wege halten sich vollständig automatisch in beide Richtungen synchron!
 
 ---
 
