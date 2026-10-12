@@ -1,6 +1,11 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/default)
 [![GitHub Release](https://img.shields.io/github/v/release/Domenic1989/Haushaltshilfe)](https://github.com/Domenic1989/Haushaltshilfe/releases)
 [![GitHub Downloads](https://img.shields.io/github/downloads/Domenic1989/Haushaltshilfe/total)](https://github.com/Domenic1989/Haushaltshilfe/releases)
+[![GitHub Stars](https://img.shields.io/github/stars/Domenic1989/Haushaltshilfe?style=flat&color=yellow)](https://github.com/Domenic1989/Haushaltshilfe/stargazers)
+[![Visitors](https://visitor-badge.laobi.icu/badge?page_id=Domenic1989.Haushaltshilfe)](https://github.com/Domenic1989/Haushaltshilfe)
+[![Last Commit](https://img.shields.io/github/last-commit/Domenic1989/Haushaltshilfe)](https://github.com/Domenic1989/Haushaltshilfe/commits/main)
+[![Issues](https://img.shields.io/github/issues/Domenic1989/Haushaltshilfe)](https://github.com/Domenic1989/Haushaltshilfe/issues)
+[![License](https://img.shields.io/github/license/Domenic1989/Haushaltshilfe?color=blue)](https://github.com/Domenic1989/Haushaltshilfe/blob/main/LICENSE)
 
 # 🏠 Haushaltshilfe Pro für Home Assistant
 
