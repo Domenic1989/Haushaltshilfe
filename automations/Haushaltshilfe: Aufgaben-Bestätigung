@@ -1,0 +1,60 @@
+alias: "Haushalshilfe: Aufgaben-Bestätigung"
+description: >-
+  Sendet eine Push-Nachricht inkl. Raum-Name (für manuelle Klicks und
+  Fälligkeit)
+triggers:
+  - trigger: event
+    event_type: set_tasks_data
+actions:
+  - parallel:
+      - action: notify.mobile_app_dein_handy_1
+        data:
+          title: 🏠 Aufgaben-Zentrale
+          message: |
+            {% set u = trigger.event.data.user_name | default('') %}
+            {% set t = trigger.event.data.task_name | default('Aufgabe') %}
+            {% set r = trigger.event.data.room_name | default('') %}
+            {% set a = trigger.event.data.action | default('bearbeitet') %}
+
+            {% if r == '' %}
+              {% set tasks = state_attr('sensor.haushalt_tasks_storage', 'tasks') | default([], true) %}
+              {% set match = tasks | selectattr('name', 'eq', t) | first %}
+              {% set r = match.room if match is defined else 'Haus' %}
+            {% endif %}
+
+            {% if 'fällig' in a or 'jetzt' in a or u == '' or u == 'Jemand' %}
+              Die Aufgabe "{{ t }}" im Raum "{{ r }}" ist JETZT fällig!
+            {% else %}
+              {{ u }} hat im Raum "{{ r }}" die Aufgabe "{{ t }}" {{ a }}!
+            {% endif %}
+          data:
+            push:
+              sound: default
+              importance: high
+      - action: notify.mobile_app_dein_handy_2
+        data:
+          title: 🏠 Aufgaben-Zentrale
+          message: |
+            {% set u = trigger.event.data.user_name | default('') %}
+            {% set t = trigger.event.data.task_name | default('Aufgabe') %}
+            {% set r = trigger.event.data.room_name | default('') %}
+            {% set a = trigger.event.data.action | default('bearbeitet') %}
+
+            {% if r == '' %}
+              {% set tasks = state_attr('sensor.haushalt_tasks_storage', 'tasks') | default([], true) %}
+              {% set match = tasks | selectattr('name', 'eq', t) | first %}
+              {% set r = match.room if match is defined else 'Haus' %}
+            {% endif %}
+
+            {% if 'fällig' in a or 'jetzt' in a or u == '' or u == 'Jemand' %}
+              Die Aufgabe "{{ t }}" im Raum "{{ r }}" ist JETZT fällig!
+            {% else %}
+              {{ u }} hat im Raum "{{ r }}" die Aufgabe "{{ t }}" {{ a }}!
+            {% endif %}
+          data:
+            push:
+              sound: default
+              importance: high
+        enabled: true
+mode: parallel
+max: 10
