@@ -141,7 +141,7 @@ Solltest du bereits die HACS-Integration *Waste Collection Schedule* nutzen, pas
 
 ### Benutzer verwalten & löschen (`⚙️ Verwaltung`)
 1. Klicke auf **`⚙️ Verwaltung`**.
-2. Gib das **Admin-Passwort** ein (Standard: `1234`).
+2. Gib das **Admin-Passwort** ein.
 3. An allen Benutzerkarten erscheint nun ein rotes **`✕`** zum Löschen.
 4. Klicke auf **`❌ Beenden`**, um den Verwaltungsmodus wieder zu verlassen.
 
