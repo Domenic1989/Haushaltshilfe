@@ -70,15 +70,17 @@ Kopiere den Ordner `custom_components/haushaltshilfe` in deinen Home Assistant O
 
 Wenn du die Haushaltshilfe Pro zum ersten Mal auf einem neuen Gerät (Smartphone, Tablet, Wand-Display oder PC) öffnest, richtest du die Verbindung einmalig ein:
 
-1. **Long-Lived Access Token erstellen**:
-   - Klicke in Home Assistant unten links auf dein **Benutzerprofil** (dein Name/Avatar).
-   - Scrolle ganz nach unten zum Bereich **Langlebige Zugangstoken** (*Long-Lived Access Tokens*).
-   - Klicke auf **Token erstellen**, gib einen Namen ein (z. B. *Tablet Küche*) und kopiere den generierten Schlüssel.
-2. **Token in den Einstellungen eingeben**:
-   - Öffne die Haushaltshilfe Pro und klicke oben rechts auf das **Zahnrad-Icon** ⚙️, um in die **Einstellungen** zu gelangen.
-   - Füge deinen kopierten Access Token dort in das entsprechende Feld ein und bestätige die Eingabe.
-   - Der Token wird sicher im `localStorage` des jeweiligen Geräts gespeichert.
-   - Du bleibst auf diesem Gerät dauerhaft angemeldet und musst den Token nicht erneut eingeben!
+Da die Haushaltshilfe Pro über einen sicheren, token-freien Proxy direkt mit Home Assistant kommuniziert, ist kein manueller Long-Lived Access Token mehr auf den Geräten nötig!
+
+Aufrufen über die Home Assistant Seitenleiste:
+
+Öffne einfach deine Home Assistant Oberfläche und klicke in der Seitenleiste auf den Eintrag Haushaltshilfe Pro.
+
+Die Verbindung zum Server und die Authentifizierung laufen komplett im Hintergrund über den integrierten Proxy.
+
+Benutzer auswählen & Einrichten:
+
+Beim ersten Start wählst du deinen Benutzer aus oder vergibst in den System-Einstellungen (über das Zahnrad-Icon ⚙️) einmalig deine Passwörter und Konfigurationen.
 
 ---
 
@@ -90,6 +92,7 @@ Du kannst das Panel der Haushaltshilfe Pro auf zwei Arten aufrufen:
 2. **Direkt per Browser-URL**: Rufe die Adresse direkt auf, z. B. auf einem Wand-Tablet oder Kiosk-Browser:
    ```text
    http://<DEINE-HOME-ASSISTANT-IP>:8123/local/haushaltshilfe/index.html
+   http://<DEINE-HOME-ASSISTANT-IP>/local/haushaltshilfe/index.html
 
 ## 🗑️ Müllabfuhr konfigurieren (Optional)
 
@@ -108,10 +111,8 @@ Solltest du bereits die HACS-Integration *Waste Collection Schedule* nutzen, pas
 
 | Funktion / Rolle | Standard-Passwort | Beschreibung / Einsatzort |
 | :--- | :--- | :--- |
-| **Master-Passwort** | `homeassistant` | Zugriff auf die System-Einstellungen (`⚙️` oben rechts am Login-Bildschirm). |
-| **Admin-Passwort** | `1234` | Zugriff auf die Benutzerverwaltung (`⚙️ Verwaltung` zum Löschen von Benutzern). |
-| **Standard-Benutzer `Admin`** | `admin` | Erstes Standard-Konto bei Neuinstallation. |
-| **Standard-Benutzer `Tablet`** | `tablet` | Zweites Standard-Konto (z. B. für Wandtablets). |
+| **Master-Passwort** | `Dein_Passwort_welches_du_vergeben_hast` | Zugriff auf die System-Einstellungen (`⚙️` oben rechts am Login-Bildschirm). |
+| **Admin-Passwort** | `Dein_Passwort_welches_du_vergeben_hast` | Zugriff auf die Benutzerverwaltung (`⚙️ Verwaltung` zum Löschen von Benutzern). |
 
 > 💡 **Hinweis zu Passwörtern & Tabs:** Sämtliche Passwörter sowie die Sichtbarkeit der einzelnen Tabs können flexibel auf zwei Wegen angepasst werden:
 > 1. **Über das Dashboard**: Im Login-Bildschirm oben rechts auf das Zahnrad `⚙️` klicken.
@@ -148,9 +149,9 @@ Solltest du bereits die HACS-Integration *Waste Collection Schedule* nutzen, pas
 
 ### System-Einstellungen (`⚙️` Oben Rechts)
 1. Klicke oben rechts auf der Login-Karte auf das graue Zahnrad **`⚙️`**.
-2. Gib das **Master-Passwort** ein (Standard: `homeassistant`).
+2. Gib das **Master-Passwort** ein .
 3. Im Dialog **System-Einstellungen** (`settingsOverlay`) kannst du:
-   - Den **Long-Lived Access Token** eintragen oder aktualisieren.
+   - Das **Master-Passwort** für die Systemeinstellung neu festlegen.
    - Das **Admin-Passwort** für die Benutzerverwaltung neu festlegen.
 4. Klicke auf **Speichern**.
 
@@ -193,7 +194,7 @@ Sämtliche Navigations-Tabs (🛒 Einkaufsliste, 📋 Aufgaben, 🍽️ Essenspl
 1. Gib die Aufgabe im Textfeld ein (z. B. *„Rasen mähen“*) und klicke auf **`+`**.
 2. Im Popup kannst du festlegen:
    - **Zugeordnet an**: Wähle das zuständige Familienmitglied im Dropdown aus.
-   - **Option 1 (Intervall)**: Zahl eingeben und als **Stunden** oder **Tage** speichern (inkl. Standard-Uhrzeit).
+   - **Option 1 (Intervall)**: Zahl eingeben und als **Stunden**, **Minuen** oder **Tage** speichern (inkl. Standard-Uhrzeit).
    - **Option 2 (Wochentage)**: Klicke die Wochentags-Punkte an (M, D, M, D, F, S, S) und klicke auf **Tage Speichern**.
    - **Option 3 (Festes Datum)**: Exaktes Fälligkeitsdatum über den Kalender auswählen und mit **Datum nutzen ✅** bestätigen.
 
@@ -205,17 +206,13 @@ Sämtliche Navigations-Tabs (🛒 Einkaufsliste, 📋 Aufgaben, 🍽️ Essenspl
 
 ## 5. 💰 Finanz-Modul (`Finanzen` / `v-finance`)
 
-- **Monat anlegen**: Klicke auf **`➕ Monat manuell hinzufügen`** (z. B. *Oktober 2026*).
-- **Einträge verwalten**: Klicke auf eine Monatskarte, um das Detail-Modal (`finance-modal`) zu öffnen.
-- **Fixum & Spendings**: Trage Fixkosten (Miete, Internet) oder variable Ausgaben (Einkauf, Tanken) mit Betrag (`€`) und Beschreibung ein.
-- **Eintrag löschen**: Klicke auf das **`✕`** neben dem jeweiligen Eintrag.
-  
-  ### Fixkosten-Vorlagen verwalten
-1. Öffne das **Finanz-Tab**.
-2. Klicke auf **⚙️ Fixkosten verwalten**.
-3. Erstelle deine wiederkehrenden Ausgaben (Miete, Strom etc.) und wähle das passende Intervall.
-4. Klicke auf **Speichern**. Beim Anlegen eines neuen Monats über **➕ Monat hinzufügen** werden deine Fixkosten nun automatisch eingetragen.
-
+- Das Finanz-Modul ist in eine übersichtliche Zwei-Ebenen-Struktur (Jahre ➔ Monate) unterteilt:
+- Jahr anlegen: Klicke oben auf ➕ Jahr hinzufügen und gib eine vierstellige Jahreszahl ein (z. B. 2026), um das Jahr als neue Übersichtskarte zu erstellen.
+- Jahr öffnen: Klicke auf eine Jahreskarte, um in die Monatsansicht des jeweiligen Jahres zu wechseln. (Über das Mülleimer-Icon 🗑️ auf der Jahreskarte lässt sich das gesamte Jahr inklusive aller Monate löschen).
+- Monat anlegen: Klicke im geöffneten Jahr auf ➕ Monat in diesem Jahr hinzufügen (z. B. Oktober). Hinterlegte Fixkosten-Vorlagen werden dabei automatisch für diesen Monat übernommen.
+- Einträge verwalten: Klicke auf eine Monatskarte, um das Detail-Modal (finance-modal) zu öffnen.
+- Fixum & Spendings: Trage Fixkosten (Miete, Internet) oder variable Ausgaben (Einkauf, Tanken) mit Betrag (€) und Beschreibung ein.
+- Eintrag löschen: Klicke auf das ✕ neben dem jeweiligen Eintrag.
 ---
 
 ## 6. 🚛 Müll-Modul (`Müll` / `v-trash`)
