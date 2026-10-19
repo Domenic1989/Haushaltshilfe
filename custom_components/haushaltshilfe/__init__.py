@@ -6,6 +6,7 @@ import json
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components import frontend
+from homeassistant.components.http import HomeAssistantView
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN, CONF_ADMIN_PW, CONF_MASTER_PW, CONF_VISIBLE_TABS
@@ -17,9 +18,6 @@ STORAGE_KEY = f"{DOMAIN}_data_store"
 STORAGE_VERSION = 1
 
 AUTO_INPUT_TEXTS = {
-    "helper_master_pw": {"name": "Master Passwort", "initial": "homeassistant"},
-    "helper_admin_pw": {"name": "Admin Passwort", "initial": "1234"},
-    "helper_user_list": {"name": "Benutzerliste", "initial": '["Admin:admin", "Tablet:tablet"]'},
     "helper_visible_tabs": {"name": "Sichtbare Tabs", "initial": '["shop","todo","food","trash","finance"]'},
     "helper_shop_stores": {"name": "Geschäfte", "initial": '["Aldi", "Lidl", "Rewe"]'},
     "helper_room_list": {"name": "Räume", "initial": '["Küche", "Bad", "Wohnen"]'},
@@ -34,29 +32,356 @@ AUTO_INPUT_TEXTS = {
 }
 
 
+class HaushaltshilfeCredentialsView(HomeAssistantView):
+    """API Endpoint um Master- und Admin-Passwort an das Frontend zu liefern."""
+    url = "/api/haushaltshilfe/credentials"
+    name = "api:haushaltshilfe:credentials"
+    requires_auth = False
+
+    async def get(self, request):
+        hass = request.app["hass"]
+        entry = hass.data.get(DOMAIN, {}).get("entry")
+        store_data = hass.data.get(DOMAIN, {}).get("data", {})
+        if not entry:
+            return self.json({"error": "Config entry not found"}, status=500)
+
+        m_pw = entry.options.get(CONF_MASTER_PW, entry.data.get(CONF_MASTER_PW, store_data.get("helper_master_pw", "")))
+        a_pw = entry.options.get(CONF_ADMIN_PW, entry.data.get(CONF_ADMIN_PW, store_data.get("helper_admin_pw", "")))
+        return self.json({
+            "master_pw": str(m_pw),
+            "admin_pw": str(a_pw)
+        })
+
+
+class HaushaltshilfeUpdateCredentialsView(HomeAssistantView):
+    """API Endpoint um Master- und Admin-Passwort zentral zu speichern."""
+    url = "/api/haushaltshilfe/update_credentials"
+    name = "api:haushaltshilfe:update_credentials"
+    requires_auth = False
+
+    async def post(self, request):
+        hass = request.app["hass"]
+        entry = hass.data.get(DOMAIN, {}).get("entry")
+        if not entry:
+            return self.json({"error": "Config entry not found"}, status=500)
+
+        try:
+            data = await request.json()
+        except Exception:
+            try:
+                raw_text = await request.text()
+                data = json.loads(raw_text)
+            except Exception:
+                data = {}
+
+        new_master = data.get("master_pw")
+        new_admin = data.get("admin_pw")
+
+        new_options = dict(entry.options)
+        updated = False
+
+        if new_master is not None and str(new_master).strip() != "":
+            new_options[CONF_MASTER_PW] = str(new_master).strip()
+            updated = True
+        
+        if new_admin is not None and str(new_admin).strip() != "":
+            new_options[CONF_ADMIN_PW] = str(new_admin).strip()
+            updated = True
+
+        if updated:
+            hass.config_entries.async_update_entry(entry, options=new_options)
+            
+            store_data = hass.data[DOMAIN].get("data", {})
+            store = hass.data[DOMAIN].get("store")
+            if store_data is not None and store is not None:
+                if new_master:
+                    store_data["helper_master_pw"] = str(new_master).strip()
+                if new_admin:
+                    store_data["helper_admin_pw"] = str(new_admin).strip()
+                await store.async_save(store_data)
+
+            return self.json({"success": True})
+
+        return self.json({"success": False, "message": "Keine Änderungen"}, status=400)
+
+
+class HaushaltshilfeUsersView(HomeAssistantView):
+    """API Endpoint um die Benutzerliste abzurufen und zu speichern."""
+    url = "/api/haushaltshilfe/users"
+    name = "api:haushaltshilfe:users"
+    requires_auth = False
+
+    async def get(self, request):
+        hass = request.app["hass"]
+        store_data = hass.data.get(DOMAIN, {}).get("data", {})
+        store = hass.data[DOMAIN].get("store")
+        
+        raw_users = store_data.get("users_list")
+        
+        if raw_users is None:
+            users_list = []
+            store_data["users_list"] = json.dumps(users_list)
+            if store is not None:
+                await store.async_save(store_data)
+        else:
+            if isinstance(raw_users, str):
+                try:
+                    users_list = json.loads(raw_users)
+                except Exception:
+                    users_list = []
+            else:
+                users_list = raw_users
+                
+        return self.json({"users": users_list})
+
+    async def post(self, request):
+        hass = request.app["hass"]
+        store_data = hass.data.get(DOMAIN, {}).get("data", {})
+        store = hass.data[DOMAIN].get("store")
+
+        try:
+            data = await request.json()
+        except Exception:
+            try:
+                raw_text = await request.text()
+                data = json.loads(raw_text)
+            except Exception:
+                data = {}
+
+        new_users = data.get("users")
+        if new_users is not None:
+            if isinstance(new_users, list):
+                store_data["users_list"] = json.dumps(new_users)
+            else:
+                store_data["users_list"] = str(new_users)
+
+            if store is not None:
+                await store.async_save(store_data)
+
+            return self.json({"success": True})
+
+        return self.json({"success": False, "message": "Keine Benutzer übergeben"}, status=400)
+
+
+class HaushaltshilfeSaveTokenView(HomeAssistantView):
+    """Speichert ein aktives HA-Token im Backend, damit Mobilgeräte es nach Login abrufen können."""
+    url = "/api/haushaltshilfe/save_token"
+    name = "api:haushaltshilfe:save_token"
+    requires_auth = True
+
+    async def post(self, request):
+        hass = request.app["hass"]
+        store_data = hass.data.get(DOMAIN, {}).get("data", {})
+        store = hass.data.get(DOMAIN, {}).get("store")
+
+        try:
+            data = await request.json()
+        except Exception:
+            data = {}
+
+        token = data.get("token")
+        if token and isinstance(token, str) and token.strip() != "":
+            store_data["saved_ha_token"] = token.strip()
+            if store is not None:
+                await store.async_save(store_data)
+            return self.json({"success": True})
+
+        return self.json({"success": False}, status=400)
+
+
+class HaushaltshilfePublicUsersView(HomeAssistantView):
+    """Liefert nur die Benutzernamen (ohne Passwörter!) für den Login-Screen ohne Token."""
+    url = "/api/haushaltshilfe/public_users"
+    name = "api:haushaltshilfe:public_users"
+    requires_auth = False
+
+    async def get(self, request):
+        hass = request.app["hass"]
+        store_data = hass.data.get(DOMAIN, {}).get("data", {})
+        raw_users = store_data.get("users_list", "[]")
+
+        if isinstance(raw_users, str):
+            try:
+                users_list = json.loads(raw_users)
+            except Exception:
+                users_list = []
+        else:
+            users_list = raw_users if isinstance(raw_users, list) else []
+
+        public_users = []
+        for u_str in users_list:
+            if isinstance(u_str, str) and ":" in u_str:
+                parts = u_str.split(":")
+                u_name = parts[0]
+                is_pers = len(parts) > 2 and parts[2] == "persistent"
+                public_users.append({"name": u_name, "persistent": is_pers})
+
+        return self.json({"users": public_users})
+
+
+class HaushaltshilfeAppLoginView(HomeAssistantView):
+    """Prüft Benutzername & Passwort ohne Token und gibt bei Erfolg das gespeicherte Token zurück."""
+    url = "/api/haushaltshilfe/app_login"
+    name = "api:haushaltshilfe:app_login"
+    requires_auth = False
+
+    async def post(self, request):
+        hass = request.app["hass"]
+        store_data = hass.data.get(DOMAIN, {}).get("data", {})
+
+        try:
+            data = await request.json()
+        except Exception:
+            try:
+                raw_text = await request.text()
+                data = json.loads(raw_text)
+            except Exception:
+                data = {}
+
+        username = data.get("username", "")
+        password = data.get("password", "")
+
+        raw_users = store_data.get("users_list", "[]")
+        if isinstance(raw_users, str):
+            try:
+                users_list = json.loads(raw_users)
+            except Exception:
+                users_list = []
+        else:
+            users_list = raw_users if isinstance(raw_users, list) else []
+
+        for u_str in users_list:
+            if isinstance(u_str, str) and ":" in u_str:
+                parts = u_str.split(":")
+                u_name = parts[0]
+                u_pw = parts[1] if len(parts) > 1 else ""
+                if u_name == username and u_pw == password:
+                    saved_token = store_data.get("saved_ha_token", "")
+                    return self.json({"success": True, "token": saved_token})
+
+        return self.json({"success": False, "message": "Invalid credentials"}, status=401)
+
+
+class HaushaltshilfeStateProxyView(HomeAssistantView):
+    """Liest und schreibt States & Events für das Frontend komplett ohne Token-Zwang."""
+    url = "/api/haushaltshilfe/proxy"
+    name = "api:haushaltshilfe:proxy"
+    requires_auth = False
+
+    async def get(self, request):
+        """Liefert den State und die Attribute einer Entität ohne Token."""
+        hass = request.app["hass"]
+        entity_id = request.query.get("entity_id")
+        
+        if entity_id:
+            state = hass.states.get(entity_id)
+            if not state:
+                return self.json({"state": "unknown", "attributes": {}})
+            return self.json({"state": state.state, "attributes": dict(state.attributes)})
+            
+        return self.json({"error": "No entity_id provided"}, status=400)
+
+    async def post(self, request):
+        """Feuert ein Event oder setzt einen input_text / sensor Wert ohne Token."""
+        hass = request.app["hass"]
+        store_data = hass.data.get(DOMAIN, {}).get("data", {})
+        store = hass.data.get(DOMAIN, {}).get("store")
+        entry = hass.data.get(DOMAIN, {}).get("entry")
+
+        try:
+            data = await request.json()
+        except Exception:
+            try:
+                raw_text = await request.text()
+                data = json.loads(raw_text)
+            except Exception:
+                return self.json({"error": "Invalid JSON"}, status=400)
+
+        action = data.get("action")
+        
+        # 1. Custom Event feuern (für Einkaufsliste, Aufgaben, Favoriten, Finanzen, Vorlagen)
+        if action == "fire_event":
+            event_type = data.get("event_type")
+            event_data = data.get("event_data", {})
+            if event_type:
+                hass.bus.async_fire(event_type, event_data)
+                return self.json({"success": True})
+
+        # 2. Input_text oder Sensor direkt setzen & im Store sichern
+        elif action == "set_input_text":
+            entity_id = data.get("entity_id")
+            value = data.get("value", "")
+            if entity_id and (entity_id.startswith("input_text.") or entity_id.startswith("sensor.")):
+                helper_key = entity_id.replace("input_text.", "").replace("sensor.haushalt_", "")
+                if helper_key == "finance_templates":
+                    store_data["finance_templates"] = str(value)
+                    store_data["helper_finance_templates"] = str(value)
+                else:
+                    store_data[helper_key] = str(value)
+
+                current_state = hass.states.get(entity_id)
+                attrs = current_state.attributes.copy() if current_state else {}
+                hass.states.async_set(entity_id, str(value), attrs)
+
+                # Falls es die Fixkosten-Vorlagen sind, halte beide Entitäten synchron
+                if "finance_templates" in entity_id:
+                    try:
+                        parsed_tpl = json.loads(str(value)) if isinstance(value, str) else value
+                    except Exception:
+                        parsed_tpl = []
+                    hass.states.async_set("input_text.helper_finance_templates", str(value), {"friendly_name": "Fixkosten Vorlagen"})
+                    hass.states.async_set("sensor.haushalt_finance_templates", "OK", {"templates": parsed_tpl})
+
+                if store is not None:
+                    await store.async_save(store_data)
+
+                if helper_key == "helper_visible_tabs" and entry is not None:
+                    try:
+                        parsed = json.loads(str(value))
+                        new_options = dict(entry.options)
+                        if new_options.get(CONF_VISIBLE_TABS) != parsed:
+                            new_options[CONF_VISIBLE_TABS] = parsed
+                            hass.config_entries.async_update_entry(entry, options=new_options)
+                    except Exception:
+                        pass
+
+                return self.json({"success": True})
+
+        return self.json({"error": "Unknown action"}, status=400)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Haushaltshilfe Pro with persistent JSON storage."""
     hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN]["entry"] = entry
+
     store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
-    
     store_data = await store.async_load() or {}
     hass.data[DOMAIN]["store"] = store
     hass.data[DOMAIN]["data"] = store_data
 
-    # Optionswerte aus der Integration auslesen
-    opt_admin = entry.options.get(CONF_ADMIN_PW)
-    opt_master = entry.options.get(CONF_MASTER_PW)
-    opt_tabs = entry.options.get(CONF_VISIBLE_TABS)
+    opt_master = entry.options.get(CONF_MASTER_PW, entry.data.get(CONF_MASTER_PW))
+    opt_admin = entry.options.get(CONF_ADMIN_PW, entry.data.get(CONF_ADMIN_PW))
+    opt_tabs = entry.options.get(CONF_VISIBLE_TABS, entry.data.get(CONF_VISIBLE_TABS))
 
-    # 1. Input-Text-Helfer initialisieren / wiederherstellen
+    if opt_master is not None:
+        store_data["helper_master_pw"] = str(opt_master)
+    if opt_admin is not None:
+        store_data["helper_admin_pw"] = str(opt_admin)
+
+    if "users_list" not in store_data:
+        store_data["users_list"] = json.dumps([])
+
+    # Synchronisiere finance_templates und helper_finance_templates beim Start
+    if "finance_templates" in store_data and store_data["finance_templates"] != "[]":
+        store_data["helper_finance_templates"] = store_data["finance_templates"]
+    elif "helper_finance_templates" in store_data:
+        store_data["finance_templates"] = store_data["helper_finance_templates"]
+
     for helper_id, config in AUTO_INPUT_TEXTS.items():
         entity_id = f"input_text.{helper_id}"
         
-        if helper_id == "helper_admin_pw":
-            val_to_set = opt_admin if opt_admin is not None else store_data.get(helper_id, config["initial"])
-        elif helper_id == "helper_master_pw":
-            val_to_set = opt_master if opt_master is not None else store_data.get(helper_id, config["initial"])
-        elif helper_id == "helper_visible_tabs":
+        if helper_id == "helper_visible_tabs":
             if opt_tabs is not None:
                 val_to_set = json.dumps(opt_tabs) if isinstance(opt_tabs, list) else str(opt_tabs)
             else:
@@ -73,14 +398,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 "editable": True,
                 "min": 0,
                 "max": 10000,
-                "mode": "password" if "pw" in helper_id else "text",
+                "mode": "text",
                 "friendly_name": config["name"],
             },
         )
 
     await store.async_save(store_data)
 
-    # 2. Listener für REST API Aufrufe aus dem Dashboard
     @callback
     def handle_call_service_event(event):
         data = event.data
@@ -97,21 +421,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 current_state = hass.states.get(entity_id)
                 attrs = current_state.attributes.copy() if current_state else {}
                 
-                # State und Store sofort schreiben
                 hass.states.async_set(entity_id, str(value), attrs)
                 store_data[helper_key] = str(value)
                 hass.async_create_task(store.async_save(store_data))
 
-                # Entry Options im Hintergrund synchronisieren (ohne Reload-Schleife)
                 new_options = dict(entry.options)
                 updated = False
-                if helper_key == "helper_admin_pw" and new_options.get(CONF_ADMIN_PW) != str(value):
-                    new_options[CONF_ADMIN_PW] = str(value)
-                    updated = True
-                elif helper_key == "helper_master_pw" and new_options.get(CONF_MASTER_PW) != str(value):
-                    new_options[CONF_MASTER_PW] = str(value)
-                    updated = True
-                elif helper_key == "helper_visible_tabs":
+                if helper_key == "helper_visible_tabs":
                     try:
                         parsed = json.loads(str(value))
                         if new_options.get(CONF_VISIBLE_TABS) != parsed:
@@ -125,7 +441,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.bus.async_listen("call_service", handle_call_service_event)
 
-    # Custom Events abfangen
     EVENT_MAPPING = {
         "set_tasks_data": "tasks_data",
         "set_todo_favs": "todo_favs",
@@ -134,7 +449,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "set_shopping_data": "shopping_db",
         "set_finance_data": "finance_db",
         "set_finance_db": "finance_db",
-        "set_finance_templates": "finance_templates",
+        "set_finance_templates": "helper_finance_templates",
+        "set_users_data": "users_list",
     }
 
     @callback
@@ -143,23 +459,32 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if ev_type in EVENT_MAPPING:
             storage_key = EVENT_MAPPING[ev_type]
             raw_val = None
-            for key in ("tasks", "favs", "json_data", "data"):
+            # HIER WAR DER FEHLER: "templates" ist jetzt mit in der Liste!
+            for key in ("tasks", "favs", "json_data", "data", "users", "templates"):
                 if event.data.get(key) is not None:
                     raw_val = event.data.get(key)
                     break
             
             if raw_val is not None:
-                if isinstance(raw_val, str):
-                    store_data[storage_key] = raw_val
-                else:
-                    store_data[storage_key] = json.dumps(raw_val)
+                val_str = raw_val if isinstance(raw_val, str) else json.dumps(raw_val)
+                store_data[storage_key] = val_str
+
+                # Falls Fixkosten-Vorlagen geändert wurden, sofort State & Sensor aktualisieren
+                if ev_type == "set_finance_templates":
+                    store_data["finance_templates"] = val_str
+                    store_data["helper_finance_templates"] = val_str
+                    try:
+                        parsed_tpl = json.loads(val_str) if isinstance(val_str, str) else raw_val
+                    except Exception:
+                        parsed_tpl = []
+                    hass.states.async_set("input_text.helper_finance_templates", val_str, {"friendly_name": "Fixkosten Vorlagen"})
+                    hass.states.async_set("sensor.haushalt_finance_templates", "OK", {"templates": parsed_tpl})
                 
                 hass.async_create_task(store.async_save(store_data))
 
     for ev_name in EVENT_MAPPING.keys():
         hass.bus.async_listen(ev_name, handle_custom_events)
 
-    # WWW Ordner synchronisieren
     source_dir = hass.config.path("custom_components", DOMAIN, "www")
     target_dir = hass.config.path("www", "haushaltshilfe")
 
@@ -188,13 +513,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         require_admin=False,
     )
 
+    hass.http.register_view(HaushaltshilfeCredentialsView())
+    hass.http.register_view(HaushaltshilfeUpdateCredentialsView())
+    hass.http.register_view(HaushaltshilfeUsersView())
+    hass.http.register_view(HaushaltshilfeSaveTokenView())
+    hass.http.register_view(HaushaltshilfePublicUsersView())
+    hass.http.register_view(HaushaltshilfeAppLoginView())
+    hass.http.register_view(HaushaltshilfeStateProxyView())
+
     entry.async_on_unload(entry.add_update_listener(update_listener))
 
     return True
 
 
 async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
-    """Wird aufgerufen, wenn Einstellungen in den HA-Integrationsoptionen geändert werden."""
     store = hass.data[DOMAIN].get("store")
     store_data = hass.data[DOMAIN].get("data", {})
 
@@ -202,36 +534,17 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
     master_pw = entry.options.get(CONF_MASTER_PW)
     visible_tabs = entry.options.get(CONF_VISIBLE_TABS)
 
-    # 1. Admin-Passwort synchronisieren
     if admin_pw is not None:
-        val_admin = str(admin_pw)
-        store_data["helper_admin_pw"] = val_admin
-        current_state = hass.states.get("input_text.helper_admin_pw")
-        attrs = current_state.attributes.copy() if current_state else {}
-        hass.states.async_set("input_text.helper_admin_pw", val_admin, attrs)
-
-    # 2. Master-Passwort synchronisieren
+        store_data["helper_admin_pw"] = str(admin_pw)
     if master_pw is not None:
-        val_master = str(master_pw)
-        store_data["helper_master_pw"] = val_master
-        current_state = hass.states.get("input_text.helper_master_pw")
-        attrs = current_state.attributes.copy() if current_state else {}
-        hass.states.async_set("input_text.helper_master_pw", val_master, attrs)
+        store_data["helper_master_pw"] = str(master_pw)
 
-    # 3. Sichtbare Tabs synchronisieren (Liste sauber als JSON-String formatieren)
     if visible_tabs is not None:
-        if isinstance(visible_tabs, list):
-            tabs_str = json.dumps(visible_tabs)
-        else:
-            tabs_str = str(visible_tabs)
-
+        tabs_str = json.dumps(visible_tabs) if isinstance(visible_tabs, list) else str(visible_tabs)
         store_data["helper_visible_tabs"] = tabs_str
         current_state = hass.states.get("input_text.helper_visible_tabs")
         attrs = current_state.attributes.copy() if current_state else {}
-        
-        # State in HA sofort setzen, damit das Dashboard den neuen Wert ausliest
         hass.states.async_set("input_text.helper_visible_tabs", tabs_str, attrs)
 
-    # In der JSON-Datei speichern
     if store:
         await store.async_save(store_data)

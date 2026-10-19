@@ -22,8 +22,7 @@ CONF_MASTER_PW = "master_pw"
 CONF_VISIBLE_TABS = "visible_tabs"
 
 HELPER_ENTITIES = {
-    "helper_admin_pw": {"name": "helper admin pw", "initial": "1234"},
-    "helper_user_list": {"name": "helper user list", "initial": json.dumps(["Admin:admin", "Tablet:tablet"])},
+    # "helper_user_list" wurde hier komplett gelöscht!
     "helper_shop_stores": {"name": "helper shop stores", "initial": json.dumps(["Aldi", "Lidl", "Rewe"])},
     "helper_room_list": {"name": "helper room list", "initial": json.dumps(["Küche", "Schlafzimmer", "Bad OG", "Bad EG"])},
     "helper_shop_favs": {"name": "helper shop favs", "initial": json.dumps({"cats": ["Alle", "Gemüse", "Fleisch", "Vorrat", "Haus"], "favs": []})},
