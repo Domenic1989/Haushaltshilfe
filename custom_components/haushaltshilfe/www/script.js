@@ -104,42 +104,22 @@ async function haSetInputText(entityId, value) {
 // ---- HELFER: SICHTBARE TABS ABFRAGEN & ANWENDEN ----
 async function applyVisibleTabs() {
     let visibleTabs = null;
-    const token = HA_TOKEN || getHAToken();
-    
-    if (!token) {
-        const local = localStorage.getItem("ha_visible_tabs");
-        if (local) {
-            try { visibleTabs = JSON.parse(local); } catch(e) {}
-        }
-        if (!visibleTabs || !Array.isArray(visibleTabs)) {
-            visibleTabs = ["shop", "todo", "food", "trash", "finance"];
-        }
-        applyTabsToDOM(visibleTabs);
-        return visibleTabs;
-    }
-
     const baseUrl = getBaseUrl();
-    const tabsEntity = (typeof TABS_ENTITY !== "undefined") ? TABS_ENTITY : "input_text.helper_visible_tabs";
 
     try {
-        const res = await fetch(`${baseUrl}/api/states/${tabsEntity}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
+        // Nutzt jetzt EXAKT denselben Endpunkt wie die funktionierenden Passwörter!
+        const res = await fetch(`${baseUrl}/api/haushaltshilfe/credentials?_t=${Date.now()}`, {
+            cache: "no-store"
         });
-        if (res.status === 401) {
-            localStorage.removeItem("ha_token");
-            HA_TOKEN = "";
-        } else if (res.ok) {
+        if (res.ok) {
             const data = await res.json();
-            if (data && data.state && data.state.startsWith("[")) {
-                visibleTabs = JSON.parse(data.state);
+            if (data && Array.isArray(data.visible_tabs)) {
+                visibleTabs = data.visible_tabs;
                 localStorage.setItem("ha_visible_tabs", JSON.stringify(visibleTabs));
             }
         }
     } catch (e) {
-        console.warn("Konnte Tabs nicht live aus HA lesen:", e);
+        console.warn("Konnte Tabs nicht über credentials laden:", e);
     }
 
     if (!visibleTabs || !Array.isArray(visibleTabs)) {
@@ -158,6 +138,7 @@ async function applyVisibleTabs() {
 }
 
 function applyTabsToDOM(visibleTabs) {
+    // 1. Tab-Buttons in der Navigationsleiste ein-/ausblenden
     const tabMap = {
         "shop": "t-shop",
         "food": "t-food",
@@ -178,7 +159,15 @@ function applyTabsToDOM(visibleTabs) {
             }
         }
     });
+
+    // 2. WICHTIG: Die Checkboxen im Einstellungs-Dialog (.tab-toggle) aktualisieren!
+    const checkboxes = document.querySelectorAll(".tab-toggle");
+    checkboxes.forEach(cb => {
+        cb.checked = visibleTabs.includes(cb.value);
+    });
 }
+
+
 
 window.applyVisibleTabs = applyVisibleTabs;
 
@@ -199,33 +188,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // --- 1. Für normale Hinweise / Fehler (wie "Passwort falsch") ---
-// --- 1. Für normale Hinweise / Fehler (wie falsches Passwort) ---
-let confirmResolver = null;
-
-function showAlert(message, title = "Hinweis") {
-    return new Promise((resolve) => {
-        confirmResolver = resolve;
-        const modal = document.getElementById('customConfirmModal');
-        const titleEl = document.getElementById('customConfirmTitle');
-        const msgEl = document.getElementById('customConfirmMessage');
-        
-        if (titleEl) titleEl.innerText = title;
-        if (msgEl) msgEl.innerText = message;
-        if (modal) modal.style.display = 'flex';
-    });
-}
-
-function resolveConfirm(val) {
-    const modal = document.getElementById('customConfirmModal');
-    if (modal) modal.style.display = 'none';
-    if (confirmResolver) {
-        confirmResolver(val);
-        confirmResolver = null;
-    }
-}
-
-
-// --- 2. Die neue, eigene Funktion nur für den Löschvorgang ---
 let deleteResolver = null;
 
 function showDeleteModal(message, title = "Benutzer löschen") {
@@ -250,14 +212,31 @@ function resolveDelete(val) {
     }
 }
 
-// Hilfsfunktion für einfache Hinweise (z. B. falsches Passwort) -> Zeigt NUR OK
-function showAlert(message, title = "Hinweis") {
-    return showConfirm(message, title, "OK", "", true);
-}
+// ---- SAUBERE ALERT & CONFIRM FUNKTIONEN FÜR DIE NEUEN MODALS ----
+let confirmResolver = null;
 
 function showAlert(message, title = "Hinweis") {
-    return showConfirm(message, title, "OK", "", true);
+    return new Promise((resolve) => {
+        confirmResolver = resolve;
+        const modal = document.getElementById('customConfirmModal');
+        const titleEl = document.getElementById('customConfirmTitle');
+        const msgEl = document.getElementById('customConfirmMessage');
+        
+        if (titleEl) titleEl.innerText = title;
+        if (msgEl) msgEl.innerText = message;
+        if (modal) modal.style.display = 'flex';
+    });
 }
+
+function resolveConfirm(val) {
+    const modal = document.getElementById('customConfirmModal');
+    if (modal) modal.style.display = 'none';
+    if (confirmResolver) {
+        confirmResolver(val);
+        confirmResolver = null;
+    }
+}
+
 
 window.openSystemSettings = async function() {
     try {
@@ -326,10 +305,16 @@ window.saveSystemSettings = async function() {
         localStorage.setItem("ha_visible_tabs", tabsJson);
 
         const baseUrl = getBaseUrl();
+        
+        // Passwörter UND Tabs gemeinsam über den funktionierenden Credentials-Endpoint speichern!
         const updateRes = await fetch(`${baseUrl}/api/haushaltshilfe/update_credentials`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ master_pw: newMasterPw, admin_pw: newAdminPw })
+            body: JSON.stringify({ 
+                master_pw: newMasterPw, 
+                admin_pw: newAdminPw,
+                visible_tabs: selectedTabs
+            })
         });
 
         if (!updateRes.ok) {
@@ -337,9 +322,6 @@ window.saveSystemSettings = async function() {
             await showAlert(`Server-Fehler (Status ${updateRes.status}): ${errText}`, "Server-Fehler ❌");
             return;
         }
-
-        const tabsEntity = (typeof TABS_ENTITY !== "undefined") ? TABS_ENTITY : "input_text.helper_visible_tabs";
-        await haSetInputText(tabsEntity, tabsJson);
 
         await showAlert("Einstellungen erfolgreich gespeichert!", "Erfolg 🎉");
         const overlay = document.getElementById("settingsOverlay");
