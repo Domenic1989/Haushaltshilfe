@@ -1,10 +1,10 @@
+    let users = []; 
     let isSessionActive = sessionStorage.getItem("session_active");
     let storedUser = localStorage.getItem("selectedUser");
-    let user = (isSessionActive || storedUser === "Tablet") ? storedUser : "";
+    let user = (isSessionActive || storedUser === "Tablet" || (storedUser && isPersistentUser(storedUser))) ? storedUser : "";
     
     let curTab = sessionStorage.getItem("current_tab") || "shop";
     let curTheme = localStorage.getItem("app_theme") || "theme-light";
-    let users = ["Admin:admin", "Tablet:tablet"]; 
     
     let curCat = "Alle", lastActivity = Date.now(), isUpdatingFood = false;
     let activeStore = "Aldi", activeRoom = "Küche";
@@ -26,47 +26,112 @@
 // ---- MASTER-PASSWORT DYNAMISCH HOLEN ----
 const TABS_ENTITY = "input_text.helper_visible_tabs";
 
-// ---- HELFER: MASTER-PASSWORT ABFRAGEN ----
-async function getMasterPw() {
-    const token = (typeof getHAToken === "function") ? getHAToken() : (localStorage.getItem("ha_token") || "");
-    const masterEntity = (typeof MASTER_PW_ENTITY !== "undefined") ? MASTER_PW_ENTITY : "input_text.helper_master_pw";
-    const baseUrl = (typeof HA_URL !== "undefined" && HA_URL !== "") ? HA_URL : window.location.origin;
+function getBaseUrl() {
+    let baseUrl = window.location.origin;
+    try {
+        if (window.parent && window.parent.location && window.parent.location.origin && window.parent.location.origin !== "null") {
+            baseUrl = window.parent.location.origin;
+        }
+    } catch(e) {}
+    if (!baseUrl || baseUrl === "null") {
+        baseUrl = (typeof HA_URL !== "undefined" && HA_URL !== "") ? HA_URL : window.location.origin;
+    }
+    return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+}
+
+async function fetchServerCredentials() {
+    const baseUrl = getBaseUrl();
+    const token = HA_TOKEN || getHAToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
 
     try {
-        const res = await fetch(`${baseUrl}/api/states/${masterEntity}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        const res = await fetch(`${baseUrl}/api/haushaltshilfe/credentials`, { headers });
         if (res.ok) {
             const data = await res.json();
-            if (data && data.state && data.state !== "unknown" && data.state !== "unavailable") {
-                return data.state;
-            }
+            if (data.master_pw) localStorage.setItem("ha_master_pw", data.master_pw);
+            if (data.admin_pw) localStorage.setItem("ha_admin_pw", data.admin_pw);
+            return data;
         }
     } catch (e) {
-        console.warn("Konnte Master-Passwort nicht aus HA lesen:", e);
+        console.warn("Server-Credentials Abfrage fehlgeschlagen:", e);
     }
+    return null;
+}
 
-    return localStorage.getItem("ha_master_pw") || (typeof MASTER_PW !== "undefined" ? MASTER_PW : "homeassistant");
+async function getMasterPw() {
+    const creds = await fetchServerCredentials();
+    if (creds && creds.master_pw) return creds.master_pw;
+    return localStorage.getItem("ha_master_pw") || "";
+}
+
+async function getAdminPw() {
+    const creds = await fetchServerCredentials();
+    if (creds && creds.admin_pw) return creds.admin_pw;
+    return localStorage.getItem("ha_admin_pw") || "";
+}
+
+// ---- TOKEN-FREIE KOMMUNIKATION MIT HOME ASSISTANT (PROXY) ----
+async function haGetState(entityId) {
+    const baseUrl = getBaseUrl();
+    try {
+        const r = await fetch(`${baseUrl}/api/haushaltshilfe/proxy?entity_id=${encodeURIComponent(entityId)}`);
+        if (!r.ok) return { state: "unknown", attributes: {} };
+        return await r.json();
+    } catch (e) {
+        return { state: "unknown", attributes: {} };
+    }
+}
+
+async function haFireEvent(eventType, eventData) {
+    const baseUrl = getBaseUrl();
+    return await fetch(`${baseUrl}/api/haushaltshilfe/proxy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: "fire_event", event_type: eventType, event_data: eventData })
+    });
+}
+
+async function haSetInputText(entityId, value) {
+    const baseUrl = getBaseUrl();
+    return await fetch(`${baseUrl}/api/haushaltshilfe/proxy`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: "set_input_text", entity_id: entityId, value: value })
+    });
 }
 
 // ---- HELFER: SICHTBARE TABS ABFRAGEN & ANWENDEN ----
 async function applyVisibleTabs() {
     let visibleTabs = null;
-    const token = (typeof getHAToken === "function") ? getHAToken() : (localStorage.getItem("ha_token") || "");
-    const baseUrl = (typeof HA_URL !== "undefined" && HA_URL !== "") ? HA_URL : window.location.origin;
+    const token = HA_TOKEN || getHAToken();
+    
+    if (!token) {
+        const local = localStorage.getItem("ha_visible_tabs");
+        if (local) {
+            try { visibleTabs = JSON.parse(local); } catch(e) {}
+        }
+        if (!visibleTabs || !Array.isArray(visibleTabs)) {
+            visibleTabs = ["shop", "todo", "food", "trash", "finance"];
+        }
+        applyTabsToDOM(visibleTabs);
+        return visibleTabs;
+    }
 
-    // 1. ZUERST aus Home Assistant abfragen
+    const baseUrl = getBaseUrl();
+    const tabsEntity = (typeof TABS_ENTITY !== "undefined") ? TABS_ENTITY : "input_text.helper_visible_tabs";
+
     try {
-        const res = await fetch(`${baseUrl}/api/states/${TABS_ENTITY}`, {
+        const res = await fetch(`${baseUrl}/api/states/${tabsEntity}`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             }
         });
-        if (res.ok) {
+        if (res.status === 401) {
+            localStorage.removeItem("ha_token");
+            HA_TOKEN = "";
+        } else if (res.ok) {
             const data = await res.json();
             if (data && data.state && data.state.startsWith("[")) {
                 visibleTabs = JSON.parse(data.state);
@@ -77,7 +142,6 @@ async function applyVisibleTabs() {
         console.warn("Konnte Tabs nicht live aus HA lesen:", e);
     }
 
-    // 2. Fallback auf LocalStorage nur wenn HA offline
     if (!visibleTabs || !Array.isArray(visibleTabs)) {
         const local = localStorage.getItem("ha_visible_tabs");
         if (local) {
@@ -85,12 +149,15 @@ async function applyVisibleTabs() {
         }
     }
 
-    // Standard-Fallback
     if (!visibleTabs || !Array.isArray(visibleTabs)) {
         visibleTabs = ["shop", "todo", "food", "trash", "finance"];
     }
 
-    // DOM anpassen
+    applyTabsToDOM(visibleTabs);
+    return visibleTabs;
+}
+
+function applyTabsToDOM(visibleTabs) {
     const tabMap = {
         "shop": "t-shop",
         "food": "t-food",
@@ -111,19 +178,13 @@ async function applyVisibleTabs() {
             }
         }
     });
-
-    return visibleTabs;
 }
 
-// Global verfügbar machen
 window.applyVisibleTabs = applyVisibleTabs;
 
-// Automatischer Observer: Reagiert sofort, sobald das Hauptmenü (#app) eingeblendet wird
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Einmal direkt ausführen
     applyVisibleTabs();
 
-    // 2. Observer auf <div id="app"> ansetzen
     const appEl = document.getElementById("app");
     if (appEl) {
         const appObserver = new MutationObserver((mutations) => {
@@ -137,401 +198,606 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// Global verfügbar machen, damit es auch nach doLogin() aufgerufen werden kann
-window.applyVisibleTabs = applyVisibleTabs;
+// --- 1. Für normale Hinweise / Fehler (wie "Passwort falsch") ---
+// --- 1. Für normale Hinweise / Fehler (wie falsches Passwort) ---
+let confirmResolver = null;
 
-// Beim Start ausführen
-document.addEventListener("DOMContentLoaded", () => {
-    applyVisibleTabs();
-});
-
-// Bei Mutation Observer (reagiert sofort, wenn #app von display:none auf display:block wechselt)
-const appObserver = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-        if (mutation.attributeName === "style") {
-            applyVisibleTabs();
-        }
+function showAlert(message, title = "Hinweis") {
+    return new Promise((resolve) => {
+        confirmResolver = resolve;
+        const modal = document.getElementById('customConfirmModal');
+        const titleEl = document.getElementById('customConfirmTitle');
+        const msgEl = document.getElementById('customConfirmMessage');
+        
+        if (titleEl) titleEl.innerText = title;
+        if (msgEl) msgEl.innerText = message;
+        if (modal) modal.style.display = 'flex';
     });
-});
+}
 
-document.addEventListener("DOMContentLoaded", () => {
-    const appEl = document.getElementById("app");
-    if (appEl) {
-        appObserver.observe(appEl, { attributes: true });
+function resolveConfirm(val) {
+    const modal = document.getElementById('customConfirmModal');
+    if (modal) modal.style.display = 'none';
+    if (confirmResolver) {
+        confirmResolver(val);
+        confirmResolver = null;
     }
-});
+}
 
-// ---- EINSTELLUNGEN ÖFFNEN (Global registrieren) ----
+
+// --- 2. Die neue, eigene Funktion nur für den Löschvorgang ---
+let deleteResolver = null;
+
+function showDeleteModal(message, title = "Benutzer löschen") {
+    return new Promise((resolve) => {
+        deleteResolver = resolve;
+        const modal = document.getElementById('customDeleteModal');
+        const titleEl = document.getElementById('customDeleteTitle');
+        const msgEl = document.getElementById('customDeleteMessage');
+        
+        if (titleEl) titleEl.innerText = title;
+        if (msgEl) msgEl.innerText = message;
+        if (modal) modal.style.display = 'flex';
+    });
+}
+
+function resolveDelete(val) {
+    const modal = document.getElementById('customDeleteModal');
+    if (modal) modal.style.display = 'none';
+    if (deleteResolver) {
+        deleteResolver(val);
+        deleteResolver = null;
+    }
+}
+
+// Hilfsfunktion für einfache Hinweise (z. B. falsches Passwort) -> Zeigt NUR OK
+function showAlert(message, title = "Hinweis") {
+    return showConfirm(message, title, "OK", "", true);
+}
+
+function showAlert(message, title = "Hinweis") {
+    return showConfirm(message, title, "OK", "", true);
+}
+
 window.openSystemSettings = async function() {
     try {
         const currentMasterPw = await getMasterPw();
-        const eingabe = prompt("SYSTEM-ZUGRIFF: Master-Passwort eingeben:");
+        const currentAdminPw = await getAdminPw();
+        const token = HA_TOKEN || getHAToken();
 
-        if (eingabe === currentMasterPw || eingabe === "admin") {
-            const currentToken = (typeof getHAToken === "function") ? getHAToken() : (localStorage.getItem("ha_token") || "");
-            
-            // Aktuellen Tab-Zustand abrufen
+        const eingabe = await showPasswordPrompt("SYSTEM-ZUGRIFF:\nMaster-Passwort eingeben:");
+        if (eingabe === null) return;
+
+        if (!currentMasterPw || eingabe === currentMasterPw) {
             const visibleTabs = await applyVisibleTabs();
             
             const elToken = document.getElementById("set_token");
             const elMaster = document.getElementById("set_master_pw");
             const elAdmin = document.getElementById("set_admin_pw");
 
-            if (elToken) elToken.value = currentToken;
-            if (elMaster) elMaster.value = currentMasterPw;
-            if (elAdmin) elAdmin.value = (typeof ADMIN_PW !== "undefined") ? ADMIN_PW : "1234";
+            if (elToken) elToken.value = token;
+            if (elMaster) elMaster.value = currentMasterPw || eingabe;
+            if (elAdmin) elAdmin.value = currentAdminPw;
 
-            // Checkboxen exakt nach aktuellem Stand anhaken oder abhaken
             document.querySelectorAll(".tab-toggle").forEach(cb => {
                 cb.checked = visibleTabs.includes(cb.value);
             });
 
             const overlay = document.getElementById("settingsOverlay");
             if (overlay) overlay.style.display = "flex";
-        } else if (eingabe !== null) {
-            alert("Master-Passwort falsch! Zugriff verweigert.");
+        } else {
+            await showAlert("Master-Passwort falsch! Zugriff verweigert.", "Zugriff verweigert ❌");
         }
     } catch (err) {
-        alert("Fehler beim Öffnen der Einstellungen: " + err.message);
+        await showAlert("Fehler beim Öffnen der Einstellungen: " + err.message, "Fehler ⚠️");
     }
 };
 
-// ---- EINSTELLUNGEN SPEICHERN (Global registrieren) ----
 window.saveSystemSettings = async function() {
     try {
-        const elToken = document.getElementById("set_token");
         const elMaster = document.getElementById("set_master_pw");
         const elAdmin = document.getElementById("set_admin_pw");
+        const elToken = document.getElementById("set_token");
 
-        if (!elToken || !elMaster || !elAdmin) {
-            alert("Fehler: Eingabefelder konnten im HTML nicht gefunden werden!");
+        if (!elMaster || !elAdmin) {
+            await showAlert("Fehler: Eingabefelder konnten im HTML nicht gefunden werden!", "Fehler ⚠️");
             return;
         }
 
-        const newToken = elToken.value.trim();
         const newMasterPw = elMaster.value.trim();
         const newAdminPw = elAdmin.value.trim();
 
-        // Nur aktiv gesetzte Häkchen sammeln
-        const selectedTabs = Array.from(document.querySelectorAll(".tab-toggle:checked")).map(cb => cb.value);
-        const tabsJson = JSON.stringify(selectedTabs);
-
-        if (!newToken || !newMasterPw || !newAdminPw) {
-            alert("Bitte alle drei Felder ausfüllen!");
+        if (!newMasterPw || !newAdminPw) {
+            await showAlert("Bitte Master- und Admin-Passwort ausfüllen!", "Achtung ⚠️");
             return;
         }
 
-        // 1. Lokalen Speicher sofort synchron aktualisieren (verhindert das Zurückspringen beim Neuladen)
-        localStorage.setItem("ha_token", newToken);
+        let activeToken = (elToken && elToken.value.trim() !== "") ? elToken.value.trim() : (HA_TOKEN || getHAToken());
+        if (activeToken) {
+            HA_TOKEN = activeToken;
+            localStorage.setItem("ha_token", activeToken);
+        }
+
+        const selectedTabs = Array.from(document.querySelectorAll(".tab-toggle:checked")).map(cb => cb.value);
+        const tabsJson = JSON.stringify(selectedTabs);
+
         localStorage.setItem("ha_master_pw", newMasterPw);
+        localStorage.setItem("ha_admin_pw", newAdminPw);
         localStorage.setItem("ha_visible_tabs", tabsJson);
-        
-        if (typeof HA_TOKEN !== "undefined") HA_TOKEN = newToken;
-        if (typeof MASTER_PW !== "undefined") window.MASTER_PW = newMasterPw;
-        if (typeof ADMIN_PW !== "undefined") window.ADMIN_PW = newAdminPw;
 
-        const baseUrl = (typeof HA_URL !== "undefined" && HA_URL !== "") ? HA_URL : window.location.origin;
-        const masterEntity = (typeof MASTER_PW_ENTITY !== "undefined") ? MASTER_PW_ENTITY : "input_text.helper_master_pw";
-        const adminEntity = (typeof ADMIN_PW_ENTITY !== "undefined") ? ADMIN_PW_ENTITY : "input_text.helper_admin_pw";
+        const baseUrl = getBaseUrl();
+        const updateRes = await fetch(`${baseUrl}/api/haushaltshilfe/update_credentials`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ master_pw: newMasterPw, admin_pw: newAdminPw })
+        });
 
-        const headers = {
-            'Authorization': `Bearer ${newToken}`,
-            'Content-Type': 'application/json'
-        };
+        if (!updateRes.ok) {
+            const errText = await updateRes.text();
+            await showAlert(`Server-Fehler (Status ${updateRes.status}): ${errText}`, "Server-Fehler ❌");
+            return;
+        }
 
-        // 2. HA REST API Aufrufe durchführen
-        await Promise.all([
-            fetch(`${baseUrl}/api/services/input_text/set_value`, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify({ entity_id: masterEntity, value: newMasterPw })
-            }),
-            fetch(`${baseUrl}/api/services/input_text/set_value`, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify({ entity_id: adminEntity, value: newAdminPw })
-            }),
-            fetch(`${baseUrl}/api/services/input_text/set_value`, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify({ entity_id: TABS_ENTITY, value: tabsJson })
-            })
-        ]).catch(e => console.error("Fehler beim API-Speichern:", e));
+        const tabsEntity = (typeof TABS_ENTITY !== "undefined") ? TABS_ENTITY : "input_text.helper_visible_tabs";
+        await haSetInputText(tabsEntity, tabsJson);
 
-        alert("Einstellungen erfolgreich gespeichert!");
-        
+        await showAlert("Einstellungen erfolgreich gespeichert!", "Erfolg 🎉");
         const overlay = document.getElementById("settingsOverlay");
         if (overlay) overlay.style.display = "none";
-        
-        location.reload();
 
+        location.reload();
     } catch (err) {
-        alert("Schwerwiegender Fehler beim Speichern: " + err.message);
+        await showAlert("Schwerwiegender Fehler beim Speichern: " + err.message, "Fehler ❌");
     }
 };
 
-    function toggleUserAdmin() { 
-        const check = prompt("ADMIN-BEREICH: Admin-Passwort eingeben:");
-        if (check === ADMIN_PW) {
-            // 1. Icons an den Usern (Stift/X) zeigen
-            document.getElementById("userGrid").classList.add("admin-mode");
-        
-            // 2. Buttons tauschen (Wir überschreiben das komplette Style-Attribut)
-            document.getElementById("admin-open-btn").style.setProperty("display", "none", "important");
-            document.getElementById("admin-close-btn").style.setProperty("display", "block", "important");
-        } else { 
-            alert("Passwort falsch!"); 
-        }
-    }
-
-    function closeUserAdmin() {
-        // 1. Icons an den Usern verstecken
-        document.getElementById("userGrid").classList.remove("admin-mode");
+async function toggleUserAdmin() {  
+    const check = await showPasswordPrompt("ADMIN-BEREICH:\nAdmin-Passwort eingeben:");
+    if (check === null) return;
+    const currentAdminPw = await getAdminPw();
     
-        // 2. Buttons zurücktauschen
-        document.getElementById("admin-open-btn").style.setProperty("display", "block", "important");
-        document.getElementById("admin-close-btn").style.setProperty("display", "none", "important");
+    if (currentAdminPw && check === currentAdminPw) {
+        document.getElementById("userGrid").classList.add("admin-mode");
+        document.getElementById("admin-open-btn").style.setProperty("display", "none", "important");
+        document.getElementById("admin-close-btn").style.setProperty("display", "block", "important");
+    } else {  
+        await showAlert("Passwort falsch! Zugriff verweigert.", "Fehler ❌");  
     }
+}
 
-    async function addUserPrompt() {
-        const check = prompt("ADMIN-BEREICH: Admin-Passwort eingeben:");
-        if (check === ADMIN_PW) {
-            const name = prompt("Name:");
-            if (name) {
-                const pw = prompt(`Passwort für ${name}:`, "Bitte Passwort eingeben");
-                if (pw) { users.push(`${name}:${pw}`); await saveUsers(); renderUserGrid(); }
+function closeUserAdmin() {
+    document.getElementById("userGrid").classList.remove("admin-mode");
+    document.getElementById("admin-open-btn").style.setProperty("display", "block", "important");
+    document.getElementById("admin-close-btn").style.setProperty("display", "none", "important");
+}
+    
+function showPasswordPrompt(title = "Passwort eingeben:") {
+    return new Promise((resolve) => {
+        const modal = document.getElementById("passwordModal");
+        const titleElem = document.getElementById("passwordModalTitle");
+        const inputElem = document.getElementById("passwordModalInput");
+
+        titleElem.innerText = title;
+        inputElem.value = "";
+        modal.style.display = "flex";
+        inputElem.focus();
+
+        inputElem.onkeydown = (e) => {
+            if (e.key === "Enter") {
+                closePasswordModal(true);
             }
-        } else { alert("Passwort falsch!"); }
-    }
+        };
 
-    function addNewCat(t) { 
-        const check = prompt("ADMIN-BEREICH: Admin-Passwort eingeben:"); 
-        if (check === ADMIN_PW) { 
-            const n = prompt("Kategorie:"); 
-            if(n) { db[t].cats.push(n); syncUp(); render(); } 
-        } else { alert("Passwort falsch!"); } 
-    }
+        window.currentPasswordResolve = resolve;
+    });
+}
 
-    function addNewFav(t) { 
-        const check = prompt("ADMIN-BEREICH: Admin-Passwort eingeben:"); 
-        if (check === ADMIN_PW) { 
-            const n = prompt("Name des Favoriten:"); 
-            if(n) { db[t].favs.push({n, c:curCat}); syncUp(); render(); } 
-        } else { alert("Passwort falsch!"); } 
-    }
-
-
-    // --- THEME STEUERUNG (DROPDOWN) ---
-
-    function toggleThemeMenu(event) {
-        if (event) {
-            event.stopPropagation();
-            event.preventDefault();
-        }
-
-        const dropdown = document.getElementById("themeDropdown");
+function closePasswordModal(confirmed) {
+    const modal = document.getElementById("passwordModal");
+    const inputElem = document.getElementById("passwordModalInput");
+    const val = inputElem.value;
     
-        if (dropdown) {
-            dropdown.classList.toggle("show");
-            console.log("Menü geklickt! Sichtbar:", dropdown.classList.contains("show"));
+    modal.style.display = "none";
+    inputElem.onkeydown = null;
+
+    if (window.currentPasswordResolve) {
+        window.currentPasswordResolve(confirmed ? val : null);
+        window.currentPasswordResolve = null;
+    }
+}    
+
+
+let isEditingUser = false;
+
+async function addUserPrompt() {
+    const check = await showPasswordPrompt("ADMIN-BEREICH:\nAdmin-Passwort eingeben:");
+    if (check === null) return;
+    const currentAdminPw = await getAdminPw();
+
+    if (currentAdminPw && check === currentAdminPw) {
+        isEditingUser = false;
+        document.getElementById("userModalTitle").innerText = "Neuen Benutzer erstellen";
+        document.getElementById("userModalOldStr").value = "";
+        document.getElementById("userModalName").value = "";
+        document.getElementById("userModalPw").value = "";
+        document.getElementById("userModalPersistent").checked = false;
+        
+        document.getElementById("userModal").style.display = "flex";
+        document.getElementById("userModalName").focus();
+    } else { 
+        await showAlert("Passwort falsch! Zugriff verweigert.", "Fehler ❌"); 
+    }
+}
+
+function closeUserModal() {
+    document.getElementById("userModal").style.display = "none";
+}
+
+async function saveUserModal() {
+    const nameInput = document.getElementById("userModalName").value.trim();
+    const pwInput = document.getElementById("userModalPw").value.trim();
+    const persistentChecked = document.getElementById("userModalPersistent").checked;
+    const oldStr = document.getElementById("userModalOldStr").value;
+
+    if (!nameInput || !pwInput) {
+        alert("Bitte Name und Passwort ausfüllen!");
+        return;
+    }
+
+    const newUserStr = persistentChecked ? `${nameInput}:${pwInput}:persistent` : `${nameInput}:${pwInput}`;
+
+    if (isEditingUser) {
+        const index = users.indexOf(oldStr);
+        if (index !== -1) {
+            users[index] = newUserStr;
         } else {
-            alert("Kritischer Fehler: Menü-ID 'themeDropdown' nicht im HTML gefunden!");
+            const nameIdx = users.findIndex(u => u.split(':')[0] === oldStr.split(':')[0]);
+            if (nameIdx !== -1) users[nameIdx] = newUserStr;
+        }
+    } else {
+        if (users.some(u => u.split(':')[0].toLowerCase() === nameInput.toLowerCase())) {
+            alert("Ein Benutzer mit diesem Namen existiert bereits!");
+            return;
+        }
+        users.push(newUserStr);
+    }
+
+    await saveUsers();
+    renderUserGrid();
+    closeUserModal();
+}
+
+function isPersistentUser(uName) {
+    if (!users || !Array.isArray(users)) return false;
+    const found = users.find(x => x.startsWith(uName + ':'));
+    if (!found) return false;
+    const parts = found.split(':');
+    return parts[2] === 'persistent';
+}
+
+let inputResolver = null;
+
+function showInputPrompt(message, title = "Eingabe") {
+    return new Promise((resolve) => {
+        inputResolver = resolve;
+        const modal = document.getElementById('customInputModal');
+        const titleEl = document.getElementById('customInputTitle');
+        const msgEl = document.getElementById('customInputMessage');
+        const inputEl = document.getElementById('customInputField');
+        
+        if (titleEl) titleEl.innerText = title;
+        if (msgEl) msgEl.innerText = message;
+        if (inputEl) {
+            inputEl.value = ""; // Vorheriges leeren
+            setTimeout(() => inputEl.focus(), 100); // Direkt fokussieren
+        }
+        
+        if (modal) modal.style.display = 'flex';
+    });
+}
+
+function resolveInput(confirmed) {
+    const modal = document.getElementById('customInputModal');
+    const inputEl = document.getElementById('customInputField');
+    let value = null;
+    
+    if (confirmed && inputEl) {
+        value = inputEl.value.trim();
+    }
+    
+    if (modal) modal.style.display = 'none';
+    if (inputResolver) {
+        inputResolver(value);
+        inputResolver = null;
+    }
+}
+
+async function addNewCat(t) {  
+    const check = await showPasswordPrompt("ADMIN-BEREICH:\nAdmin-Passwort eingeben:");  
+    if (check === null) return;
+    const currentAdminPw = await getAdminPw();
+
+    if (currentAdminPw && check === currentAdminPw) {  
+        const n = await showInputPrompt("Bitte Namen der neuen Kategorie eingeben:", "Kategorie hinzufügen");  
+        if(n) { db[t].cats.push(n); syncUp(); render(); }  
+    } else {  
+        await showAlert("Passwort falsch! Zugriff verweigert.", "Fehler ❌");  
+    }  
+}
+
+async function addNewFav(t) {  
+    const check = await showPasswordPrompt("ADMIN-BEREICH:\nAdmin-Passwort eingeben:");  
+    if (check === null) return;
+    const currentAdminPw = await getAdminPw();
+
+    if (currentAdminPw && check === currentAdminPw) {  
+        const n = await showInputPrompt("Bitte Namen des Favoriten eingeben:", "Favorit hinzufügen");  
+        if(n) { db[t].favs.push({n, c:curCat}); syncUp(); render(); }  
+    } else {  
+        await showAlert("Passwort falsch! Zugriff verweigert.", "Fehler ❌");  
+    }  
+}
+
+function toggleThemeMenu(event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    const dropdown = document.getElementById("themeDropdown");
+    if (dropdown) {
+        dropdown.classList.toggle("show");
+    }
+}
+
+function setTheme(themeName) {
+    const themes = ["theme-light", "theme-dark", "theme-glass", "theme-blue", "theme-green"];
+    document.body.classList.remove(...themes);
+    curTheme = themeName;
+    document.body.className = curTheme;
+    localStorage.setItem("app_theme", curTheme);
+    
+    const dropdown = document.getElementById("themeDropdown");
+    if (dropdown) dropdown.classList.remove("show");
+}
+
+window.addEventListener('click', function(event) {
+    const dropdown = document.getElementById("themeDropdown");
+    const button = document.querySelector('.theme-toggle-top');
+    if (dropdown && dropdown.classList.contains('show')) {
+        if (button && !button.contains(event.target) && !dropdown.contains(event.target)) {
+            dropdown.classList.remove('show');
         }
     }
+});
 
-    function setTheme(themeName) {
-        const themes = ["theme-light", "theme-dark", "theme-glass", "theme-blue", "theme-green"];
-        
-        document.body.classList.remove(...themes);
-        curTheme = themeName;
-        document.body.className = curTheme;
-        localStorage.setItem("app_theme", curTheme);
-        
-        const dropdown = document.getElementById("themeDropdown");
-        if (dropdown) dropdown.classList.remove("show");
+window.onload = async () => { 
+    document.body.className = curTheme;
+    
+    await loadUsers(); 
+    renderUserGrid();
+
+    if (!user && storedUser && (storedUser === "Tablet" || isPersistentUser(storedUser))) {
+        user = storedUser;
     }
 
-    window.addEventListener('click', function(event) {
-        const dropdown = document.getElementById("themeDropdown");
-        const button = document.querySelector('.theme-toggle-top');
-        if (dropdown && dropdown.classList.contains('show')) {
-            if (button && !button.contains(event.target) && !dropdown.contains(event.target)) {
-                dropdown.classList.remove('show');
+    if (user) {
+        await startApp(); 
+    }
+    highlightToday(); 
+
+    const shopInput = document.getElementById("shopQtyValue");
+    if (shopInput) {
+        shopInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                confirmShopAdd();
+            }
+        });
+    }
+
+    const intervalInput = document.getElementById("modalValue");
+    if (intervalInput) {
+       intervalInput.addEventListener("keypress", (e) => {
+           if (e.key === "Enter") {
+                e.preventDefault();
+                confirmInterval('t'); 
+            }
+        });
+    }
+    
+    const pwInput = document.getElementById("pw");
+    if (pwInput) {
+        pwInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                doLogin();
+            }
+        });
+    }
+};
+
+window.onclick = () => { lastActivity = Date.now(); };
+
+async function loadUsers() {
+    try {
+        const baseUrl = getBaseUrl();
+        const response = await fetch(`${baseUrl}/api/haushaltshilfe/users`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data && data.users) {
+                if (typeof data.users === 'string') {
+                    try { users = JSON.parse(data.users); } catch(err) { users = []; }
+                } else if (Array.isArray(data.users)) {
+                    users = data.users;
+                }
             }
         }
+        if (typeof renderUserGrid === 'function') {
+            renderUserGrid();
+        }
+    } catch(e) {
+        console.warn("Laden der Benutzer über API fehlgeschlagen:", e);
+    }
+}
+
+async function saveUsers() {
+    try {
+        const baseUrl = getBaseUrl();
+        const response = await fetch(`${baseUrl}/api/haushaltshilfe/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ users: users })
+        });
+        if (response.ok) {
+            console.log("✅ Benutzer erfolgreich über API gespeichert:", users);
+        }
+    } catch(e) {
+        console.error("❌ Fehler beim Speichern der Benutzer:", e);
+    }
+}
+
+function renderUserGrid() {
+    const grid = document.getElementById("userGrid");
+    if(!grid) return;
+
+    if (!users || users.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--text-muted, #888); font-size: 0.95rem;">
+                Bitte einen Benutzer erstellen
+            </div>`;
+        return;
+    }
+
+    const colors = ['#FF5733', '#34C759', '#007AFF', '#FF9500', '#5856D6', '#FF2D55'];
+    grid.innerHTML = users.map((uStr, i) => {
+        const [uName, uPw] = uStr.split(':');
+        const initial = uName.charAt(0).toUpperCase();
+        const color = colors[i % colors.length];
+        return `
+            <button class="user-btn ${user === uName ? 'selected' : ''}" onclick="selUser('${uName}', this)" style="position:relative;">
+                <div style="display:flex; align-items:center; gap:10px; padding-left:5px;">
+                    <div style="width:30px; height:30px; background:${color}; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.8rem; flex-shrink:0;">${initial}</div>
+                    <span style="flex:1; text-align:left;">${uName}</span>
+                </div>
+                <div class="user-edit-pen" style="position:absolute; top:-8px; left:-8px; background:var(--accent); color:white; width:26px; height:26px; border-radius:50%; font-size:12px; display:none; align-items:center; justify-content:center; border:2.5px solid white; z-index:10;" onclick="event.stopPropagation(); changeUserPassword('${uStr}')">✏️</div>
+                <div class="user-del-x" onclick="event.stopPropagation(); deleteUser('${uStr}')">×</div>
+            </button>`;
+    }).join('');
+}
+
+async function deleteUser(uStr) {  
+    const uName = uStr.split(':')[0];
+    
+    // Nutzt jetzt das komplett eigene Lösch-Modal
+    const confirmed = await showDeleteModal(`Möchtest du den Benutzer "${uName}" wirklich löschen?`, "Benutzer löschen");
+    
+    if (confirmed) {  
+        users = users.filter(item => item !== uStr);  
+        await saveUsers();  
+        renderUserGrid();  
+    }
+}
+
+function selUser(u, b) { 
+    user = u; 
+    document.querySelectorAll('.user-btn').forEach(x => x.classList.remove('selected')); 
+    b.classList.add('selected'); 
+}
+
+async function doLogin() { 
+    const enteredPw = document.getElementById("pw").value;
+    let foundUser = users.find(uStr => {
+        const [uName, uPw] = uStr.split(':');
+        return uName === user && uPw === enteredPw;
     });
 
-    window.onload = async () => { 
-        document.body.className = curTheme;
-        await syncDown(); 
-        await loadUsers(); 
-        renderUserGrid();
-        if (user) startApp(); 
-        highlightToday(); 
-
-        const shopInput = document.getElementById("shopQtyValue");
-        if (shopInput) {
-            shopInput.addEventListener("keypress", (e) => {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    confirmShopAdd();
-                }
-            });
-        }
-  
-        const intervalInput = document.getElementById("modalValue");
-        if (intervalInput) {
-           intervalInput.addEventListener("keypress", (e) => {
-               if (e.key === "Enter") {
-                    e.preventDefault();
-                    confirmInterval('t'); 
-                }
-            });
-        }
-        
-        const pwInput = document.getElementById("pw");
-        if (pwInput) {
-            pwInput.addEventListener("keypress", (e) => {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    doLogin();
-                }
-            });
-        }
-    };
-
-    window.onclick = () => { lastActivity = Date.now(); };
-
-    async function loadUsers() {
-        try {
-            const r = await fetch(`${HA_URL}/api/states/${USER_LIST_ENTITY}`, { headers: {'Authorization': `Bearer ${HA_TOKEN}`} });
-            const d = await r.json();
-            if (d.state && d.state.startsWith('[') && d.state !== "[]") users = JSON.parse(d.state);
-        } catch(e) {}
-    }
-
-    async function saveUsers() {
-        try {
-            await fetch(`${HA_URL}/api/services/input_text/set_value`, { 
-                method: 'POST', headers: {'Authorization': `Bearer ${HA_TOKEN}`, 'Content-Type': 'application/json'}, 
-                body: JSON.stringify({ entity_id: USER_LIST_ENTITY, value: JSON.stringify(users) }) 
-            });
-        } catch(e) {}
-    }
-
-    function renderUserGrid() {
-        const grid = document.getElementById("userGrid");
-        if(!grid) return;
-        const colors = ['#FF5733', '#34C759', '#007AFF', '#FF9500', '#5856D6', '#FF2D55'];
-        grid.innerHTML = users.map((uStr, i) => {
-            const [uName, uPw] = uStr.split(':');
-            const initial = uName.charAt(0).toUpperCase();
-            const color = colors[i % colors.length];
-            return `
-                <button class="user-btn ${user === uName ? 'selected' : ''}" onclick="selUser('${uName}', this)" style="position:relative;">
-                    <div style="display:flex; align-items:center; gap:10px; padding-left:5px;">
-                        <div style="width:30px; height:30px; background:${color}; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.8rem; flex-shrink:0;">${initial}</div>
-                        <span style="flex:1; text-align:left;">${uName}</span>
-                    </div>
-                    <div class="user-edit-pen" style="position:absolute; top:-8px; left:-8px; background:var(--accent); color:white; width:26px; height:26px; border-radius:50%; font-size:12px; display:none; align-items:center; justify-content:center; border:2.5px solid white; z-index:10;" onclick="event.stopPropagation(); changeUserPassword('${uStr}')">✏️</div>
-                    <div class="user-del-x" onclick="event.stopPropagation(); deleteUser('${uStr}')">×</div>
-                </button>`;
-        }).join('');
-    }
-
-    async function deleteUser(uStr) {
-        if (confirm(`User löschen?`)) { users = users.filter(item => item !== uStr); await saveUsers(); renderUserGrid(); }
-    }
-
-    function selUser(u, b) { 
-        user = u; 
-        document.querySelectorAll('.user-btn').forEach(x => x.classList.remove('selected')); 
-        b.classList.add('selected'); 
-    }
-
-    async function doLogin() { 
-        const enteredPw = document.getElementById("pw").value;
-        const foundUser = users.find(uStr => {
-            const [uName, uPw] = uStr.split(':');
-            return uName === user && uPw === enteredPw;
-        });
-
-        if (foundUser) {
-            sessionStorage.setItem("session_active", "true");
-            localStorage.setItem("selectedUser", user);
-
-            await startApp(); 
-        
-            if (curTab === 'todo') {
-                renderTodoList();
-            }
-        } else { 
-            alert("Passwort falsch!"); 
+    if (!foundUser && typeof loginUserViaBackend === "function") {
+        const success = await loginUserViaBackend(user, enteredPw);
+        if (success) {
+            foundUser = true;
+            await loadUsers();
         }
     }
+
+    if (foundUser) {
+        sessionStorage.setItem("session_active", "true");
+        localStorage.setItem("selectedUser", user);
+        await startApp(); 
+        if (curTab === 'todo') {
+            renderTodoList();
+        }
+    } else { 
+        await showAlert("Das eingegebene Passwort ist falsch!", "Anmeldung fehlgeschlagen ❌"); 
+    }
+}
     
-    async function changeUserPassword(uStr) {
-        const [uName, oldPw] = uStr.split(':');
-        const newPw = prompt(`Neues Passwort für ${uName} festlegen:`, oldPw);
-        if (newPw && newPw !== oldPw) {
-            const index = users.indexOf(uStr);
-            if (index !== -1) {
-                users[index] = `${uName}:${newPw}`;
-                await fetch(`${HA_URL}/api/services/input_text/set_value`, { 
-                    method: 'POST', 
-                    headers: {'Authorization': `Bearer ${HA_TOKEN}`, 'Content-Type': 'application/json'}, 
-                    body: JSON.stringify({ entity_id: USER_LIST_ENTITY, value: JSON.stringify(users) }) 
-                });
-                renderUserGrid();
-                alert(`Passwort für ${uName} geändert! ✅`);
-            }
-        }
+async function changeUserPassword(uStr) {
+    const check = await showPasswordPrompt("ADMIN-BEREICH:\nAdmin-Passwort eingeben:");
+    if (check === null) return;
+    const currentAdminPw = await getAdminPw();
+
+    if (currentAdminPw && check === currentAdminPw) {
+        const parts = uStr.split(':');
+        const uName = parts[0];
+        const oldPw = parts[1] || '';
+        const isPersistent = parts[2] === 'persistent';
+
+        isEditingUser = true;
+        document.getElementById("userModalTitle").innerText = `Benutzer "${uName}" bearbeiten`;
+        document.getElementById("userModalOldStr").value = uStr;
+        document.getElementById("userModalName").value = uName;
+        document.getElementById("userModalPw").value = oldPw;
+        document.getElementById("userModalPersistent").checked = isPersistent;
+
+        document.getElementById("userModal").style.display = "flex";
+        document.getElementById("userModalPw").focus();
+    } else {
+        await showAlert("Passwort falsch! Zugriff verweigert.", "Fehler ❌");
     }
+}
     
-    function togglePasswordVisibility() {
-        const pwInput = document.getElementById("pw");
-        const eyeBtn = document.getElementById("eye-icon");
-    
-        if (pwInput.type === "password") {
-            pwInput.type = "text";
-            eyeBtn.innerText = "🔒";
-        } else {
-            pwInput.type = "password";
-            eyeBtn.innerText = "👁️";
-        }
+function togglePasswordVisibility() {
+    const pwInput = document.getElementById("pw");
+    const eyeBtn = document.getElementById("eye-icon");
+    if (pwInput.type === "password") {
+        pwInput.type = "text";
+        eyeBtn.innerText = "🔒";
+    } else {
+        pwInput.type = "password";
+        eyeBtn.innerText = "👁️";
     }
+}
 
-    async function startApp() {
-        document.getElementById("loginOverlay").style.display = "none";
-        document.getElementById("app").style.display = "block";
+async function startApp() {
+    const loginOverlay = document.getElementById("loginOverlay");
+    const appEl = document.getElementById("app");
+    if (loginOverlay) loginOverlay.style.display = "none";
+    if (appEl) appEl.style.display = "block";
 
-        console.log("Starte initialen Daten-Sync...");
-        await syncDown();
-        console.log("Initialer Sync abgeschlossen.");
+    console.log("Starte initialen Daten-Sync...");
+    await syncDown();
+    console.log("Initialer Sync abgeschlossen.");
 
-        tab(curTab); 
+    tab(curTab); 
 
-        setInterval(load, 5000);
-        setInterval(updateStatus, 1000);
-        setInterval(syncDown, 20000); 
-        setInterval(loadTrash, 600000);
-        setInterval(updateAppBadges, 1000);
-    }
+    setInterval(load, 2000);
+    setInterval(updateStatus, 1000);
+    setInterval(syncDown, 20000); 
+    setInterval(loadTrash, 600000);
+    setInterval(updateAppBadges, 1000);
+}
 
-    async function syncUpSidebar(type) {
-        const ent = type === 'shop' ? STORES_ENTITY : ROOMS_ENTITY;
-        const val = type === 'shop' ? stores : rooms;
-        try { await fetch(`${HA_URL}/api/services/input_text/set_value`, { method: 'POST', headers: {'Authorization': `Bearer ${HA_TOKEN}`, 'Content-Type': 'application/json'}, body: JSON.stringify({ entity_id: ent, value: JSON.stringify(val) }) }); } catch(e) {}
-    }
+async function syncUpSidebar(type) {
+    const ent = type === 'shop' ? STORES_ENTITY : ROOMS_ENTITY;
+    const val = type === 'shop' ? stores : rooms;
+    try { await haSetInputText(ent, JSON.stringify(val)); } catch(e) {}
+}
 
 async function renderSidebars() {
     let allOptions = [];
     try {
         const cfg = SYNC_CONFIG.shopping;
-        const r = await fetch(`${HA_URL}/api/states/${cfg.entity}`, { 
-            headers: {'Authorization': `Bearer ${HA_TOKEN}`} 
-        });
-        const d = await r.json();
+        const d = await haGetState(cfg.entity);
         
         if (d && d.attributes && d.attributes[cfg.attr]) {
             const rawData = d.attributes[cfg.attr];
@@ -584,8 +850,103 @@ async function renderSidebars() {
     }
 }  
 
-    async function addSidebarItem(type) { const n = prompt("Name:"); if(n) { if(type==='shop') stores.push(n); else rooms.push(n); await syncUpSidebar(type); renderSidebars(); } }
-    async function deleteSidebarItem(type, val) { if(confirm("Löschen?")) { if(type==='shop') stores = stores.filter(x=>x!==val); else rooms = rooms.filter(x=>x!==val); await syncUpSidebar(type); renderSidebars(); } }
+let currentSidebarType = 'room';
+let pendingDeleteType = null;
+let pendingDeleteVal = null;
+
+// 1. Hinzufügen-Modal öffnen (für Shop oder Raum)
+function addSidebarItem(type) {
+    currentSidebarType = type;
+    const modal = document.getElementById('roomModal');
+    const input = document.getElementById('newRoomInput');
+    const title = modal ? modal.querySelector('h3') : null;
+
+    if (modal && input) {
+        input.value = "";
+        if (title) {
+            title.innerText = (type === 'shop') ? "Neues Geschäft hinzufügen" : "Neuen Raum hinzufügen";
+        }
+        modal.style.display = 'flex';
+        input.focus();
+    }
+}
+
+// Hinzufügen-Modal schließen
+function closeRoomModal() {
+    const modal = document.getElementById('roomModal');
+    if (modal) modal.style.display = 'none';
+}
+
+// 2. Eingabe bestätigen und speichern
+async function confirmAddRoom() {
+    const input = document.getElementById('newRoomInput');
+    if (!input) return;
+    
+    const n = input.value.trim();
+    if (!n) {
+        alert("Bitte einen Namen eingeben!");
+        return;
+    }
+
+    if (currentSidebarType === 'shop') {
+        if (stores.includes(n)) {
+            alert("Dieses Geschäft gibt es bereits!");
+            return;
+        }
+        stores.push(n);
+    } else {
+        if (rooms.includes(n)) {
+            alert("Diesen Raum gibt es bereits!");
+            return;
+        }
+        rooms.push(n);
+    }
+
+    closeRoomModal();
+    await syncUpSidebar(currentSidebarType);
+    renderSidebars();
+}
+
+// 3. Löschen-Modal öffnen
+function deleteSidebarItem(type, val) {
+    pendingDeleteType = type;
+    pendingDeleteVal = val;
+
+    const modal = document.getElementById('deleteModal');
+    const textEl = document.getElementById('deleteModalText');
+
+    if (modal && textEl) {
+        textEl.innerText = `Möchtest du "${val}" wirklich löschen?`;
+        modal.style.display = 'flex';
+    }
+}
+
+// Lösch-Modal schließen
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    if (modal) modal.style.display = 'none';
+    pendingDeleteType = null;
+    pendingDeleteVal = null;
+}
+
+// 4. Tatsächliches Löschen ausführen (wird vom Button im Modal aufgerufen)
+async function confirmDelete() {
+    if (!pendingDeleteType || !pendingDeleteVal) return;
+
+    const type = pendingDeleteType;
+    const val = pendingDeleteVal;
+
+    closeDeleteModal();
+
+    if (type === 'shop') {
+        stores = stores.filter(x => x !== val);
+    } else {
+        rooms = rooms.filter(x => x !== val);
+    }
+
+    await syncUpSidebar(type);
+    renderSidebars();
+}
 
 async function saveTodoDb(taskName = "Update", actionType = "aktualisiert") {
     if (Array.isArray(todoDb)) {
@@ -606,153 +967,145 @@ async function saveTodoDb(taskName = "Update", actionType = "aktualisiert") {
     }
 
     const dataToSend = JSON.stringify(todoDb || []);
-
-    const taskObj = (todoDb || []).find(t => 
-        t.name.toLowerCase().trim() === taskName.toLowerCase().trim()
-    );
-    
-    let roomName = "Haus";
-
-    if (taskObj) {
-        roomName = taskObj.room || taskObj.category || "Haus";
-    } else if (typeof activeRoom !== 'undefined' && activeRoom) {
-        roomName = activeRoom;
-    }
+    const taskObj = (todoDb || []).find(t => t.name.toLowerCase().trim() === taskName.toLowerCase().trim());
+    let roomName = taskObj ? (taskObj.room || taskObj.category || "Haus") : (activeRoom || "Haus");
 
     try {
-        const response = await fetch(`${HA_URL}/api/events/set_tasks_data`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${HA_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                tasks: dataToSend, 
-                user_name: user,       
-                task_name: taskName,   
-                room_name: roomName,   
-                action: actionType     
-            })
+        await haFireEvent("set_tasks_data", {
+            tasks: dataToSend, 
+            user_name: user,       
+            task_name: taskName,   
+            room_name: roomName,   
+            action: actionType     
         });
-
-        if (!response.ok) throw new Error(`Server-Fehler: ${response.status}`);
-        console.log(`✅ Event gesendet: [${roomName}] ${taskName}`);
-        
         if (typeof renderSidebars === "function") renderSidebars();
-
     } catch (e) {
         console.error("❌ Fehler beim Senden des Speicher-Events:", e);
     }
 }
-    
+
 async function completeTodo(id) {
     const t = todoDb.find(x => String(x.id) === String(id));
-    
-    if (!t) {
-        console.error("Aufgabe mit ID " + id + " nicht in todoDb gefunden!");
-        return;
-    }
+    if (!t) return;
 
-    if (confirm(`"${t.name}" erledigt?`)) {
-        try {
-            const now = new Date();
+    try {
+        const now = new Date();
+        if (t.room.trim() === "Müllabfuhr") {
+            todoDb = todoDb.filter(x => String(x.id) !== String(id));
+            await saveTodoDb(t.name, "Müll erledigt & entfernt 🗑️");
+        } else {
+            t.lastDone = now.toISOString();
+            let nextDate;
 
-            if (t.room.trim() === "Müllabfuhr") {
-                todoDb = todoDb.filter(x => String(x.id) !== String(id));
-                await saveTodoDb(t.name, "Müll erledigt & entfernt 🗑️");
-            } 
-            else {
-                t.lastDone = now.toISOString();
-                let nextDate;
-
-                if (t.selectedDays && t.selectedDays.length > 0) {
-                    let next = new Date();
-                    const wochenAbstand = t.weeks || 1;
-                    
-                    for (let i = 1; i <= 7 * wochenAbstand; i++) {
-                        let temp = new Date();
-                        temp.setDate(temp.getDate() + i);
-                        if (t.selectedDays.includes(temp.getDay())) {
-                            next = temp;
-                            break;
-                        }
+            if (t.selectedWeekdays && t.selectedWeekdays.length > 0) {
+                let next = new Date();
+                const wochenAbstand = t.weeks || 1;
+                
+                for (let i = 1; i <= 7 * wochenAbstand; i++) {
+                    let temp = new Date();
+                    temp.setDate(temp.getDate() + i);
+                    if (t.selectedWeekdays.includes(temp.getDay())) {
+                        next = temp;
+                        break;
                     }
-                    nextDate = next;
-                } 
-                else {
-                    const hours = t.intervalHours || 24;
-                    nextDate = new Date(now.getTime() + (hours * 60 * 60 * 1000));
                 }
-
+                nextDate = next;
                 if (t.time) {
                     const [h, m] = t.time.split(':');
                     nextDate.setHours(parseInt(h), parseInt(m), 0, 0);
                 } else {
                     nextDate.setHours(10, 0, 0, 0);
                 }
+            } else {
+                const hours = (t.intervalHours !== undefined && t.intervalHours !== null) ? parseFloat(t.intervalHours) : 24;
+                nextDate = new Date(now.getTime() + (hours * 60 * 60 * 1000));
 
-                t.nextDate = nextDate.toISOString();
-                await saveTodoDb(t.name, "erledigt ✅");
+                // Uhrzeit NUR überschreiben, wenn es ein Tages-Intervall (>= 24h) ist!
+                // Bei Minuten und Stunden (< 24h) bleibt die exakt berechnete Uhrzeit erhalten.
+                if (hours >= 24) {
+                    if (t.time) {
+                        const [h, m] = t.time.split(':');
+                        nextDate.setHours(parseInt(h), parseInt(m), 0, 0);
+                    } else {
+                        nextDate.setHours(10, 0, 0, 0);
+                    }
+                }
             }
 
-            renderTodoList();
-            if (typeof updateAppBadges === "function") updateAppBadges();
-
-        } catch (error) {
-            console.error("Fehler beim Speichern:", error);
+            t.nextDate = nextDate.toISOString();
+            await saveTodoDb(t.name, "erledigt ✅");
         }
+
+        renderTodoList();
+        if (typeof updateAppBadges === "function") updateAppBadges();
+    } catch (error) {
+        console.error("Fehler beim Speichern:", error);
     }
-}    
-     
+}     
+
 async function deleteTodo(id) {
     const taskToDelete = todoDb.find(x => String(x.id) === String(id));
-    
-    if (taskToDelete && confirm(`Möchtest du "${taskToDelete.name}" wirklich löschen?`)) {
-        const deletedName = taskToDelete.name;
-        todoDb = todoDb.filter(x => String(x.id) !== String(id));
-        await saveTodoDb(deletedName, "gelöscht 🗑️");
-        renderTodoList();
-
-        if (typeof updateAppBadges === "function") {
-            updateAppBadges();
+    if (taskToDelete) {
+        const confirmed = await showDeleteModal(`Möchtest du "${taskToDelete.name}" wirklich löschen?`);
+        if (confirmed) {
+            const deletedName = taskToDelete.name;
+            todoDb = todoDb.filter(x => String(x.id) !== String(id));
+            await saveTodoDb(deletedName, "gelöscht 🗑️");
+            renderTodoList();
+            if (typeof updateAppBadges === "function") updateAppBadges();
         }
-    } else if (!taskToDelete) {
-        console.error("Löschen fehlgeschlagen: Aufgabe mit ID " + id + " nicht gefunden.");
     }
-}  
+}      
       
 function addTodo(manualName = null) {
     const i = document.getElementById("in-todo");
-    tempTodoName = manualName || i.value.trim();
+    tempTodoName = manualName || (i ? i.value.trim() : "");
     if (!tempTodoName) return;
 
     const select = document.getElementById("modalAssignee");
-    select.innerHTML = '<option value="">Niemand (Alle)</option>'; 
+    if (select) {
+        select.innerHTML = '<option value="">Niemand (Alle)</option>'; 
 
-    users.forEach(uStr => {
-        const uName = uStr.split(':')[0]; 
-        const option = document.createElement("option");
-        option.value = uName;
-        option.innerText = uName;
-
-        if (uName === user) {
-            option.selected = true;
+        if (Array.isArray(users)) {
+            users.forEach(uStr => {
+                if (typeof uStr === 'string' && uStr.includes(':')) {
+                    const uName = uStr.split(':')[0]; 
+                    const option = document.createElement("option");
+                    option.value = uName;
+                    option.innerText = uName;
+                    
+                    if (uName === user) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                }
+            });
         }
+    }
 
-        select.appendChild(option);
-    });
+    const modalTitle = document.getElementById("modalTitle");
+    if (modalTitle) {
+        modalTitle.innerText = `Intervall für "${tempTodoName}"`;
+    }
 
-    document.getElementById("modalTitle").innerText = `Intervall für "${tempTodoName}"`;
-    document.getElementById("modalValue").value = "1";
+    const modalValue = document.getElementById("modalValue");
+    if (modalValue) {
+        modalValue.value = "1";
+    }
     
     const timeInput = document.getElementById("modalTime");
     if (timeInput) {
         timeInput.value = "10:00"; 
     }
 
-    document.getElementById("intervalModal").style.display = "flex";
+    const modal = document.getElementById("intervalModal");
+    if (modal) {
+        modal.style.display = "flex";
+    }
 
-    if (!manualName) i.value = ""; 
+    if (!manualName && i) {
+        i.value = ""; 
+    }
 
     selectedDays = [];
     document.querySelectorAll('.day-dot').forEach(dot => dot.classList.remove('active'));
@@ -787,17 +1140,16 @@ async function confirmInterval(einheit) {
     if (einheit === 'date') {
         if (!dateInput.value) { alert("Bitte Datum auswählen!"); return; }
         nextDate = new Date(dateInput.value);
-        nextDate.setHours(hrs, mins, 0, 0);
-        
+        if (dateInput.value.length <= 10) {
+            nextDate.setHours(hrs, mins, 0, 0);
+        }
         const diffMs = nextDate.getTime() - now.getTime();
-        hours = Math.max(1, Math.round(diffMs / 3600000)); 
-    } 
-    else if (einheit === 'days') {
+        hours = Math.max(1 / 60, diffMs / 3600000); 
+    } else if (einheit === 'days') {
         if (!selectedDays || selectedDays.length === 0) { 
             alert("Bitte mindestens einen Wochentag auswählen!"); 
             return; 
         }
-    
         const wochenRhythmus = parseInt(valInput.value) || 1;
         const currentDay = now.getDay(); 
         let minDiff = 7; 
@@ -817,29 +1169,35 @@ async function confirmInterval(einheit) {
 
         nextDate.setHours(hrs, mins, 0, 0);
         hours = wochenRhythmus * 7 * 24; 
-    }
-    else {
+    } else {
         const val = parseFloat(valInput.value.replace(',', '.'));
         if (isNaN(val) || val <= 0) { alert("Bitte eine Zahl eingeben!"); return; }
         
-        hours = (einheit === 't') ? val * 24 : val;
-        
         if (einheit === 't') {
+            hours = val * 24;
             nextDate = new Date(now);
             nextDate.setDate(now.getDate() + Math.round(val));
             nextDate.setHours(hrs, mins, 0, 0);
+        } else if (einheit === 'm') {
+            hours = val / 60;
+            nextDate = new Date(now.getTime() + (val * 60 * 1000));
         } else {
+            hours = val;
             nextDate = new Date(now.getTime() + (hours * 3600000));
         }
     }
+
+    const rawAssignee = assigneeInput ? assigneeInput.value : "";
+    const assignedPerson = (rawAssignee && rawAssignee.trim() !== "") ? rawAssignee.trim() : null;
 
     const newTodo = { 
         id: Date.now(), 
         name: tempTodoName, 
         room: activeRoom, 
-        assignedTo: assigneeInput.value,
+        assignedTo: assignedPerson,
         time: timeVal, 
         intervalHours: hours, 
+        intervalUnit: einheit,
         selectedWeekdays: einheit === 'days' ? [...selectedDays] : null,
         weeks: (einheit === 'days') ? (parseInt(valInput.value) || 1) : 1, 
         lastDone: now.toISOString(), 
@@ -850,7 +1208,6 @@ async function confirmInterval(einheit) {
     await saveTodoDb(newTodo.name, "neu erstellt 🆕");
 
     document.getElementById("intervalModal").style.display = "none";
-    
     if(dateInput) dateInput.value = ""; 
     valInput.value = "1"; 
     if(timeInput) timeInput.value = "10:00"; 
@@ -862,7 +1219,6 @@ async function confirmInterval(einheit) {
     
 function openEdit(id) {
     const t = todoDb.find(x => String(x.id) === String(id));
-    
     if(t) {
         document.getElementById('edit-id').value = t.id;
         document.getElementById('edit-name').value = t.name;
@@ -870,40 +1226,35 @@ function openEdit(id) {
         const editSelect = document.getElementById('edit-assignee');
         if (editSelect) {
             editSelect.innerHTML = '<option value="">Niemand (Alle)</option>';
-            
             if (typeof users !== 'undefined' && Array.isArray(users)) {
                 users.forEach(uStr => {
                     const uName = uStr.split(':')[0]; 
                     const option = document.createElement("option");
                     option.value = uName;
                     option.innerText = uName;
-                    
-                    if (uName === t.assignedTo) {
-                        option.selected = true;
-                    }
+                    if (uName === t.assignedTo) option.selected = true;
                     editSelect.appendChild(option);
                 });
             }
-            
-            if (!t.assignedTo) {
-                editSelect.value = "";
-            }
+            if (!t.assignedTo) editSelect.value = "";
         }
 
         let displayVal;
         if (t.selectedWeekdays && t.selectedWeekdays.length > 0) {
-            displayVal = Math.round(t.intervalHours / 168); 
+            displayVal = t.weeks || Math.round(t.intervalHours / 168) || 1;
+        } else if (t.intervalUnit === 'm' || (t.intervalHours > 0 && t.intervalHours < 1)) {
+            displayVal = Math.round(t.intervalHours * 60);
+        } else if (t.intervalHours >= 24) {
+            displayVal = Math.round((t.intervalHours / 24) * 10) / 10;
         } else {
-            displayVal = (t.intervalHours >= 24) ? t.intervalHours / 24 : t.intervalHours;
+            displayVal = Math.round(t.intervalHours * 10) / 10;
         }
         
         const intervalInput = document.getElementById('edit-interval-val');
         if(intervalInput) intervalInput.value = displayVal;
 
         const timeInput = document.getElementById('edit-time');
-        if(timeInput) {
-            timeInput.value = t.time || "10:00"; 
-        }
+        if(timeInput) timeInput.value = t.time || "10:00"; 
 
         if(t.nextDate) {
             const date = new Date(t.nextDate);
@@ -930,14 +1281,12 @@ function openEdit(id) {
         
         const modal = document.getElementById('editModal');
         if(modal) modal.style.display = 'flex';
-    } else {
-        console.error("Bearbeiten fehlgeschlagen: ID " + id + " nicht gefunden.");
     }
 }    
 
-    function closeEdit() {
-        document.getElementById('editModal').style.display = 'none';
-    }
+function closeEdit() {
+    document.getElementById('editModal').style.display = 'none';
+}
 
 async function saveEdit(modus) {
     const id = document.getElementById('edit-id').value;
@@ -945,89 +1294,84 @@ async function saveEdit(modus) {
     if(idx === -1) return;
 
     const name = document.getElementById('edit-name').value.trim();
-    const val = parseFloat(document.getElementById('edit-interval-val').value) || 1;
+    const val = parseFloat(String(document.getElementById('edit-interval-val').value).replace(',', '.')) || 1;
     const dateVal = document.getElementById('edit-date-val').value;
-    const assignee = document.getElementById('edit-assignee').value;
+    
+    const assigneeEl = document.getElementById('edit-assignee') || document.getElementById('editAssignee');
+    const assignee = assigneeEl ? assigneeEl.value.trim() : "";
     
     const timeVal = document.getElementById('edit-time').value || "10:00";
     const [hrs, mins] = timeVal.split(':').map(Number);
-
     const now = new Date();
 
     todoDb[idx].name = name;
-    todoDb[idx].assignedTo = assignee; 
+    todoDb[idx].assignedTo = (assignee !== "" && assignee !== "Niemand") ? assignee : null; 
     todoDb[idx].time = timeVal; 
+    todoDb[idx].intervalUnit = modus;
 
     if (modus === 'date') {
         if(!dateVal) return alert("Bitte Datum wählen!");
         const targetDate = new Date(dateVal);
-        
-        targetDate.setHours(hrs, mins, 0, 0);
-        
+        if (dateVal.length <= 10) {
+            targetDate.setHours(hrs, mins, 0, 0);
+        }
         todoDb[idx].nextDate = targetDate.toISOString();
         const diff = targetDate - now;
-        todoDb[idx].intervalHours = Math.max(1, Math.round(diff / (1000 * 60 * 60)));
-        
+        todoDb[idx].intervalHours = Math.max(1 / 60, diff / (1000 * 60 * 60));
+        todoDb[idx].selectedWeekdays = null;
         delete todoDb[idx].selectedDays;
         delete todoDb[idx].weeks;
-    } 
-    else if (modus === 'days') {
+    } else if (modus === 'days') {
         if (!selectedDays || selectedDays.length === 0) return alert("Bitte Wochentage wählen!");
-        
-        todoDb[idx].selectedDays = [...selectedDays];
+        todoDb[idx].selectedWeekdays = [...selectedDays];
+        delete todoDb[idx].selectedDays;
         const wochenRhythmus = Math.max(1, Math.round(val)); 
         todoDb[idx].weeks = wochenRhythmus;
         
         let tageDiff = -1;
-
         for (let i = 0; i <= 7; i++) {
             let temp = new Date();
             temp.setDate(temp.getDate() + i);
-            
             temp.setHours(hrs, mins, 0, 0);
-            
             if (selectedDays.includes(temp.getDay())) {
                 if (i === 0 && temp < now) continue;
-                
                 tageDiff = i;
                 break;
             }
         }
-
         if (tageDiff === -1) tageDiff = 7; 
 
         let finalDate = new Date();
         finalDate.setDate(now.getDate() + tageDiff + ((wochenRhythmus - 1) * 7));
-        
         finalDate.setHours(hrs, mins, 0, 0);
 
         todoDb[idx].nextDate = finalDate.toISOString();
         todoDb[idx].intervalHours = wochenRhythmus * 168; 
-    } 
-    else {
-        const hours = (modus === 't') ? val * 24 : val;
-        todoDb[idx].intervalHours = hours;
-        
-        let nextDate = new Date(now.getTime() + (hours * 60 * 60 * 1000));
-        
+    } else {
+        let hours;
+        let nextDate;
         if (modus === 't') {
+            hours = val * 24;
+            nextDate = new Date(now);
+            nextDate.setDate(now.getDate() + Math.round(val));
             nextDate.setHours(hrs, mins, 0, 0);
+        } else if (modus === 'm') {
+            hours = val / 60;
+            nextDate = new Date(now.getTime() + (val * 60 * 1000));
+        } else {
+            hours = val;
+            nextDate = new Date(now.getTime() + (hours * 60 * 60 * 1000));
         }
 
+        todoDb[idx].intervalHours = hours;
         todoDb[idx].nextDate = nextDate.toISOString();
-        
+        todoDb[idx].selectedWeekdays = null;
         delete todoDb[idx].selectedDays;
         delete todoDb[idx].weeks;
     }
 
     await saveTodoDb(name, "bearbeitet ✏️");
-    
-    if (typeof closeEdit === "function") {
-        closeEdit();
-    } else {
-        document.getElementById('editModal').style.display = 'none';
-    }
-    
+    closeEdit();
     renderTodoList();
 }    
 
@@ -1055,6 +1399,7 @@ function renderTodoList() {
     filtered.forEach(t => {
         const next = new Date(t.nextDate);
         const diffMs = next - now;
+        const diffMins = Math.ceil(diffMs / (1000 * 60));
         const diffHours = Math.round(diffMs / (1000 * 60 * 60));
         
         const tempNext = new Date(t.nextDate);
@@ -1068,12 +1413,12 @@ function renderTodoList() {
         if (isOverdue) {
             statusColor = "var(--danger)"; 
             timeText = "ÜBERFÄLLIG";
-        } else if (diffHours < 1) {
+        } else if (diffMins < 60) {
             statusColor = "var(--accent)"; 
-            timeText = "SOFORT!";
+            timeText = `In ${diffMins} Min.`;
         } else if (diffDays === 0) {
             statusColor = "var(--accent)"; 
-            timeText = "Heute";
+            timeText = (t.intervalHours && t.intervalHours < 24) ? `In ${diffHours} Std.` : "Heute";
         } else if (diffDays === 1) {
             statusColor = "#f39c12"; 
             timeText = "Morgen";
@@ -1122,158 +1467,78 @@ function renderTodoList() {
     }
 }
 
-    async function syncDown() {
-        try {
-            console.log("🔄 SyncDown gestartet...");
+async function syncDown() {
+    try {
+        console.log("🔄 SyncDown gestartet...");
+        ADMIN_PW = await getAdminPw();
 
-            const rPw = await fetch(`${HA_URL}/api/states/${ADMIN_PW_ENTITY}`, { 
-                headers: {'Authorization': `Bearer ${HA_TOKEN}`} 
-            });
-            const dPw = await rPw.json();
-            if (dPw.state && dPw.state !== "unknown" && dPw.state !== "unavailable") {
-                ADMIN_PW = dPw.state;
-            }
+        for (let t of ['shop', 'food', 'todo']) {
+            const cfg = SYNC_CONFIG[t];
+            const d = await haGetState(cfg.entity);
 
-            for (let t of ['shop', 'food', 'todo']) {
-                const cfg = SYNC_CONFIG[t];
-    
-                const r = await fetch(`${HA_URL}/api/states/${cfg.entity}`, { 
-                    headers: {'Authorization': `Bearer ${HA_TOKEN}`} 
-                });
-                const d = await r.json();
-
-                if (d && d.attributes && d.attributes[cfg.attr]) {
-                    let rawData = d.attributes[cfg.attr];
-                    let parsed;
-
-                    if (typeof rawData === 'string') {
-                        try {
-                            parsed = JSON.parse(rawData);
-                        } catch(e) {
-                            console.error(`Fehler beim Parsen von ${t}:`, e);
-                            parsed = { cats: ["Alle"], favs: [] };
-                        }
-                    } else {
-                        parsed = rawData;
-                    }
-
-                    if (parsed) {
-                        db[t].cats = parsed.cats || ["Alle"];
-                        db[t].favs = parsed.favs || [];
-                        console.log(`✅ ${t} Favoriten erfolgreich geladen:`, db[t]);
-                    }
-                } else {
-                    console.warn(`⚠️ Konnte Attribut ${cfg.attr} in ${cfg.entity} nicht finden.`);
+            if (d && d.attributes && d.attributes[cfg.attr]) {
+                let rawData = d.attributes[cfg.attr];
+                let parsed = (typeof rawData === 'string') ? JSON.parse(rawData) : rawData;
+                if (parsed) {
+                    db[t].cats = parsed.cats || ["Alle"];
+                    db[t].favs = parsed.favs || [];
                 }
             }
+        }
 
-            const [rStores, rRooms, rTodoData] = await Promise.all([
-                fetch(`${HA_URL}/api/states/${STORES_ENTITY}`, { headers: {'Authorization': `Bearer ${HA_TOKEN}`} }),
-                fetch(`${HA_URL}/api/states/${ROOMS_ENTITY}`, { headers: {'Authorization': `Bearer ${HA_TOKEN}`} }),
-                fetch(`${HA_URL}/api/states/${TODO_DATA_ENTITY}`, { headers: {'Authorization': `Bearer ${HA_TOKEN}`} })
-            ]);
+        const [dSt, dR, dTodo] = await Promise.all([
+            haGetState(STORES_ENTITY),
+            haGetState(ROOMS_ENTITY),
+            haGetState(TODO_DATA_ENTITY)
+        ]);
  
-            const dSt = await rStores.json();
-            const dR = await rRooms.json();
-            const dTodo = await rTodoData.json();
+        if (dSt.state?.startsWith('[')) stores = JSON.parse(dSt.state);
+        if (dR.state?.startsWith('[')) rooms = JSON.parse(dR.state);
 
-            if (dSt.state?.startsWith('[')) stores = JSON.parse(dSt.state);
-            if (dR.state?.startsWith('[')) rooms = JSON.parse(dR.state);
-
-            if (dTodo && dTodo.attributes && dTodo.attributes.tasks_json) {
-                try {
-                    let rawData = dTodo.attributes.tasks_json;
-                    let savedTasks;
-
-                    if (typeof rawData === 'string') {
-                        savedTasks = JSON.parse(rawData);
-                    } else {
-                        savedTasks = rawData; 
-                    }
-
-                    if (Array.isArray(savedTasks)) {
-                        todoDb = savedTasks;
-                        console.log("✅ Aufgaben geladen:", todoDb.length);
-                    }
-                } catch (jsonErr) {
-                    console.error("❌ JSON-Fehler bei Aufgaben:", jsonErr);
-                }
-            } else {
-                console.warn("⚠️ Aufgaben-Sensor liefert keine Daten.");
+        if (dTodo && dTodo.attributes && dTodo.attributes.tasks_json) {
+            try {
+                let rawData = dTodo.attributes.tasks_json;
+                let savedTasks = (typeof rawData === 'string') ? JSON.parse(rawData) : rawData;
+                if (Array.isArray(savedTasks)) todoDb = savedTasks;
+            } catch (jsonErr) {
+                console.error("❌ JSON-Fehler bei Aufgaben:", jsonErr);
             }
-
-            if (document.getElementById("app").style.display !== "none") {
-                renderSidebars(); 
-                render(); 
-            
-                if (curTab === 'todo' && document.getElementById("list-todo")) {
-                    renderTodoList(); 
-                }
-            
-                if (typeof load === 'function') {
-                    load();
-               }
-            }
-
-            console.log("✅ SyncDown erfolgreich abgeschlossen.");
-
-        } catch(e) {
-            console.error("❌ Kritischer Fehler in syncDown:", e);
-        }
-    }
-
-    async function syncUp() { 
-        const cfg = SYNC_CONFIG[curTab];
-    
-        if (!cfg) {
-            console.warn(`⚠️ syncUp abgebrochen: Keine Konfiguration für ${curTab} gefunden.`);
-            return;
         }
 
-        const data = JSON.stringify(db[curTab]);
+        if (document.getElementById("app").style.display !== "none") {
+            renderSidebars(); 
+            render(); 
+            if (curTab === 'todo' && document.getElementById("list-todo")) renderTodoList(); 
+            if (typeof load === 'function') load();
+        }
 
-        try { 
-            const response = await fetch(`${HA_URL}/api/events/${cfg.event}`, { 
-                method: 'POST', 
-                headers: {
-                    'Authorization': `Bearer ${HA_TOKEN}`, 
-                    'Content-Type': 'application/json'
-                }, 
-                body: JSON.stringify({ 
-                    favs: data 
-                }) 
-            });
-
-            if (response.ok) {
-                console.log(`✅ Favoriten für ${curTab} erfolgreich per Event (${cfg.event}) gespeichert.`);
-            } else {
-                console.error(`❌ Fehler beim Speichern: Status ${response.status}`);
-            }
-
-        } catch(e) {
-            console.error(`❌ Kritischer Fehler beim Speichern der Favoriten für ${curTab}:`, e);
-        } 
+        console.log("✅ SyncDown erfolgreich abgeschlossen.");
+    } catch(e) {
+        console.error("❌ Kritischer Fehler in syncDown:", e);
     }
+}
+
+async function syncUp() { 
+    const cfg = SYNC_CONFIG[curTab];
+    if (!cfg) return;
+    const data = JSON.stringify(db[curTab]);
+
+    try { 
+        await haFireEvent(cfg.event, { favs: data });
+    } catch(e) {
+        console.error(`❌ Fehler beim Speichern der Favoriten für ${curTab}:`, e);
+    } 
+}
 
 async function load() {
-    if (typeof renderSidebars === "function") {
-        await renderSidebars();
-    }
+    if (typeof renderSidebars === "function") await renderSidebars();
+    if (curTab === 'trash' || isUpdatingFood) return;
+    if (curTab === 'todo') { renderTodoList(); return; }
 
-    if(curTab==='trash' || isUpdatingFood) return;
-
-    if(curTab==='todo') { 
-        renderTodoList(); 
-        return; 
-    }
-
-    // --- ESSENSPLAN LADE-LOGIK (KORRIGIERT) ---
-    if(curTab==='food') {
+    if (curTab === 'food') {
         for(let i=0; i<7; i++) {
             try {
-                const r = await fetch(`${HA_URL}/api/states/${FOOD_ENTITIES[i]}`, { headers: {'Authorization': `Bearer ${HA_TOKEN}`} });
-                const d = await r.json(); 
-                
+                const d = await haGetState(FOOD_ENTITIES[i]); 
                 const inp = document.getElementById(`plan-${i}`);
                 const sel = document.getElementById(`cook-${i}`);
 
@@ -1288,9 +1553,8 @@ async function load() {
                     });
                 }
 
-                // WICHTIGE SPERRE: Überschreibt das Feld nur, wenn es nicht aktiv bearbeitet wird
-                if(inp && document.activeElement !== inp && !isUpdatingFood) {
-                    const raw = (d.state==='unknown'||d.state==='---') ? '' : d.state;
+                if (inp && document.activeElement !== inp && !isUpdatingFood) {
+                    const raw = (d.state === 'unknown' || d.state === '---') ? '' : d.state;
                     if (raw.includes(' | ')) {
                         const parts = raw.split(' | ');
                         inp.value = parts[0].trim();
@@ -1306,11 +1570,10 @@ async function load() {
         return; 
     }
 
-    if(curTab === 'shop') {
+    if (curTab === 'shop') {
         try {
             const cfg = SYNC_CONFIG.shopping;
-            const r = await fetch(`${HA_URL}/api/states/${cfg.entity}`, { headers: {'Authorization': `Bearer ${HA_TOKEN}`} });
-            const d = await r.json(); 
+            const d = await haGetState(cfg.entity); 
 
             let fullList = [];
             if (d && d.attributes && d.attributes[cfg.attr]) {
@@ -1319,33 +1582,24 @@ async function load() {
             }
 
             let filtered = fullList.filter(o => o.endsWith(` @${activeStore}`));
-
             document.getElementById("list-shop").innerHTML = filtered.reverse().map(t => 
                 `<li style="flex-direction:row; align-items:center;">
                     <span>${t.split(' @')[0]}</span>
-                    <button class="btn-del-item" onclick="delItem('${t}')">X</button>
+                    <button class="btn-del-item" onclick="delItem('${t}')">🗑️</button>
                 </li>`
             ).join('') || "<li>Leer! ✨</li>";
-
         } catch(e) {
-            console.error("Fehler beim Laden der Einkaufsliste aus Attributen", e);
             document.getElementById("list-shop").innerHTML = "<li>Fehler beim Laden ⚠️</li>";
         }
     }
 
-    if (typeof updateAppBadges === "function") {
-        updateAppBadges();
-    }
+    if (typeof updateAppBadges === "function") updateAppBadges();
 }
 
 async function delItem(t) {
     try {
         const cfg = SYNC_CONFIG.shopping;
-        
-        const r = await fetch(`${HA_URL}/api/states/${cfg.entity}`, { 
-            headers: {'Authorization': `Bearer ${HA_TOKEN}`} 
-        });
-        const d = await r.json();
+        const d = await haGetState(cfg.entity);
 
         let currentList = [];
         if (d && d.attributes && d.attributes[cfg.attr]) {
@@ -1354,112 +1608,233 @@ async function delItem(t) {
         }
 
         const newList = currentList.filter(x => x !== t);
-
-        const response = await fetch(`${HA_URL}/api/events/${cfg.event}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${HA_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                json_data: newList
-            })
-        });
-
-        if (response.ok) {
-            console.log(`✅ Artikel "${t}" gelöscht und Liste synchronisiert.`);
-            await load();
-            
-            if (typeof updateAppBadges === "function") {
-                updateAppBadges();
-            }
-            
-        } else {
-            console.error("❌ Fehler beim Senden des Lösch-Events an HA.");
-        }
-
+        await haFireEvent(cfg.event, { json_data: newList });
+        await load();
+        if (typeof updateAppBadges === "function") updateAppBadges();
     } catch (e) {
         console.error("❌ Kritischer Fehler in delItem:", e);
     }
 }
 
-    function deleteCat(type, name) { if(name !== 'Alle' && confirm(`Löschen?`)) { db[type].cats = db[type].cats.filter(x => x !== name); db[type].favs = db[type].favs.filter(x => x.c !== name); curCat = "Alle"; syncUp(); render(); } }
-    async function deleteFav(idx) { if(confirm("Favorit löschen?")) { db[curTab].favs.splice(idx, 1); await syncUp(); render(); } }
-
-    function render() {
-        const cBox = document.getElementById(`cats-${curTab}`); if(!cBox) return; cBox.innerHTML = "";
-        db[curTab].cats.forEach(c => { 
-            const b = document.createElement('button'); b.className = `cat-btn ${curCat === c ? 'active-'+curTab : ''}`; b.innerText = c; b.onclick = () => { curCat = c; render(); }; b.oncontextmenu = (e) => { e.preventDefault(); deleteCat(curTab, c); }; cBox.appendChild(b); 
-        });
-        const fBox = document.getElementById(`favs-${curTab}`); if(!fBox) return; fBox.innerHTML = "";
-        staticFavs[curTab]?.forEach(f => { if(curCat==='Alle'||f.c===curCat) fBox.appendChild(createFavChip(f, false)); });
-        db[curTab].favs.forEach((f, idx) => { if(curCat==='Alle'||f.c===curCat) fBox.appendChild(createFavChip(f, true, idx)); });
-    }
-
-    function createFavChip(f, isCustom, idx) {
-        const chip = document.createElement('div'); 
-        chip.className = 'fav-chip'; 
-        chip.innerHTML = `<span>${f.n}</span>`;
-    
-        if(isCustom) { 
-            const del = document.createElement('span'); 
-            del.innerHTML = " ×"; 
-            del.className = "del-fav"; 
-            del.onclick = (e) => { e.stopPropagation(); deleteFav(idx); }; 
-            chip.appendChild(del); 
-        }
-    
-        chip.onclick = () => { 
-            if(curTab === 'shop') {
-                addShop(f.n); 
-            } else if(curTab === 'food') {
-                const d = prompt("Für welchen Tag? (0=Mo, 1=Di, 2=Mi, 3=Do, 4=Fr, 5=Sa, 6=So)", new Date().getDay() === 0 ? 6 : new Date().getDay() - 1);
-            
-                if(d !== null && d !== "") {
-                     const dayIdx = parseInt(d);
-                    if(dayIdx >= 0 && dayIdx <= 6) {
-                        document.getElementById('plan-' + dayIdx).value = f.n;
-                        saveFood(dayIdx); 
-                    } else {
-                        alert("Bitte eine Zahl zwischen 0 und 6 eingeben.");
-                    }
-                }
-            } else { 
-                addTodo(f.n); 
-            }
-        };
-    
-        return chip;
-    }
-
-    function tab(t) { 
-        curTab = t; 
-        sessionStorage.setItem("current_tab", t); 
-        ['shop','food','todo','trash','finance'].forEach(v => { 
-            const view = document.getElementById('v-'+v);
-            const tabBtn = document.getElementById('t-'+v);
-            if(view) view.style.display = t===v?'block':'none'; 
-            if(tabBtn) tabBtn.className = `tab-item ${t===v?'active-'+t:''}`; 
-        }); 
-    
-        if(t==='trash') { 
-            loadTrash(); 
-        } else if(t==='finance') {
-            loadFinance();
-        } else { 
+async function deleteCat(type, name) { 
+    if (name !== 'Alle') { 
+        // Nutzt jetzt das echte Lösch-Modal (mit "Abbrechen" und "Löschen")
+        const confirmed = await showDeleteModal(`Kategorie "${name}" wirklich löschen?`, "Kategorie löschen");
+        if (confirmed) { 
+            db[type].cats = db[type].cats.filter(x => x !== name); 
+            db[type].favs = db[type].favs.filter(x => x.c !== name); 
+            curCat = "Alle"; 
+            syncUp(); 
             render(); 
-            load(); 
-            renderSidebars(); 
         } 
+    } 
+}
+
+async function deleteFav(idx) { 
+    // Nutzt ebenfalls das echte Lösch-Modal
+    const confirmed = await showDeleteModal("Möchtest du diesen Favoriten wirklich löschen?", "Favorit löschen");
+    if (confirmed) { 
+        db[curTab].favs.splice(idx, 1); 
+        await syncUp(); 
+        render(); 
+    } 
+}
+
+// Schickes Bestätigungs-Modal statt window.confirm()
+function showConfirm(message, title = "Löschen bestätigen") {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('customConfirmModal');
+        const titleEl = document.getElementById('customConfirmTitle');
+        const msgEl = document.getElementById('customConfirmMessage');
+        const btnYes = document.getElementById('customConfirmYes');
+        const btnNo = document.getElementById('customConfirmNo');
+
+        if (!modal) {
+            resolve(confirm(message)); // Fallback falls Modal fehlt
+            return;
+        }
+
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+        modal.style.display = 'flex';
+
+        const handleYes = () => {
+            modal.style.display = 'none';
+            cleanup();
+            resolve(true);
+        };
+
+        const handleNo = () => {
+            modal.style.display = 'none';
+            cleanup();
+            resolve(false);
+        };
+
+        const cleanup = () => {
+            btnYes.removeEventListener('click', handleYes);
+            btnNo.removeEventListener('click', handleNo);
+        };
+
+        btnYes.addEventListener('click', handleYes, { once: true });
+        btnNo.addEventListener('click', handleNo, { once: true });
+    });
+}
+
+function render() {
+    const cBox = document.getElementById(`cats-${curTab}`); 
+    if(!cBox) return; 
+    cBox.innerHTML = "";
+    
+    db[curTab].cats.forEach(c => { 
+        const b = document.createElement('button'); 
+        b.className = `cat-btn ${curCat === c ? 'active-'+curTab : ''}`; 
+        
+        // Text-Span erstellen
+        const txt = document.createElement('span');
+        txt.innerText = c;
+        b.appendChild(txt);
+
+        // Das "×" nur bei selbst erstellten Kategorien (und nicht bei "Alle") einfügen
+        if (c !== 'Alle') {
+            const del = document.createElement('span');
+            del.innerHTML = " 🗑️";
+            del.className = "del-cat";
+            del.style.marginLeft = "6px";
+            del.style.cursor = "pointer";
+            del.style.fontWeight = "bold";
+            
+            // Klick auf das X ruft direkt deine Löschfunktion auf
+            del.onclick = (e) => { 
+                e.stopPropagation(); 
+                deleteCat(curTab, c); 
+            };
+            b.appendChild(del);
+        }
+
+        b.onclick = () => { curCat = c; render(); }; 
+        // Rechtsklick kann als Backup natürlich drin bleiben oder weichen
+        b.oncontextmenu = (e) => { e.preventDefault(); deleteCat(curTab, c); }; 
+        
+        cBox.appendChild(b); 
+    });
+
+    const fBox = document.getElementById(`favs-${curTab}`); 
+    if(!fBox) return; 
+    fBox.innerHTML = "";
+    
+    staticFavs[curTab]?.forEach(f => { if(curCat==='Alle'||f.c===curCat) fBox.appendChild(createFavChip(f, false)); });
+    db[curTab].favs.forEach((f, idx) => { if(curCat==='Alle'||f.c===curCat) fBox.appendChild(createFavChip(f, true, idx)); });
+}
+
+let foodResolver = null;
+
+function showFoodDayPrompt(message, title = "Essen planen") {
+    return new Promise((resolve) => {
+        foodResolver = resolve;
+        const modal = document.getElementById('customFoodModal');
+        const titleEl = document.getElementById('customFoodTitle');
+        const msgEl = document.getElementById('customFoodMessage');
+        const inputEl = document.getElementById('customFoodField');
+        
+        if (titleEl) titleEl.innerText = title;
+        if (msgEl) msgEl.innerText = message;
+        if (inputEl) {
+            // Standard-Tag direkt voreintragen (0=Mo bis 6=So)
+            const defaultDay = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+            inputEl.value = defaultDay;
+            setTimeout(() => {
+                inputEl.focus();
+                inputEl.select();
+            }, 100);
+        }
+        
+        if (modal) modal.style.display = 'flex';
+    });
+}
+
+function resolveFoodPrompt(confirmed) {
+    const modal = document.getElementById('customFoodModal');
+    const inputEl = document.getElementById('customFoodField');
+    let value = null;
+    
+    if (confirmed && inputEl) {
+        value = inputEl.value.trim();
+    }
+    
+    if (modal) modal.style.display = 'none';
+    if (foodResolver) {
+        foodResolver(value);
+        foodResolver = null;
+    }
+}
+
+function createFavChip(f, isCustom, idx) {
+    const chip = document.createElement('div'); 
+    chip.className = 'fav-chip'; 
+    chip.innerHTML = `<span>${f.n}</span>`;
+
+    if(isCustom) { 
+        const del = document.createElement('span'); 
+        del.innerHTML = " 🗑️"; 
+        del.className = "del-fav"; 
+        del.onclick = (e) => { e.stopPropagation(); deleteFav(idx); }; 
+        chip.appendChild(del); 
     }
 
-    let tempShopItem = "";
+    chip.onclick = async () => { 
+        if(curTab === 'shop') {
+            addShop(f.n); 
+        } else if(curTab === 'food') {
+            // Nutzt jetzt das neue, eigene Wochentag-Modal
+            const d = await showFoodDayPrompt(
+                `Für welchen Tag?\n(0 = Mo, 1 = Di, 2 = Mi, 3 = Do, 4 = Fr, 5 = Sa, 6 = So)`, 
+                `Essen planen: ${f.n}`
+            );
+            
+            if(d !== null && d !== "") {
+                 const dayIdx = parseInt(d);
+                if(dayIdx >= 0 && dayIdx <= 6) {
+                    document.getElementById('plan-' + dayIdx).value = f.n;
+                    saveFood(dayIdx); 
+                } else {
+                    await showAlert("Bitte eine Zahl zwischen 0 und 6 eingeben.", "Ungültige Eingabe ❌");
+                }
+            }
+        } else { 
+            addTodo(f.n); 
+        }
+    };
+    return chip;
+}
 
-    async function addShop(manual) {
-        const i = document.getElementById("in-shop");
-        tempShopItem = manual || i.value.trim();
-    
-        if (tempShopItem) {
+function tab(t) { 
+    curTab = t; 
+    sessionStorage.setItem("current_tab", t); 
+    ['shop','food','todo','trash','finance'].forEach(v => { 
+        const view = document.getElementById('v-'+v);
+        const tabBtn = document.getElementById('t-'+v);
+        if(view) view.style.display = t===v?'block':'none'; 
+        if(tabBtn) tabBtn.className = `tab-item ${t===v?'active-'+t:''}`; 
+    }); 
+
+    if(t==='trash') { 
+        loadTrash(); 
+    } else if(t==='finance') {
+        loadFinance();
+    } else { 
+        render(); 
+        load(); 
+        renderSidebars(); 
+    } 
+}
+
+let tempShopItem = "";
+
+async function addShop(manual) {
+    const i = document.getElementById("in-shop");
+    tempShopItem = manual || i.value.trim();
+
+    if (tempShopItem) {
         document.getElementById("shopQtyTitle").innerText = `Menge für "${tempShopItem}"`;
         document.getElementById("shopQtyValue").value = "1"; 
         document.getElementById("shopQtyModal").style.display = "flex";
@@ -1468,25 +1843,20 @@ async function delItem(t) {
             const valInput = document.getElementById("shopQtyValue");
             valInput.focus();
             valInput.select();
-            }, 50);
+        }, 50);
 
-            if (!manual) i.value = ""; 
-        }
+        if (!manual) i.value = ""; 
     }
+}
     
 async function confirmShopAdd() {
     const q = document.getElementById("shopQtyValue");
     let qty = parseInt(q.value) || 1;
-
     const vollerName = (qty > 1) ? `${qty}x ${tempShopItem}` : tempShopItem;
 
     try {
         const cfg = SYNC_CONFIG.shopping;
-
-        const r = await fetch(`${HA_URL}/api/states/${cfg.entity}`, { 
-            headers: {'Authorization': `Bearer ${HA_TOKEN}`} 
-        });
-        const data = await r.json();
+        const data = await haGetState(cfg.entity);
 
         let currentList = [];
         if (data && data.attributes && data.attributes[cfg.attr]) {
@@ -1495,92 +1865,61 @@ async function confirmShopAdd() {
         }
 
         currentList.push(`${vollerName} @${activeStore}`);
+        await haFireEvent(cfg.event, { json_data: currentList });
 
-        const response = await fetch(`${HA_URL}/api/events/${cfg.event}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${HA_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                json_data: currentList
-            })
-        });
-
-        if (response.ok) {
-            console.log(`✅ "${vollerName}" zu ${activeStore} hinzugefügt.`);
-            
-            document.getElementById("shopQtyModal").style.display = "none";
-            load(); 
-        } else {
-            throw new Error("Fehler beim Senden des Events");
-        }
-
+        document.getElementById("shopQtyModal").style.display = "none";
+        load(); 
     } catch (e) {
         console.error("Fehler beim Hinzufügen zum Einkauf:", e);
-        alert("Fehler beim Speichern! Prüfe die Verbindung zu Home Assistant.");
     }
 }
 
-    // --- ESSENSPLAN SPEICHER-LOGIK (KORRIGIERT) ---
-    async function saveFood(idx) {
-        isUpdatingFood = true;
-    
-        const dishElem = document.getElementById(`plan-${idx}`);
-        const cookElem = document.getElementById(`cook-${idx}`);
-        
-        if (!dishElem) return;
+async function saveFood(idx) {
+    isUpdatingFood = true;
+    const dishElem = document.getElementById(`plan-${idx}`);
+    const cookElem = document.getElementById(`cook-${idx}`);
+    if (!dishElem) return;
 
-        const dish = dishElem.value.trim();
-        const cook = cookElem ? cookElem.value : "";
-    
-        const finalValue = cook ? `${dish} | ${cook}` : dish;
+    const dish = dishElem.value.trim();
+    const cook = cookElem ? cookElem.value : "";
+    const finalValue = cook ? `${dish} | ${cook}` : dish;
 
-        try {
-            const response = await fetch(`${HA_URL}/api/services/input_text/set_value`, { 
-                method: 'POST', 
-                headers: {
-                    'Authorization': `Bearer ${HA_TOKEN}`, 
-                    'Content-Type': 'application/json'
-                }, 
-                body: JSON.stringify({ 
-                     entity_id: FOOD_ENTITIES[idx], 
-                     value: finalValue 
-                }) 
-            });
-
-            if (response.ok) {
-                console.log(`✅ Essensplan Tag ${idx} gespeichert: ${finalValue}`);
-            } else {
-                console.error(`❌ Speichern fehlgeschlagen: Status ${response.status}`);
-            }
-        } catch (e) {
-            console.error("Fehler beim Speichern des Essensplans:", e);
-        }
-    
-        // 2 Sekunden Puffer, damit der HA-State im Backend ankommt vor dem nächsten Sync
-        setTimeout(() => {
-            isUpdatingFood = false;
-        }, 2000);
+    try {
+        await haSetInputText(FOOD_ENTITIES[idx], finalValue);
+    } catch (e) {
+        console.error("Fehler beim Speichern des Essensplans:", e);
     }
 
-    function highlightToday() { let d=new Date().getDay(); let idx=d===0?6:d-1; document.querySelectorAll('.day-card').forEach(c=>c.classList.remove('today')); if(document.getElementById('card-'+idx)) document.getElementById('card-'+idx).classList.add('today'); }
-    function clearWeek() { if(confirm("Ganze Woche löschen?")) { for(let i=0; i<7; i++) { document.getElementById('plan-'+i).value=''; saveFood(i); } } }
+    setTimeout(() => { isUpdatingFood = false; }, 2000);
+}
+
+function highlightToday() { 
+    let d = new Date().getDay(); 
+    let idx = d === 0 ? 6 : d - 1; 
+    document.querySelectorAll('.day-card').forEach(c => c.classList.remove('today')); 
+    if(document.getElementById('card-'+idx)) document.getElementById('card-'+idx).classList.add('today'); 
+}
+
+function clearWeek() { 
+    if(confirm("Ganze Woche löschen?")) { 
+        for(let i=0; i<7; i++) { 
+            document.getElementById('plan-'+i).value=''; 
+            saveFood(i); 
+        } 
+    } 
+}
 
 async function loadTrash() {
     let h = ""; 
     try { 
         for (const s of TRASH_CONFIG) { 
-            const [rDays, rDate] = await Promise.all([ 
-                fetch(`${HA_URL}/api/states/${s.id}`, { headers: {'Authorization': `Bearer ${HA_TOKEN}`} }), 
-                fetch(`${HA_URL}/api/states/${s.dateId}`, { headers: {'Authorization': `Bearer ${HA_TOKEN}`} }) 
+            const [dDays, dDate] = await Promise.all([ 
+                haGetState(s.id), 
+                haGetState(s.dateId) 
             ]);
-            const dDays = await rDays.json(); 
-            const dDate = await rDate.json();
             
             let tage = dDays.state; 
             let rohDatum = dDate.state;
-
             let dF = "Unbekannt";
             let dateObj = null;
             
@@ -1601,7 +1940,6 @@ async function loadTrash() {
 
             if (dateObj && !isNaN(dateObj.getTime())) {
                 const taskName = `🗑️ ${s.name} rausstellen`;
-                
                 let reminderDate = new Date(dateObj);
                 reminderDate.setDate(reminderDate.getDate() - 1);
                 reminderDate.setHours(18, 0, 0, 0);
@@ -1618,7 +1956,6 @@ async function loadTrash() {
                         lastDone: null,
                         nextDate: reminderDate.toISOString()
                     };
-                    
                     todoDb.push(newTrashTodo);
                     saveTodoDb(taskName, "automatisch geplant 🤖"); 
                 }
@@ -1636,9 +1973,7 @@ async function loadTrash() {
                   </div>`;
         } 
         document.getElementById("trash-content").innerHTML = h; 
-        
         if(curTab === 'todo') renderTodoList();
-
     } catch (e) { 
         console.error("Fehler beim Laden des Müll-Syncs:", e);
         document.getElementById("trash-content").innerHTML = "Fehler beim Laden!"; 
@@ -1648,8 +1983,7 @@ async function loadTrash() {
 async function syncTrashToTodos() {
     for (const s of TRASH_CONFIG) {
         try {
-            const rDate = await fetch(`${HA_URL}/api/states/${s.dateId}`, { headers: {'Authorization': `Bearer ${HA_TOKEN}`} });
-            const dDate = await rDate.json();
+            const dDate = await haGetState(s.dateId);
             const rohDatum = dDate.state;
 
             if (rohDatum && rohDatum !== "unknown" && rohDatum !== "unavailable") {
@@ -1658,12 +1992,9 @@ async function syncTrashToTodos() {
                 termin.setHours(18, 0, 0, 0);
 
                 const taskName = `🗑️ ${s.name} rausstellen`;
-                
                 const exists = todoDb.some(t => t.name === taskName && t.nextDate.startsWith(termin.toISOString().split('T')[0]));
 
                 if (!exists) {
-                    console.log(`🤖 Automatik: Neue Aufgabe für ${s.name} am ${termin.toLocaleDateString()} erstellt.`);
-                    
                     const newTrashTodo = {
                         id: Date.now() + Math.random(),
                         name: taskName,
@@ -1673,7 +2004,6 @@ async function syncTrashToTodos() {
                         lastDone: null,
                         nextDate: termin.toISOString()
                     };
-
                     todoDb.push(newTrashTodo);
                     await saveTodoDb(taskName, "automatisch geplant 🤖"); 
                 }
@@ -1685,31 +2015,37 @@ async function syncTrashToTodos() {
     renderTodoList();
 }    
 
-    function logout() { sessionStorage.clear(); localStorage.removeItem("selectedUser"); location.reload(); }
+function logout() { 
+    sessionStorage.clear(); 
+    localStorage.removeItem("selectedUser"); 
+    location.reload(); 
+}
 
-    function updateStatus() { 
-        if (!user) return; 
-        const timeStr = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }); 
-        const statusElem = document.getElementById("statusInfo"); 
-        
-        let firstLineContent = (user === "Tablet") ? `📺 ${user} • ${timeStr}` : `${user} • ${timeStr}`;
-        const coloredLine = `<span class="user-name-gradient">${firstLineContent}</span>`;
+function updateStatus() {  
+    if (!user) return;  
+    const timeStr = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });  
+    const statusElem = document.getElementById("statusInfo");  
+    
+    const isPersistent = (user === "Tablet" || (typeof isPersistentUser === 'function' && isPersistentUser(user)));
+    let firstLineContent = isPersistent ? `📺 ${user} • ${timeStr}` : `${user} • ${timeStr}`;
+    const coloredLine = `<span class="user-name-gradient">${firstLineContent}</span>`;
 
-        if (user !== "Tablet") { 
-            const diff = Date.now() - lastActivity; const timeLeft = 600000 - diff; 
-            if (timeLeft <= 0) logout(); 
-            const min = Math.floor(timeLeft / 60000); const sec = Math.floor((timeLeft % 60000) / 1000); 
-            statusElem.innerHTML = `${coloredLine}<br><span style="font-size:0.8rem; color:var(--danger); font-weight:bold;">Logout: ${min}:${sec < 10 ? '0' : ''}${sec}</span>`; 
-        } else { statusElem.innerHTML = coloredLine; } 
-    }
+    if (!isPersistent) {  
+        const diff = Date.now() - lastActivity; 
+        const timeLeft = 600000 - diff;  
+        if (timeLeft <= 0) logout();  
+        const min = Math.floor(timeLeft / 60000); 
+        const sec = Math.floor((timeLeft % 60000) / 1000);  
+        statusElem.innerHTML = `${coloredLine}<br><span style="font-size:0.8rem; color:var(--danger); font-weight:bold;">Logout: ${min}:${sec < 10 ? '0' : ''}${sec}</span>`;  
+    } else { 
+        statusElem.innerHTML = coloredLine; 
+    }  
+}
 
 async function updateAppBadges() {
     try {
         const cfg = SYNC_CONFIG.shopping;
-        const r = await fetch(`${HA_URL}/api/states/${cfg.entity}`, { 
-            headers: {'Authorization': `Bearer ${HA_TOKEN}`} 
-        });
-        const d = await r.json();
+        const d = await haGetState(cfg.entity);
         
         let totalShopCount = 0;
         if (d && d.attributes && d.attributes[cfg.attr]) {

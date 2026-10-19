@@ -2,30 +2,99 @@
 
 const HA_URL = "";
 
-// Holt das Auth-Token automatisch aus der laufenden Home Assistant Session
-function getHAToken() {
+// Prüft, ob ein frisches Token direkt aus der aktiven HA-Oberfläche (iframe) verfügbar ist
+function getLiveHASessionToken() {
     try {
         if (window.parent && window.parent.hass && window.parent.hass.auth && window.parent.hass.auth.data) {
-            return window.parent.hass.auth.data.access_token;
+            return window.parent.hass.auth.data.access_token || "";
         }
         if (window.hass && window.hass.auth && window.hass.auth.data) {
-            return window.hass.auth.data.access_token;
+            return window.hass.auth.data.access_token || "";
         }
     } catch(e) {
         console.warn("Konnte Token nicht automatisch aus Session lesen:", e);
     }
+    return "";
+}
+
+// Holt das Auth-Token (entweder live aus HA oder aus dem lokalen Speicher)
+function getHAToken() {
+    const liveToken = getLiveHASessionToken();
+    if (liveToken) return liveToken;
     return localStorage.getItem("ha_token") || "";
 }
 
-// HA_TOKEN wird dynamically/automatisch ermittelt
+// HA_TOKEN wird dynamisch ermittelt
 let HA_TOKEN = getHAToken();
 
-const MASTER_PW = "homeassistant";
-const ADMIN_PW_ENTITY = "input_text.helper_admin_pw";
-let ADMIN_PW = "1234";
+// SICHERHEIT: Nur wenn wir ein ECHTES, FRISCHES Token aus der HA-Session haben, im Backend sichern!
+const liveSessionToken = getLiveHASessionToken();
+if (liveSessionToken && liveSessionToken.trim() !== "") {
+    HA_TOKEN = liveSessionToken;
+    localStorage.setItem("ha_token", HA_TOKEN);
+    let baseUrl = (typeof HA_URL !== "undefined" && HA_URL !== "") ? HA_URL : window.location.origin;
+    fetch(`${baseUrl}/api/haushaltshilfe/save_token`, {
+        method: 'POST',
+        headers: { 
+            'Authorization': `Bearer ${HA_TOKEN}`, 
+            'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ token: HA_TOKEN })
+    }).then(res => {
+        if (res.status === 401) {
+            // Falls Token ungültig ist -> Bereinigen!
+            localStorage.removeItem("ha_token");
+            HA_TOKEN = "";
+        }
+    }).catch(e => console.warn("Backend Token-Sync fehlgeschlagen:", e));
+} else if (!HA_TOKEN || HA_TOKEN === "null" || HA_TOKEN === "undefined") {
+    HA_TOKEN = "";
+}
+
+// Lädt die Benutzernamen vom Server, auch wenn am Handy noch kein Token da ist
+async function fetchPublicUsers() {
+    try {
+        let baseUrl = (typeof HA_URL !== "undefined" && HA_URL !== "") ? HA_URL : window.location.origin;
+        const response = await fetch(`${baseUrl}/api/haushaltshilfe/public_users`);
+        if (response.ok) {
+            const data = await response.json();
+            return data.users || [];
+        }
+    } catch (e) {
+        console.warn("Fehler beim Laden der öffentlichen Benutzer:", e);
+    }
+    return [];
+}
+
+// Prüft das Benutzer-Passwort am Server und holt bei Erfolg das HA_TOKEN aufs Handy
+async function loginUserViaBackend(username, password) {
+    try {
+        let baseUrl = (typeof HA_URL !== "undefined" && HA_URL !== "") ? HA_URL : window.location.origin;
+        const response = await fetch(`${baseUrl}/api/haushaltshilfe/app_login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: username, password: password })
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.token) {
+                HA_TOKEN = data.token;
+                localStorage.setItem("ha_token", data.token);
+                return true;
+            }
+        }
+    } catch (e) {
+        console.error("Login über Backend fehlgeschlagen:", e);
+    }
+    return false;
+}
+
+// Master-Passwort ohne hartcodierten Fallback
+const MASTER_PW = ""; 
+const ADMIN_PW_ENTITY = "";
+let ADMIN_PW = ""; // Dynamisch über getAdminPw() befüllt, ohne "1234"
 
 // ---- ENTITÄTEN-ÜBERSICHT ----
-const USER_LIST_ENTITY = "input_text.helper_user_list";
 const STORES_ENTITY = "input_text.helper_shop_stores";
 const ROOMS_ENTITY = "input_text.helper_room_list";
 

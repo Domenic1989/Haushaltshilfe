@@ -11,7 +11,7 @@
     
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#0f13fc">
+    <meta name="theme-color" content="#ffffff">
     <meta name="referrer" content="same-origin">
 
     <!-- Stylesheets -->
@@ -70,14 +70,13 @@
             <span style="font-size: 1.4rem;">⚙️</span> System-Einstellungen
         </h3>
         
-        <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">LONG LIVED ACCESS TOKEN</label>
-        <textarea id="set_token" placeholder="Token hier einfügen..." style="width:100%; height:80px; margin-bottom:15px; border-radius:12px; border:1px solid #ddd; padding:12px; font-size:0.65rem; box-sizing:border-box; font-family: monospace; background: #f9f9fb; outline: none; resize: none;"></textarea>
-        
+        <!-- MASTER-PASSWORT -->
         <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">MASTER-PASSWORT</label>
         <input type="password" id="set_master_pw" placeholder="Master-Passwort..." style="width:100%; padding:12px; margin-bottom:15px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; font-size: 0.9rem; background: #f9f9fb; outline: none;">
 
+        <!-- ADMIN-PASSWORT -->
         <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">ADMIN-PASSWORT</label>
-        <input type="text" id="set_admin_pw" placeholder="Admin-Passwort..." style="width:100%; padding:12px; margin-bottom:20px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; font-size: 0.9rem; background: #f9f9fb; outline: none;">
+        <input type="password" id="set_admin_pw" placeholder="Admin-Passwort..." style="width:100%; padding:12px; margin-bottom:20px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; font-size: 0.9rem; background: #f9f9fb; outline: none;">
 
         <!-- TABS AUSWAHL -->
         <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:10px; letter-spacing: 0.5px;">SICHTBARE TABS IN DER LEISTE</label>
@@ -99,6 +98,7 @@
             </label>
         </div>
         
+        <!-- BUTTONS -->
         <div style="display:flex; gap:12px;">
             <button type="button" style="flex:1; background:var(--primary); height:50px; border-radius:15px; font-weight:bold; color: white; border: none; cursor: pointer;" onclick="saveSystemSettings()">Speichern</button>
             <button type="button" style="flex:1; background:var(--gray); height:50px; border-radius:15px; font-weight:bold; color: white; border: none; cursor: pointer;" onclick="document.getElementById('settingsOverlay').style.display='none'">Abbrechen</button>
@@ -160,21 +160,43 @@
     
     <!-- FINANZEN TAB -->
     <div id="v-finance" style="display:none; padding-top: 20px;">
-        <header style="margin-bottom: 20px; padding: 0 15px;">
-            <h1 style="margin: 0;">Finanz-Historie 📅</h1>
-        </header>
         
-        <!-- Controls: Sauberes Flex-Layout für beide Buttons -->
-        <div class="finance-controls" style="margin: 10px 15px 20px 15px; display: flex; gap: 12px; width: calc(100% - 30px); box-sizing: border-box;">
-            <button type="button" onclick="addNewMonth()" style="flex: 1; min-width: 0; background: var(--primary); color: white; border: none; padding: 15px 10px; border-radius: 15px; font-weight: bold; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
-                ➕ Monat hinzufügen
-            </button>
-            <button type="button" onclick="if(typeof openFixkostenModal === 'function') { openFixkostenModal(); } else { document.getElementById('fixkostenModal').style.display='flex'; }" style="flex: 1; min-width: 0; background: var(--card); color: var(--text); border: 1px solid rgba(0,0,0,0.15); padding: 15px 10px; border-radius: 15px; font-weight: bold; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
-                ⚙️ Fixkosten verwalten
-            </button>
+        <!-- ANSICHT 1: JAHRE-ÜBERSICHT -->
+        <div id="finance-years-view">
+            <header style="margin-bottom: 20px; padding: 0 15px;">
+                <h1 style="margin: 0;">Finanz-Historie 📅</h1>
+            </header>
+            
+            <div class="finance-controls" style="margin: 10px 15px 20px 15px; display: flex; gap: 12px; width: calc(100% - 30px); box-sizing: border-box;">
+                <button type="button" onclick="addNewYear()" style="flex: 1; min-width: 0; background: var(--primary); color: white; border: none; padding: 15px 10px; border-radius: 15px; font-weight: bold; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                    ➕ Jahr hinzufügen
+                </button>
+                <button type="button" onclick="if(typeof openFixkostenModal === 'function') { openFixkostenModal(); } else { document.getElementById('fixkostenModal').style.display='flex'; }" style="flex: 1; min-width: 0; background: var(--card); color: var(--text); border: 1px solid rgba(0,0,0,0.15); padding: 15px 10px; border-radius: 15px; font-weight: bold; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                    ⚙️ Fixkosten verwalten
+                </button>
+            </div>
+
+            <div id="years-container" style="margin: 0 15px; display: grid; gap: 15px;"></div>
         </div>
 
-        <div id="months-container" style="margin: 0 15px; display: grid; gap: 15px;"></div>
+        <!-- ANSICHT 2: MONATS-ÜBERSICHT FÜR DAS GEWÄHLTE JAHR -->
+        <div id="finance-months-view" style="display: none;">
+            <header style="margin-bottom: 20px; padding: 0 15px; display: flex; align-items: center; gap: 12px;">
+                <button type="button" onclick="backToYears()" style="background: var(--card); border: 1px solid rgba(0,0,0,0.15); border-radius: 12px; width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text);">⬅️</button>
+                <h1 id="finance-year-title" style="margin: 0; font-size: 1.5rem;">Jahr</h1>
+            </header>
+            
+            <div class="finance-controls" style="margin: 10px 15px 20px 15px; display: flex; gap: 12px; width: calc(100% - 30px); box-sizing: border-box;">
+                <button type="button" onclick="addNewMonth()" style="flex: 1; min-width: 0; background: var(--primary); color: white; border: none; padding: 15px 10px; border-radius: 15px; font-weight: bold; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                    ➕ Monat in diesem Jahr hinzufügen
+                </button>
+                <button type="button" onclick="if(typeof openFixkostenModal === 'function') { openFixkostenModal(); } else { document.getElementById('fixkostenModal').style.display='flex'; }" style="flex: 1; min-width: 0; background: var(--card); color: var(--text); border: 1px solid rgba(0,0,0,0.15); padding: 15px 10px; border-radius: 15px; font-weight: bold; font-size: 0.95rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">
+                    ⚙️ Fixkosten verwalten
+                </button>
+            </div>
+
+            <div id="months-container" style="margin: 0 15px; display: grid; gap: 15px;"></div>
+        </div>
 
         <!-- MODAL 1: FINANZ-DETAILS / MONAT -->
         <div id="finance-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:10001; backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:20px;">
@@ -241,7 +263,7 @@
                     </button>
                 </div>
 
-                <!-- Liste deiner bereits gespeicherten Vorlagen -->
+                <!-- Liste -->
                 <label style="font-size:0.7rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px;">DEINE VORLAGEN</label>
                 <div id="fixkostenList" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:8px; margin-bottom:15px; padding-right:5px;"></div>
 
@@ -292,8 +314,9 @@
         <input type="number" id="modalValue" value="1" style="width:100%; box-sizing: border-box; display:block; margin-bottom:15px; padding:15px; border-radius:15px; border:1px solid rgba(0,0,0,0.1); text-align:center; font-size:1.8rem; font-weight:bold; background: var(--bg); color: var(--text); outline: none;">
         
         <div style="display:flex; gap:10px; margin-bottom:20px;">
-            <button onclick="confirmInterval('s')" style="flex:1; padding:15px; background:var(--todo); color:white; border:none; border-radius:15px; font-weight:bold; cursor: pointer;">Stunden</button>
-            <button onclick="confirmInterval('t')" style="flex:1; padding:15px; background:var(--primary); color:white; border:none; border-radius:15px; font-weight:bold; cursor: pointer;">Tage</button>
+            <button onclick="confirmInterval('m')" style="flex:1; padding:15px 10px; background:var(--todo); color:white; border:none; border-radius:15px; font-weight:bold; cursor: pointer;">Minuten</button>
+            <button onclick="confirmInterval('s')" style="flex:1; padding:15px 10px; background:var(--todo); color:white; border:none; border-radius:15px; font-weight:bold; cursor: pointer;">Stunden</button>
+            <button onclick="confirmInterval('t')" style="flex:1; padding:15px 10px; background:var(--primary); color:white; border:none; border-radius:15px; font-weight:bold; cursor: pointer;">Tage</button>
         </div>
         
         <div style="margin-top: 15px;">
@@ -345,12 +368,13 @@
 
         <hr style="opacity:0.1; margin-bottom:15px;">
 
-        <label style="font-size:0.7rem; color:var(--gray); display:block; text-align:left; font-weight: bold; text-transform: uppercase;">Option 1: Neues Intervall (Stunden/Tage)</label>
+        <label style="font-size:0.7rem; color:var(--gray); display:block; text-align:left; font-weight: bold; text-transform: uppercase;">Option 1: Neues Intervall (Min/Std/Tage)</label>
         <input type="number" id="edit-interval-val" value="1" style="width:100%; padding:12px; border-radius:12px; border:1px solid rgba(0,0,0,0.1); text-align:center; font-size:1.5rem; font-weight:bold; background:var(--bg); color:var(--text); margin-bottom:10px; box-sizing: border-box; outline: none;">
         
         <div style="display:flex; gap:10px; margin-bottom:20px;">
-            <button onclick="saveEdit('s')" style="flex:1; padding:12px; background:var(--todo); color:white; border:none; border-radius:12px; font-weight:bold; cursor: pointer;">Stunden</button>
-            <button onclick="saveEdit('t')" style="flex:1; padding:12px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold; cursor: pointer;">Tage</button>
+            <button onclick="saveEdit('m')" style="flex:1; padding:12px 8px; background:var(--todo); color:white; border:none; border-radius:12px; font-weight:bold; cursor: pointer;">Minuten</button>
+            <button onclick="saveEdit('s')" style="flex:1; padding:12px 8px; background:var(--todo); color:white; border:none; border-radius:12px; font-weight:bold; cursor: pointer;">Stunden</button>
+            <button onclick="saveEdit('t')" style="flex:1; padding:12px 8px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold; cursor: pointer;">Tage</button>
         </div>
         
         <div style="margin-top: 15px;">
@@ -404,9 +428,134 @@
     </div>
 </div>
 
+<!-- NEUES BENUTZER & BEARBEITEN MODAL -->
+<div id="userModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:var(--card, #fff); padding:25px; border-radius:20px; width:90%; max-width:350px; box-shadow:0 10px 25px rgba(0,0,0,0.2); box-sizing:border-box; color: var(--text);">
+        <h3 id="userModalTitle" style="margin-top:0; margin-bottom:15px; font-size:1.2rem; text-align:center;">Benutzer bearbeiten</h3>
+        
+        <input type="hidden" id="userModalOldStr" value="">
+        
+        <div style="margin-bottom: 12px;">
+            <label style="font-size:0.85rem; color:var(--gray); display:block; margin-bottom:5px;">Name</label>
+            <input type="text" id="userModalName" placeholder="Name" style="width:100%; padding:12px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); box-sizing:border-box; font-size:1rem; outline:none; background:var(--bg); color:var(--text);">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="font-size:0.85rem; color:var(--gray); display:block; margin-bottom:5px;">Passwort</label>
+            <input type="text" id="userModalPw" placeholder="Passwort" style="width:100%; padding:12px; border-radius:10px; border:1px solid rgba(0,0,0,0.1); box-sizing:border-box; font-size:1rem; outline:none; background:var(--bg); color:var(--text);">
+        </div>
+
+        <div style="margin-bottom: 20px; display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.03); padding:10px 12px; border-radius:10px;">
+            <input type="checkbox" id="userModalPersistent" style="width:20px; height:20px; cursor:pointer;">
+            <label for="userModalPersistent" style="font-size:0.9rem; cursor:pointer; user-select:none;">Dauerhaft angemeldet (kein Auto-Logout)</label>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <button type="button" onclick="closeUserModal()" style="flex:1; padding:12px; border-radius:10px; border:none; background:#e5e5ea; font-weight:bold; cursor:pointer;">Abbrechen</button>
+            <button type="button" onclick="saveUserModal()" style="flex:1; padding:12px; border-radius:10px; border:none; background:var(--primary, #007aff); color:white; font-weight:bold; cursor:pointer;">Speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- PASSWORT ABFRAGE MODAL -->
+<div id="passwordModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:var(--card, #fff); padding:25px; border-radius:20px; width:90%; max-width:330px; box-shadow:0 10px 25px rgba(0,0,0,0.2); box-sizing:border-box; color:var(--text); text-align:center;">
+        <h3 id="passwordModalTitle" style="margin-top:0; margin-bottom:15px; font-size:1.1rem;">Passwort eingeben</h3>
+        
+        <input type="password" id="passwordModalInput" placeholder="Passwort..." style="width:100%; padding:12px; border-radius:12px; border:2px solid rgba(0,0,0,0.1); box-sizing:border-box; font-size:0.9rem; outline:none; text-align:center; margin-bottom:20px; background:var(--bg); color:var(--text);">
+
+        <div style="display:flex; gap:10px;">
+            <button type="button" onclick="closePasswordModal(false)" style="flex:1; padding:12px; border-radius:10px; border:none; background:#e5e5ea; font-weight:bold; cursor:pointer;">Abbrechen</button>
+            <button type="button" onclick="closePasswordModal(true)" style="flex:1; padding:12px; border-radius:10px; border:none; background:var(--primary, #007aff); color:white; font-weight:bold; cursor:pointer;">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- RAUM HINZUFÜGEN MODAL -->
+<div id="roomModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:var(--card, #fff); padding:25px; border-radius:20px; width:90%; max-width:330px; box-shadow:0 10px 25px rgba(0,0,0,0.2); box-sizing:border-box; color:var(--text); text-align:center;">
+        <h3 style="margin-top:0; margin-bottom:15px; font-size:1.1rem;">Neuen Raum hinzufügen</h3>
+        
+        <input type="text" id="newRoomInput" placeholder="Raumname (z.B. Keller)" style="width:100%; padding:12px; border-radius:12px; border:2px solid rgba(0,0,0,0.1); box-sizing:border-box; font-size:0.9rem; outline:none; text-align:center; margin-bottom:20px; background:var(--bg); color:var(--text);">
+
+        <div style="display:flex; gap:10px;">
+            <button type="button" onclick="closeRoomModal()" style="flex:1; padding:12px; border-radius:10px; border:none; background:#e5e5ea; font-weight:bold; cursor:pointer;">Abbrechen</button>
+            <button type="button" onclick="confirmAddRoom()" style="flex:1; padding:12px; border-radius:10px; border:none; background:var(--primary, #007aff); color:white; font-weight:bold; cursor:pointer;">Hinzufügen</button>
+        </div>
+    </div>
+</div>
+
+<!-- LÖSCHEN BESTÄTIGUNGS MODAL -->
+<div id="deleteModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:var(--card, #fff); padding:25px; border-radius:20px; width:90%; max-width:330px; box-shadow:0 10px 25px rgba(0,0,0,0.2); box-sizing:border-box; color:var(--text); text-align:center;">
+        <h3 id="deleteModalTitle" style="margin-top:0; margin-bottom:15px; font-size:1.1rem;">Wirklich löschen?</h3>
+        <p id="deleteModalText" style="font-size:0.9rem; color:var(--gray); margin-bottom:20px;"></p>
+
+        <div style="display:flex; gap:10px;">
+            <button type="button" onclick="closeDeleteModal()" style="flex:1; padding:12px; border-radius:10px; border:none; background:#e5e5ea; font-weight:bold; cursor:pointer;">Abbrechen</button>
+            <button type="button" id="deleteConfirmBtn" onclick="confirmDelete()" style="flex:1; padding:12px; border-radius:10px; border:none; background:var(--danger, #ff3b30); color:white; font-weight:bold; cursor:pointer;">Löschen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 1: Für Hinweise & Fehlermeldungen (z.B. falsches Passwort -> Nur "OK") -->
+<div id="customConfirmModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); align-items:center; justify-content:center; z-index:9999; backdrop-filter: blur(8px);">
+    <div class="modal-card" style="background:var(--card, #1c1c1e); padding:25px; border-radius:20px; width:90%; max-width:380px; text-align:center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); color:var(--text, #fff);">
+        <h3 id="customConfirmTitle" style="margin-top:0; margin-bottom:10px; font-size:1.3rem;">Hinweis</h3>
+        <p id="customConfirmMessage" style="margin-bottom:20px; font-size:1rem; opacity:0.9;"></p>
+        <div style="display:flex;">
+            <button type="button" id="customConfirmYes" onclick="resolveConfirm(true)" style="width:100%; padding:12px; border-radius:12px; border:none; background:#007aff; color:#fff; cursor:pointer; font-weight:800;">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 2: Eigens für den Löschvorgang (Mit "Abbrechen" und "Löschen") -->
+<div id="customDeleteModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); align-items:center; justify-content:center; z-index:9999; backdrop-filter: blur(8px);">
+    <div class="modal-card" style="background:var(--card, #1c1c1e); padding:25px; border-radius:20px; width:90%; max-width:380px; text-align:center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); color:var(--text, #fff);">
+        <h3 id="customDeleteTitle" style="margin-top:0; margin-bottom:10px; font-size:1.3rem;">Benutzer löschen</h3>
+        <p id="customDeleteMessage" style="margin-bottom:20px; font-size:1rem; opacity:0.9;"></p>
+        <div style="display:flex; gap:10px;">
+            <button type="button" onclick="resolveDelete(false)" style="flex:1; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:inherit; cursor:pointer; font-weight:800;">Abbrechen</button>
+            <button type="button" onclick="resolveDelete(true)" style="flex:1; padding:12px; border-radius:12px; border:none; background:#ff3b30; color:#fff; cursor:pointer; font-weight:800;">Löschen</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Für Texteingaben (z.B. neue Kategorie oder Favorit) -->
+<div id="customInputModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); align-items:center; justify-content:center; z-index:9999; backdrop-filter: blur(8px);">
+    <div class="modal-card" style="background:var(--card, #1c1c1e); padding:25px; border-radius:20px; width:90%; max-width:380px; text-align:center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); color:var(--text, #fff);">
+        <h3 id="customInputTitle" style="margin-top:0; margin-bottom:10px; font-size:1.3rem;">Eingabe</h3>
+        <p id="customInputMessage" style="margin-bottom:15px; font-size:1rem; opacity:0.9;"></p>
+        
+        <!-- Schönes Eingabefeld im Design -->
+        <input type="text" id="customInputField" style="width:100%; padding:12px; border-radius:12px; border:2px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.1); color:inherit; font-weight:800; font-size:1rem; margin-bottom:20px; outline:none; box-sizing:border-box;" placeholder="Hier eingeben...">
+        
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <button type="button" onclick="resolveInput(false)" style="width:100%; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:inherit; cursor:pointer; font-weight:800;">Abbrechen</button>
+            <button type="button" onclick="resolveInput(true)" style="width:100%; padding:12px; border-radius:12px; border:none; background:#0984e3; color:#fff; cursor:pointer; font-weight:800;">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Speziell für die Wochentags-Auswahl beim Essen (0-6) -->
+<div id="customFoodModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); align-items:center; justify-content:center; z-index:9999; backdrop-filter: blur(8px);">
+    <div class="modal-card" style="background:var(--card, #1c1c1e); padding:25px; border-radius:20px; width:90%; max-width:380px; text-align:center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); color:var(--text, #fff);">
+        <h3 id="customFoodTitle" style="margin-top:0; margin-bottom:10px; font-size:1.3rem;">Essen planen</h3>
+        <p id="customFoodMessage" style="margin-bottom:15px; font-size:1rem; opacity:0.9; line-height:1.4;"></p>
+        
+        <!-- Eingabefeld für die Zahl (0-6) -->
+        <input type="number" id="customFoodField" min="0" max="6" style="width:100%; padding:12px; border-radius:12px; border:2px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.1); color:inherit; font-weight:800; font-size:1.2rem; margin-bottom:20px; outline:none; text-align:center; box-sizing:border-box;" placeholder="0-6">
+        
+        <!-- Buttons untereinander -->
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <button type="button" onclick="resolveFoodPrompt(false)" style="width:100%; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:inherit; cursor:pointer; font-weight:800;">Abbrechen</button>
+            <button type="button" onclick="resolveFoodPrompt(true)" style="width:100%; padding:12px; border-radius:12px; border:none; background:#0984e3; color:#fff; cursor:pointer; font-weight:800;">OK</button>
+        </div>
+    </div>
+</div>
 <!-- SKRIPTE WITH CACHE-BUSTING -->
 <script src="config.js"></script>
-<script src="script.js"></script>
+<script src="script.js?v=2.2"></script>
 <script src="finance.js?v=2.0"></script>
 </body>
 </html>

@@ -106,6 +106,26 @@ body[class*="theme-"] #list-todo li.urgent-blink {
     z-index: 10;
 }
 
+/* --- Mülleimer-Button im Shop absolut rahmen- und schattenlos machen --- */
+.btn-del-item {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0;
+    margin: 0;
+}
+
+.btn-del-item:focus, 
+.btn-del-item:active {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: scale(0.9); /* Kleiner Klick-Effekt */
+}
+
 .badge.visible { display: block; }
 
 /* Blink-Effekt für fällige Aufgaben */
@@ -210,6 +230,13 @@ body[class*="theme-"] #list-todo li.urgent-blink {
         .month-card { padding: 35px !important; margin-bottom: 25px !important; border-radius: 35px !important; }
         .month-card h2 { font-size: 2.2rem !important; margin-bottom: 20px !important; }
         .month-card .finance-item { font-size: 2.4rem !important; padding: 20px !important; margin-bottom: 10px !important; border-radius: 18px !important; }
+        
+        #years-container { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 25px !important; margin: 0 !important; }
+        #years-container .month-card { padding: 35px !important; margin-bottom: 0 !important; border-radius: 35px !important; }
+        #years-container .month-card h3 { font-size: 2.2rem !important; margin-bottom: 15px !important; }
+        #years-container .month-card div { font-size: 1.3rem !important; }
+        #years-container .month-card .summary-total { font-size: 1.8rem !important; margin-top: 15px !important; padding-top: 15px !important; border-top: 3px solid rgba(0,0,0,0.1) !important; }
+    
 
         /* --- TABLET INPUT FIX (ÜBERALL GROSS & BREIT) --- */
         .finance-input-row { gap: 15px !important; margin-bottom: 25px !important; display: flex !important; align-items: center !important; }
@@ -275,6 +302,7 @@ body[class*="theme-"] #list-todo li.urgent-blink {
     .fav-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; }
     .fav-chip { background: var(--card); padding: 12px 18px; border-radius: 18px; font-size: 0.9rem; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #e5e5ea; cursor: pointer; display: flex; align-items: center; color: var(--text); }
     .del-fav { color: var(--danger); margin-left: 10px; font-weight: 800; font-size: 1.1rem; }
+    .del-cat { color: var(--danger); margin-left: 6px; font-weight: 800; font-size: 1.1rem; }
     ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 15px; align-items: stretch; }
     li { background: var(--card); padding: 18px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); font-size: 1rem; flex: 1 1 300px; max-width: 100%; box-sizing: border-box; color: var(--text); }
     .week-grid { display: grid; gap: 12px; margin-top: 10px; }
@@ -297,12 +325,18 @@ body[class*="theme-"] #list-todo li.urgent-blink {
     .trash-date { font-size: 0.85rem; color: var(--gray); margin-top: 5px; font-weight: 600; }
     /* --- FINANCE HISTORY COMPACT --- */
 
-    #months-container { display: grid; grid-template-columns: repeat( 1fr); gap: 15px; margin: 0 15px; }
+    #months-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 0 15px; }
 
     .month-card { background: var(--card); border-radius: 25px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.1s; cursor: pointer; display: flex; flex-direction: column; }
     .month-card:active { transform: scale(0.96); }
 
     .month-card h2 { margin: 0 0 15px 0; font-size: 1.3rem; color: var(--primary); border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    
+    #years-container { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 15px !important; margin: 0 15px !important; }
+    #years-container .month-card { padding: 20px !important; margin-bottom: 0 !important; border-radius: 25px !important; }
+    #years-container .month-card h3 { font-size: 1.3rem !important; margin-bottom: 10px !important; }
+    #years-container .month-card div { font-size: 0.9rem !important; }
+    #years-container .month-card .summary-total { font-size: 1rem !important; margin-top: 10px !important; padding-top: 10px !important; border-top: 1px solid rgba(0,0,0,0.1) !important; }
 
     /* Eingabefelder (Popup & Karte) */
     .finance-input-row { display: flex; gap: 8px; margin-bottom: 20px; }

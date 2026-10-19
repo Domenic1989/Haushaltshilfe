@@ -34,8 +34,10 @@ body.theme-green .modal-content h1, body.theme-green .modal-content h2, body.the
 body.theme-green .modal-content button[onclick*="closeEdit"], body.theme-green .modal-content button[onclick*="intervalModal"], body.theme-green .modal-content button[onclick*="shopQtyModal"] { color: #003d33 !important; font-weight: 800 !important; opacity: 1 !important; background: none; border: none; transition: all 0.2s ease; cursor: pointer; }
 body.theme-green .modal-content button[onclick*="closeEdit"]:hover, body.theme-green .modal-content button[onclick*="intervalModal"]:hover, body.theme-green .modal-content button[onclick*="shopQtyModal"]:hover { color: #003d33 !important; transform: scale(1.1); background: rgba(0, 61, 51, 0.05) !important; border-radius: 8px; }
 /* Namen-Dropdown & Namen-Eingabe */
-body.theme-green #modalAssignee, body.theme-green #edit-name { color: #003d33 !important; font-weight: 800 !important; border: 2px solid #003d33 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 15px !important; transition: all 0.2s ease; outline: none; }
-
+body.theme-green #editModal > div { background: rgba(85, 239, 196, 0.85) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important; color: #000000 !important; border-radius: 20px !important; }
+body.theme-green #editModal h2, body.theme-green #editModal h3, body.theme-green #editModal label { color: #003d33 !important; font-weight: 900 !important; }
+body.theme-green #edit-assignee { color: #003d33 !important; font-weight: 800 !important; border: 2px solid #003d33 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 15px !important; padding: 12px; transition: all 0.2s ease; outline: none; }
+body.theme-green #modalAssignee, body.theme-green #edit-name, body.theme-green #modalName, body.theme-green #modalTitle { color: #003d33 !important; font-weight: 800 !important; border: 2px solid #003d33 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 15px !important; transition: all 0.2s ease; outline: none; }
 /* Alle Datums-Felder */
 body.theme-green #modalDate, body.theme-green #edit-date-val { color: #003d33 !important; font-weight: 800 !important; border: 2px solid #003d33 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 15px !important; padding: 12px; transition: all 0.2s ease; outline: none; font-family: inherit; }
 
@@ -106,5 +108,63 @@ body.theme-green #fixkostenList div[style*="var(--gray)"] { color: #003d33 !impo
 body.theme-green #fixkostenList div[style*="text-align:center"] { background: rgba(255, 255, 255, 0.4) !important; color: #003d33 !important; border: 1px dashed rgba(0, 61, 51, 0.3) !important; }
 
 /* Hauptansicht Buttons */
-body.theme-green .finance-controls button[onclick*="addNewMonth"] { background: #00b894 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4) !important; }
+body.theme-green .finance-controls button[onclick*="addNewYear"],
+body.theme-green .finance-controls button[onclick*="addNewMonth"] { background: #00b894 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4) !important; font-weight: 700 !important; }
 body.theme-green .finance-controls button[onclick*="fixkostenModal"] { background: rgba(255, 255, 255, 0.45) !important; color: #003d33 !important; border: 1px solid rgba(255, 255, 255, 0.4) !important; backdrop-filter: blur(20px); font-weight: 700 !important; }
+
+body.theme-green #set_token { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003d33 !important; color: #003d33 !important; font-weight: 700 !important; border-radius: 12px !important; }
+body.theme-green #set_master_pw, body.theme-green #set_admin_pw { color: #003d33 !important; font-weight: 800 !important; border: 2px solid #003d33 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; outline: none !important; }
+body.theme-green #set_token:focus, body.theme-green #set_master_pw:focus, body.theme-green #set_admin_pw:focus { background: #ffffff !important; border-color: #00b894 !important; box-shadow: 0 0 10px rgba(0, 184, 148, 0.3) !important; }
+body.theme-green #settingsOverlay .tab-toggle { accent-color: #00b894 !important; }
+body.theme-green #settingsOverlay label { color: #003d33 !important; }
+body.theme-green #settingsOverlay button[onclick*="saveSystemSettings"] { background: #00b894 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4) !important; font-weight: 800 !important; }
+body.theme-green #settingsOverlay button[onclick*="settingsOverlay']"] { background: rgba(255, 255, 255, 0.5) !important; color: #003d33 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; backdrop-filter: blur(20px); font-weight: 800 !important; }
+/* --- GREEN THEME: BENUTZER MODAL (KOMPAKT NEBENEINANDER) --- */
+body.theme-green #userModal > div { background: rgba(85, 239, 196, 0.9) !important; backdrop-filter: blur(30px) saturate(180%) !important; border: 1px solid rgba(255, 255, 255, 0.4) !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important; color: #000000 !important; }
+body.theme-green #userModal h3 { color: #003d33 !important; font-weight: 900 !important; }
+body.theme-green #userModal label { color: #003d33 !important; font-weight: 800 !important; opacity: 0.9 !important; }
+body.theme-green #userModal input[type="text"], body.theme-green #userModal input[type="password"] { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003d33 !important; color: #003d33 !important; font-weight: 800 !important; border-radius: 10px !important; outline: none !important; }
+body.theme-green #userModal input::placeholder { color: rgba(0, 61, 51, 0.4) !important; }
+body.theme-green #userModal div[style*="background:rgba"] { background: rgba(255, 255, 255, 0.4) !important; border: 1px solid rgba(255, 255, 255, 0.6) !important; }
+body.theme-green #userModal input[type="checkbox"] { accent-color: #00b894 !important; }
+body.theme-green #userModal button[onclick*="saveUserModal"] { background: #00b894 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4) !important; font-weight: 800 !important; }
+body.theme-green #userModal button[onclick*="closeUserModal"] { background: rgba(255, 255, 255, 0.5) !important; color: #003d33 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; font-weight: 800 !important; backdrop-filter: blur(10px); }
+body.theme-green #passwordModal > div { background: rgba(85, 239, 196, 0.9) !important; backdrop-filter: blur(30px) saturate(180%) !important; border: 1px solid rgba(255, 255, 255, 0.4) !important; color: #000000 !important; }
+body.theme-green #passwordModal h3 { color: #003d33 !important; font-weight: 900 !important; }
+body.theme-green #passwordModal input[type="password"] { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003d33 !important; color: #003d33 !important; font-weight: 800 !important; border-radius: 10px !important; outline: none !important; font-size: 1.2rem !important; }
+body.theme-green #passwordModal button[onclick*="closePasswordModal(true)"] { background: #00b894 !important; color: #ffffff !important; font-weight: 800 !important; }
+body.theme-green #passwordModal button[onclick*="closePasswordModal(false)"] { background: rgba(255, 255, 255, 0.5) !important; color: #003d33 !important; font-weight: 800 !important; }
+/* --- GREEN THEME: ROOM & DELETE MODALS STYLING (NEBENEINANDER) --- */
+body.theme-green #roomModal > div, body.theme-green #deleteModal > div { background: rgba(85, 239, 196, 0.9) !important; backdrop-filter: blur(30px) saturate(180%) !important; -webkit-backdrop-filter: blur(30px) saturate(180%) !important; border: 1px solid rgba(255, 255, 255, 0.4) !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important; color: #000000 !important; border-radius: 20px !important; }
+body.theme-green #roomModal h3, body.theme-green #deleteModal h3 { color: #003d33 !important; font-weight: 900 !important; }
+body.theme-green #deleteModal p { color: #003d33 !important; font-weight: 800 !important; opacity: 0.9 !important; }
+body.theme-green #newRoomInput { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003d33 !important; color: #003d33 !important; font-weight: 800 !important; border-radius: 12px !important; outline: none !important; }
+body.theme-green #newRoomInput::placeholder { color: rgba(0, 61, 51, 0.4) !important; }
+body.theme-green #roomModal button[onclick*="confirmAddRoom"], body.theme-green #deleteModal button[onclick*="confirmDelete"] { background: #00b894 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4) !important; font-weight: 800 !important; }
+body.theme-green #roomModal button[onclick*="closeRoomModal"], body.theme-green #deleteModal button[onclick*="closeDeleteModal"] { background: rgba(255, 255, 255, 0.5) !important; color: #003d33 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; font-weight: 800 !important; backdrop-filter: blur(10px); }
+/* --- GREEN THEME: CUSTOM CONFIRM MODAL --- */
+body.theme-green #customConfirmModal .modal-card { background: rgba(85, 239, 196, 0.9) !important; backdrop-filter: blur(30px) saturate(180%) !important; -webkit-backdrop-filter: blur(30px) saturate(180%) !important; border: 1px solid rgba(255, 255, 255, 0.4) !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important; color: #000000 !important; border-radius: 20px !important; }
+body.theme-green #customConfirmTitle { color: #003d33 !important; font-weight: 900 !important; }
+body.theme-green #customConfirmMessage { color: #003d33 !important; font-weight: 800 !important; opacity: 0.9 !important; }
+body.theme-green #customConfirmYes { background: #ff3b30 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4) !important; font-weight: 800 !important; }
+body.theme-green #customConfirmNo { background: rgba(255, 255, 255, 0.5) !important; color: #003d33 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; font-weight: 800 !important; backdrop-filter: blur(10px); }
+/* --- GREEN THEME: CUSTOM DELETE MODAL --- */
+body.theme-green #customDeleteModal .modal-card { background: rgba(85, 239, 196, 0.9) !important; backdrop-filter: blur(30px) saturate(180%) !important; -webkit-backdrop-filter: blur(30px) saturate(180%) !important; border: 1px solid rgba(255, 255, 255, 0.4) !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important; color: #000000 !important; border-radius: 20px !important; }
+body.theme-green #customDeleteTitle { color: #003d33 !important; font-weight: 900 !important; }
+body.theme-green #customDeleteMessage { color: #003d33 !important; font-weight: 800 !important; opacity: 0.9 !important; }
+body.theme-green #customDeleteModal div[style*="display:flex"] { display: flex !important; flex-direction: column !important; gap: 10px !important; }
+body.theme-green #customDeleteModal div[style*="display:flex"] button { width: 100% !important; flex: none !important; }
+body.theme-green #customDeleteModal button[onclick*="resolveDelete(false)"] { background: rgba(255, 255, 255, 0.5) !important; color: #003d33 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; font-weight: 800 !important; backdrop-filter: blur(10px); border-radius: 12px !important; }
+body.theme-green #customDeleteModal button[onclick*="resolveDelete(true)"] { background: #ff3b30 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4) !important; font-weight: 800 !important; border-radius: 12px !important; }
+/* --- GREEN THEME: INPUT MODAL --- */
+body.theme-green #customInputModal .modal-card { background: rgba(85, 239, 196, 0.9) !important; backdrop-filter: blur(30px) saturate(180%) !important; border: 1px solid rgba(255, 255, 255, 0.4) !important; border-radius: 20px !important; }
+body.theme-green #customInputTitle { color: #003d33 !important; font-weight: 900 !important; }
+body.theme-green #customInputMessage { color: #003d33 !important; font-weight: 800 !important; opacity: 0.9 !important; }
+body.theme-green #customInputField { background: rgba(255, 255, 255, 0.5) !important; border: 2px solid #003d33 !important; color: #003d33 !important; font-weight: 800 !important; }
+/* --- GREEN THEME: FOOD PROMPT MODAL --- */
+body.theme-green #customFoodModal .modal-card { background: rgba(85, 239, 196, 0.9) !important; backdrop-filter: blur(30px) saturate(180%) !important; border: 1px solid rgba(255, 255, 255, 0.4) !important; border-radius: 20px !important; }
+body.theme-green #customFoodTitle { color: #003d33 !important; font-weight: 900 !important; }
+body.theme-green #customFoodMessage { color: #003d33 !important; font-weight: 800 !important; opacity: 0.9 !important; }
+body.theme-green #customFoodField { background: rgba(255, 255, 255, 0.5) !important; border: 2px solid #003d33 !important; color: #003d33 !important; font-weight: 800 !important; }
+body.theme-green #customFoodModal button[onclick*="resolveFoodPrompt(true)"] { background: #00b894 !important; color: #ffffff !important; font-weight: 800 !important; border-radius: 12px !important; }
+body.theme-green #customFoodModal button[onclick*="resolveFoodPrompt(false)"] { background: rgba(255, 255, 255, 0.5) !important; color: #003d33 !important; font-weight: 800 !important; border-radius: 12px !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; }

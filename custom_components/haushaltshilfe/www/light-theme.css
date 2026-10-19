@@ -37,8 +37,10 @@ body.theme-light .modal-content button[onclick*="intervalModal"]:hover,
 body.theme-light .modal-content button[onclick*="shopQtyModal"]:hover { color: #ffcc00 !important; transform: scale(1.1); background: rgba(255, 204, 0, 0.1) !important; border-radius: 8px; }
 
 /* --- LIGHT THEME: NAMEN & EINGABE --- */
-body.theme-light #modalAssignee, body.theme-light #edit-name { color: #997a00 !important; font-weight: 800 !important; border: 2px solid #ffcc00 !important; background: rgba(255, 255, 255, 0.95) !important; border-radius: 15px !important; transition: all 0.2s ease; outline: none; }
-
+body.theme-light #editModal > div { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important; color: #000000 !important; border-radius: 20px !important; }
+body.theme-light #editModal h2, body.theme-light #editModal h3, body.theme-light #editModal label { color: #997a00 !important; font-weight: 800 !important; }
+body.theme-light #edit-assignee { color: #997a00 !important; font-weight: 800 !important; border: 2px solid #ffcc00 !important; background: rgba(255, 255, 255, 0.95) !important; border-radius: 15px !important; padding: 12px; transition: all 0.2s ease; outline: none; }
+body.theme-light #modalAssignee, body.theme-light #edit-name, body.theme-light #modalName, body.theme-light #modalTitle { color: #997a00 !important; font-weight: 800 !important; border: 2px solid #ffcc00 !important; background: rgba(255, 255, 255, 0.95) !important; border-radius: 15px !important; transition: all 0.2s ease; outline: none; }
 /* --- LIGHT THEME: DATUM --- */
 body.theme-light #modalDate, body.theme-light #edit-date-val { color: #997a00 !important; font-weight: 800 !important; border: 2px solid #ffcc00 !important; background: rgba(255, 255, 255, 0.95) !important; border-radius: 15px !important; padding: 12px; transition: all 0.2s ease; outline: none; font-family: inherit; }
 
@@ -122,8 +124,66 @@ body.theme-light #fixkostenList div[style*="var(--gray)"] { color: #997a00 !impo
 body.theme-light #fixkostenList div[style*="text-align:center"] { background: rgba(255, 255, 255, 0.5) !important; color: #997a00 !important; border: 1px dashed rgba(255, 204, 0, 0.6) !important; }
 
 /* Hauptansicht Buttons */
-body.theme-light .finance-controls button[onclick*="addNewMonth"] { background: #ffcc00 !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; }
+body.theme-light .finance-controls button[onclick*="addNewYear"],
+body.theme-light .finance-controls button[onclick*="addNewMonth"] { background: #ffcc00 !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; font-weight: 700 !important; }
 body.theme-light .finance-controls button[onclick*="fixkostenModal"] { background: rgba(255, 255, 255, 0.5) !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.6) !important; backdrop-filter: blur(20px); font-weight: 700 !important; }
 /* --- LIGHT THEME: FIX SCHLIESSUNG & BUTTON MONAT HINZUFÜGEN --- */
 body.theme-light .side-btn.active-todo .shop-badge { background: #ffffff !important; color: #000000 !important; }
 body.theme-light .finance-controls button[onclick*="addNewMonth"] { background: #ffcc00 !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; font-weight: 800 !important; }
+
+body.theme-light #set_token { background: rgba(255, 255, 255, 0.95) !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 700 !important; border-radius: 12px !important; }
+body.theme-light #set_master_pw, body.theme-light #set_admin_pw { color: #997a00 !important; font-weight: 800 !important; border: 2px solid #ffcc00 !important; background: rgba(255, 255, 255, 0.95) !important; border-radius: 12px !important; outline: none !important; }
+body.theme-light #set_token:focus, body.theme-light #set_master_pw:focus, body.theme-light #set_admin_pw:focus { background: #ffffff !important; border-color: #997a00 !important; box-shadow: 0 0 10px rgba(255, 204, 0, 0.3) !important; }
+body.theme-light #settingsOverlay .tab-toggle { accent-color: #ffcc00 !important; }
+body.theme-light #settingsOverlay label { color: #997a00 !important; }
+body.theme-light #settingsOverlay button[onclick*="saveSystemSettings"] { background: #ffcc00 !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; font-weight: 800 !important; }
+body.theme-light #settingsOverlay button[onclick*="settingsOverlay']"] { background: rgba(255, 255, 255, 0.5) !important; color: #997a00 !important; border: 1px solid #ffcc00 !important; backdrop-filter: blur(20px); font-weight: 800 !important; }
+/* --- LIGHT THEME: BENUTZER MODAL (KOMPAKT NEBENEINANDER) --- */
+body.theme-light #userModal > div { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important; color: #000000 !important; }
+body.theme-light #userModal h3 { color: #997a00 !important; font-weight: 800 !important; }
+body.theme-light #userModal label { color: #997a00 !important; font-weight: 700 !important; opacity: 0.9 !important; }
+body.theme-light #userModal input[type="text"], body.theme-light #userModal input[type="password"] { background: #ffffff !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 800 !important; border-radius: 10px !important; outline: none !important; }
+body.theme-light #userModal input::placeholder { color: rgba(153, 122, 0, 0.5) !important; }
+body.theme-light #userModal div[style*="background:rgba"] { background: rgba(255, 255, 255, 0.5) !important; border: 1px solid rgba(255, 204, 0, 0.6) !important; }
+body.theme-light #userModal input[type="checkbox"] { accent-color: #ffcc00 !important; }
+body.theme-light #userModal button[onclick*="saveUserModal"] { background: #ffcc00 !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; font-weight: 800 !important; }
+body.theme-light #userModal button[onclick*="closeUserModal"] { background: rgba(255, 255, 255, 0.8) !important; color: #997a00 !important; border: 1px solid #ffcc00 !important; font-weight: 800 !important; backdrop-filter: blur(10px); }
+body.theme-light #passwordModal > div { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; color: #000000 !important; }
+body.theme-light #passwordModal h3 { color: #997a00 !important; font-weight: 800 !important; }
+body.theme-light #passwordModal input[type="password"] { background: #ffffff !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 800 !important; border-radius: 10px !important; outline: none !important; font-size: 1.2rem !important; }
+body.theme-light #passwordModal button[onclick*="closePasswordModal(true)"] { background: #ffcc00 !important; color: #000000 !important; font-weight: 800 !important; }
+body.theme-light #passwordModal button[onclick*="closePasswordModal(false)"] { background: rgba(255, 255, 255, 0.8) !important; color: #997a00 !important; font-weight: 800 !important; }
+/* --- LIGHT THEME: ROOM & DELETE MODALS STYLING (NEBENEINANDER) --- */
+body.theme-light #roomModal > div, body.theme-light #deleteModal > div { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important; color: #000000 !important; border-radius: 20px !important; }
+body.theme-light #roomModal h3, body.theme-light #deleteModal h3 { color: #997a00 !important; font-weight: 800 !important; }
+body.theme-light #deleteModal p { color: #997a00 !important; font-weight: 700 !important; opacity: 0.9 !important; }
+body.theme-light #newRoomInput { background: #ffffff !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 800 !important; border-radius: 12px !important; outline: none !important; }
+body.theme-light #newRoomInput::placeholder { color: rgba(153, 122, 0, 0.5) !important; }
+body.theme-light #roomModal button[onclick*="confirmAddRoom"], body.theme-light #deleteModal button[onclick*="confirmDelete"] { background: #ffcc00 !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; font-weight: 800 !important; }
+body.theme-light #roomModal button[onclick*="closeRoomModal"], body.theme-light #deleteModal button[onclick*="closeDeleteModal"] { background: rgba(255, 255, 255, 0.8) !important; color: #997a00 !important; border: 1px solid #ffcc00 !important; font-weight: 800 !important; backdrop-filter: blur(10px); }
+/* --- LIGHT THEME: INPUT MODAL --- */
+body.theme-light #customInputModal .modal-card { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; border-radius: 20px !important; }
+body.theme-light #customInputTitle { color: #997a00 !important; font-weight: 800 !important; }
+body.theme-light #customInputMessage { color: #997a00 !important; font-weight: 700 !important; opacity: 0.9 !important; }
+body.theme-light #customInputField { background: rgba(255, 255, 255, 0.8) !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 800 !important; }
+/* --- LIGHT THEME: CUSTOM CONFIRM MODAL --- */
+body.theme-light #customConfirmModal .modal-card { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important; color: #000000 !important; border-radius: 20px !important; }
+body.theme-light #customConfirmTitle { color: #997a00 !important; font-weight: 800 !important; }
+body.theme-light #customConfirmMessage { color: #997a00 !important; font-weight: 700 !important; opacity: 0.9 !important; }
+body.theme-light #customConfirmYes { background: #ff3b30 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4) !important; font-weight: 800 !important; }
+body.theme-light #customConfirmNo { background: rgba(255, 255, 255, 0.8) !important; color: #997a00 !important; border: 1px solid #ffcc00 !important; font-weight: 800 !important; backdrop-filter: blur(10px); }
+/* --- LIGHT THEME: CUSTOM DELETE MODAL --- */
+body.theme-light #customDeleteModal .modal-card { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important; color: #000000 !important; border-radius: 20px !important; }
+body.theme-light #customDeleteTitle { color: #997a00 !important; font-weight: 800 !important; }
+body.theme-light #customDeleteMessage { color: #997a00 !important; font-weight: 700 !important; opacity: 0.9 !important; }
+body.theme-light #customDeleteModal div[style*="display:flex"] { display: flex !important; flex-direction: column !important; gap: 10px !important; }
+body.theme-light #customDeleteModal div[style*="display:flex"] button { width: 100% !important; flex: none !important; }
+body.theme-light #customDeleteModal button[onclick*="resolveDelete(false)"] { background: rgba(255, 255, 255, 0.8) !important; color: #997a00 !important; border: 1px solid #ffcc00 !important; font-weight: 800 !important; backdrop-filter: blur(10px); border-radius: 12px !important; }
+body.theme-light #customDeleteModal button[onclick*="resolveDelete(true)"] { background: #ff3b30 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4) !important; font-weight: 800 !important; border-radius: 12px !important; }
+/* --- LIGHT THEME: FOOD PROMPT MODAL --- */
+body.theme-light #customFoodModal .modal-card { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; border-radius: 20px !important; }
+body.theme-light #customFoodTitle { color: #997a00 !important; font-weight: 800 !important; }
+body.theme-light #customFoodMessage { color: #997a00 !important; font-weight: 700 !important; opacity: 0.9 !important; }
+body.theme-light #customFoodField { background: rgba(255, 255, 255, 0.8) !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 800 !important; }
+body.theme-light #customFoodModal button[onclick*="resolveFoodPrompt(true)"] { background: #ffcc00 !important; color: #7a5e00 !important; font-weight: 800 !important; border-radius: 12px !important; }
+body.theme-light #customFoodModal button[onclick*="resolveFoodPrompt(false)"] { background: rgba(255, 255, 255, 0.8) !important; color: #997a00 !important; font-weight: 800 !important; border-radius: 12px !important; border: 1px solid #ffcc00 !important; }
