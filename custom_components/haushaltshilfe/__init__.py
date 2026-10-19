@@ -33,7 +33,7 @@ AUTO_INPUT_TEXTS = {
 
 
 class HaushaltshilfeCredentialsView(HomeAssistantView):
-    """API Endpoint um Master- und Admin-Passwort an das Frontend zu liefern."""
+    """API Endpoint um Master- und Admin-Passwort sowie sichtbare Tabs an das Frontend zu liefern."""
     url = "/api/haushaltshilfe/credentials"
     name = "api:haushaltshilfe:credentials"
     requires_auth = False
@@ -47,14 +47,34 @@ class HaushaltshilfeCredentialsView(HomeAssistantView):
 
         m_pw = entry.options.get(CONF_MASTER_PW, entry.data.get(CONF_MASTER_PW, store_data.get("helper_master_pw", "")))
         a_pw = entry.options.get(CONF_ADMIN_PW, entry.data.get(CONF_ADMIN_PW, store_data.get("helper_admin_pw", "")))
+        
+        # Tabs genau wie die Passwörter aus Options -> Data -> Store holen
+        raw_tabs = entry.options.get(CONF_VISIBLE_TABS)
+        if raw_tabs is None:
+            raw_tabs = entry.data.get(CONF_VISIBLE_TABS)
+        if raw_tabs is None:
+            raw_tabs = store_data.get("helper_visible_tabs", '["shop", "todo", "food", "trash", "finance"]')
+
+        # Sicherstellen, dass immer eine saubere Liste ans Frontend geht
+        if isinstance(raw_tabs, str):
+            try:
+                visible_tabs = json.loads(raw_tabs)
+            except Exception:
+                visible_tabs = [v.strip().strip("'\"") for v in raw_tabs.strip("[]").split(",") if v.strip()]
+        elif isinstance(raw_tabs, list):
+            visible_tabs = raw_tabs
+        else:
+            visible_tabs = ["shop", "todo", "food", "trash", "finance"]
+
         return self.json({
             "master_pw": str(m_pw),
-            "admin_pw": str(a_pw)
+            "admin_pw": str(a_pw),
+            "visible_tabs": visible_tabs
         })
 
 
 class HaushaltshilfeUpdateCredentialsView(HomeAssistantView):
-    """API Endpoint um Master- und Admin-Passwort zentral zu speichern."""
+    """API Endpoint um Master- und Admin-Passwort sowie sichtbare Tabs zentral zu speichern."""
     url = "/api/haushaltshilfe/update_credentials"
     name = "api:haushaltshilfe:update_credentials"
     requires_auth = False
@@ -76,8 +96,9 @@ class HaushaltshilfeUpdateCredentialsView(HomeAssistantView):
 
         new_master = data.get("master_pw")
         new_admin = data.get("admin_pw")
+        new_tabs = data.get("visible_tabs")
 
-        new_options = dict(entry.options)
+        new_options = {**entry.data, **entry.options}
         updated = False
 
         if new_master is not None and str(new_master).strip() != "":
@@ -88,16 +109,37 @@ class HaushaltshilfeUpdateCredentialsView(HomeAssistantView):
             new_options[CONF_ADMIN_PW] = str(new_admin).strip()
             updated = True
 
+        parsed_tabs = None
+        if new_tabs is not None:
+            if isinstance(new_tabs, str):
+                try:
+                    parsed_tabs = json.loads(new_tabs)
+                except Exception:
+                    parsed_tabs = [v.strip().strip("'\"") for v in new_tabs.strip("[]").split(",") if v.strip()]
+            elif isinstance(new_tabs, list):
+                parsed_tabs = new_tabs
+
+            if parsed_tabs is not None:
+                new_options[CONF_VISIBLE_TABS] = parsed_tabs
+                updated = True
+
         if updated:
             hass.config_entries.async_update_entry(entry, options=new_options)
             
             store_data = hass.data[DOMAIN].get("data", {})
             store = hass.data[DOMAIN].get("store")
             if store_data is not None and store is not None:
-                if new_master:
+                if new_master is not None and str(new_master).strip() != "":
                     store_data["helper_master_pw"] = str(new_master).strip()
-                if new_admin:
+                if new_admin is not None and str(new_admin).strip() != "":
                     store_data["helper_admin_pw"] = str(new_admin).strip()
+                if parsed_tabs is not None:
+                    tabs_str = json.dumps(parsed_tabs)
+                    store_data["helper_visible_tabs"] = tabs_str
+                    current_state = hass.states.get("input_text.helper_visible_tabs")
+                    attrs = current_state.attributes.copy() if current_state else {}
+                    hass.states.async_set("input_text.helper_visible_tabs", tabs_str, attrs)
+
                 await store.async_save(store_data)
 
             return self.json({"success": True})
@@ -285,7 +327,7 @@ class HaushaltshilfeStateProxyView(HomeAssistantView):
         """Feuert ein Event oder setzt einen input_text / sensor Wert ohne Token."""
         hass = request.app["hass"]
         store_data = hass.data.get(DOMAIN, {}).get("data", {})
-        store = hass.data.get(DOMAIN, {}).get("store")
+        store = hass.data[DOMAIN].get("store")
         entry = hass.data.get(DOMAIN, {}).get("entry")
 
         try:
@@ -337,13 +379,22 @@ class HaushaltshilfeStateProxyView(HomeAssistantView):
 
                 if helper_key == "helper_visible_tabs" and entry is not None:
                     try:
-                        parsed = json.loads(str(value))
+                        if isinstance(value, list):
+                            parsed = value
+                        elif isinstance(value, str):
+                            try:
+                                parsed = json.loads(value)
+                            except json.JSONDecodeError:
+                                parsed = [v.strip().strip("'\"") for v in value.strip("[]").split(",") if v.strip()]
+                        else:
+                            parsed = list(value)
+
                         new_options = dict(entry.options)
                         if new_options.get(CONF_VISIBLE_TABS) != parsed:
                             new_options[CONF_VISIBLE_TABS] = parsed
                             hass.config_entries.async_update_entry(entry, options=new_options)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        _LOGGER.error("Fehler beim Aktualisieren der visible_tabs Optionen im Proxy: %s", e)
 
                 return self.json({"success": True})
 
@@ -429,12 +480,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 updated = False
                 if helper_key == "helper_visible_tabs":
                     try:
-                        parsed = json.loads(str(value))
+                        if isinstance(value, list):
+                            parsed = value
+                        elif isinstance(value, str):
+                            try:
+                                parsed = json.loads(value)
+                            except json.JSONDecodeError:
+                                parsed = [v.strip().strip("'\"") for v in value.strip("[]").split(",") if v.strip()]
+                        else:
+                            parsed = list(value)
+
                         if new_options.get(CONF_VISIBLE_TABS) != parsed:
                             new_options[CONF_VISIBLE_TABS] = parsed
                             updated = True
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        _LOGGER.error("Fehler beim Verarbeiten der visible_tabs im Call-Service: %s", e)
 
                 if updated:
                     hass.config_entries.async_update_entry(entry, options=new_options)
@@ -459,7 +519,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if ev_type in EVENT_MAPPING:
             storage_key = EVENT_MAPPING[ev_type]
             raw_val = None
-            # HIER WAR DER FEHLER: "templates" ist jetzt mit in der Liste!
             for key in ("tasks", "favs", "json_data", "data", "users", "templates"):
                 if event.data.get(key) is not None:
                     raw_val = event.data.get(key)
@@ -469,7 +528,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 val_str = raw_val if isinstance(raw_val, str) else json.dumps(raw_val)
                 store_data[storage_key] = val_str
 
-                # Falls Fixkosten-Vorlagen geändert wurden, sofort State & Sensor aktualisieren
                 if ev_type == "set_finance_templates":
                     store_data["finance_templates"] = val_str
                     store_data["helper_finance_templates"] = val_str
@@ -530,9 +588,13 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
     store = hass.data[DOMAIN].get("store")
     store_data = hass.data[DOMAIN].get("data", {})
 
-    admin_pw = entry.options.get(CONF_ADMIN_PW)
-    master_pw = entry.options.get(CONF_MASTER_PW)
+    admin_pw = entry.options.get(CONF_ADMIN_PW) or entry.data.get(CONF_ADMIN_PW)
+    master_pw = entry.options.get(CONF_MASTER_PW) or entry.data.get(CONF_MASTER_PW)
+    
+    # Hier der entscheidende Fallback, damit visible_tabs nie None wird:
     visible_tabs = entry.options.get(CONF_VISIBLE_TABS)
+    if visible_tabs is None:
+        visible_tabs = entry.data.get(CONF_VISIBLE_TABS, ["shop", "todo", "food", "trash", "finance"])
 
     if admin_pw is not None:
         store_data["helper_admin_pw"] = str(admin_pw)
@@ -542,9 +604,12 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
     if visible_tabs is not None:
         tabs_str = json.dumps(visible_tabs) if isinstance(visible_tabs, list) else str(visible_tabs)
         store_data["helper_visible_tabs"] = tabs_str
-        current_state = hass.states.get("input_text.helper_visible_tabs")
+        
+        entity_id = "input_text.helper_visible_tabs"
+        current_state = hass.states.get(entity_id)
         attrs = current_state.attributes.copy() if current_state else {}
-        hass.states.async_set("input_text.helper_visible_tabs", tabs_str, attrs)
+        
+        hass.states.async_set(entity_id, tabs_str, attrs)
 
     if store:
         await store.async_save(store_data)

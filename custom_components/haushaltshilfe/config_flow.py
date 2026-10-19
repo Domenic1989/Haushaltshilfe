@@ -76,24 +76,20 @@ class HaushaltshilfeOptionsFlowHandler(config_entries.OptionsFlow):
         entry = self.config_entry
 
         if user_input is not None:
-            # Aktuelle Werte aus Options ODER Data als Ausgangslage
-            updated_options = dict(entry.options)
-            if not updated_options:
-                updated_options = dict(entry.data)
+            # Starte immer mit einer Kombination aus Data und den bisherigen Options als Basis
+            updated_options = {**entry.data, **entry.options}
 
-            # Master-Passwort: Nur aktualisieren wenn Wert eingegeben wurde
-            if user_input.get(CONF_MASTER_PW) and str(user_input[CONF_MASTER_PW]).strip():
-                updated_options[CONF_MASTER_PW] = str(user_input[CONF_MASTER_PW]).strip()
-            elif CONF_MASTER_PW not in updated_options:
-                updated_options[CONF_MASTER_PW] = entry.data.get(CONF_MASTER_PW, "")
+            # Master-Passwort: Nur überschreiben, wenn tatsächlich etwas eingegeben wurde
+            master_pw = user_input.get(CONF_MASTER_PW)
+            if master_pw and str(master_pw).strip():
+                updated_options[CONF_MASTER_PW] = str(master_pw).strip()
 
-            # Admin-Passwort: Nur aktualisieren wenn Wert eingegeben wurde
-            if user_input.get(CONF_ADMIN_PW) and str(user_input[CONF_ADMIN_PW]).strip():
-                updated_options[CONF_ADMIN_PW] = str(user_input[CONF_ADMIN_PW]).strip()
-            elif CONF_ADMIN_PW not in updated_options:
-                updated_options[CONF_ADMIN_PW] = entry.data.get(CONF_ADMIN_PW, "")
+            # Admin-Passwort: Nur überschreiben, wenn tatsächlich etwas eingegeben wurde
+            admin_pw = user_input.get(CONF_ADMIN_PW)
+            if admin_pw and str(admin_pw).strip():
+                updated_options[CONF_ADMIN_PW] = str(admin_pw).strip()
 
-            # Sichtbare Tabs aktualisieren
+            # Sichtbare Tabs direkt aus dem Multi-Select übernehmen
             if CONF_VISIBLE_TABS in user_input:
                 updated_options[CONF_VISIBLE_TABS] = user_input[CONF_VISIBLE_TABS]
 
