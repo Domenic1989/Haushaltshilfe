@@ -7,8 +7,5 @@
   "documentation": "https://github.com/Domenic1989/Haushaltshilfe",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/Domenic1989/Haushaltshilfe/issues",
-  "version": "1.0.3",
-  "categories": [
-    "integration"
-  ]
+  "version": "1.0.3"
 }
