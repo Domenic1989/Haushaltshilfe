@@ -1,4 +1,7 @@
 {
   "name": "Haushaltshilfe Pro",
-  "render_readme": true
+  "content_in_root": false,
+  "render_readme": true,
+  "zip_release": true,
+  "filename": "haushaltshilfe.zip"
 }
