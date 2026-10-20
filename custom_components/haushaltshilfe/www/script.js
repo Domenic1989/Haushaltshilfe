@@ -1882,13 +1882,19 @@ function highlightToday() {
     if(document.getElementById('card-'+idx)) document.getElementById('card-'+idx).classList.add('today'); 
 }
 
-function clearWeek() { 
-    if(confirm("Ganze Woche löschen?")) { 
-        for(let i=0; i<7; i++) { 
-            document.getElementById('plan-'+i).value=''; 
-            saveFood(i); 
-        } 
-    } 
+async function clearWeek() {
+    const confirmed = await showDeleteModal(
+        "Möchtest du wirklich den gesamten Essensplan für diese Woche löschen?",
+        "Woche zurücksetzen 🧹"
+    );
+
+    if (confirmed) {
+        for (let i = 0; i < 7; i++) {
+            const el = document.getElementById('plan-' + i);
+            if (el) el.value = '';
+            await saveFood(i);
+        }
+    }
 }
 
 async function loadTrash() {
