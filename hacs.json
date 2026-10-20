@@ -1,7 +1,6 @@
 {
-  "name": "Haushaltshilfe Pro",
+  "name": "Haus-Zentrale Pro",
   "render_readme": true,
-  "zip_release": false,
-  "content_in_root": false
+  "zip_release": true,
+  "filename": "haushaltshilfe.zip"
 }
-
