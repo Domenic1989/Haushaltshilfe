@@ -9,15 +9,15 @@ on:
 
 jobs:
   validate_hacs:
-    runs-on: "ubuntu-latest"
+    runs-on: ubuntu-latest
     steps:
-      - uses: "actions/checkout@v4"
-      - uses: "hacs/action@main"
+      - uses: actions/checkout@v4
+      - uses: hacs/action@main
         with:
-          category: "integration"
+          category: integration
 
   validate_hassfest:
-    runs-on: "ubuntu-latest"
+    runs-on: ubuntu-latest
     steps:
-      - uses: "actions/checkout@v4"
-      - uses: "home-assistant/actions/hassfest@master"
+      - uses: actions/checkout@v4
+      - uses: home-assistant/actions/hassfest@master
