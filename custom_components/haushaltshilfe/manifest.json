@@ -2,8 +2,7 @@
   "domain": "haushaltshilfe",
   "name": "Haushaltshilfe Pro",
   "categories": [
-    "productivity_information.calendars_todos",
-    "productivity_information.shopping_groceries"
+    "productivity_information"
   ],
   "codeowners": [
     "@Domenic1989"
