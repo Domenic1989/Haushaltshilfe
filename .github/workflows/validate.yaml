@@ -15,7 +15,6 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
-          ignore: categories
 
   validate_hassfest:
     runs-on: ubuntu-latest
