@@ -236,7 +236,26 @@ Klicke oben auf das Paletten-Symbol **`🎨`**, um das Erscheinungsbild der Ober
 Klicke in der untersten Navigationsleiste auf das Tür-Symbol **`🚪 Logout`**, um zur Benutzerauswahl zurückzukehren.
 ## Screenshots
 
-![Integration Einstellungen](screenshots/integration_einstellung.jpg)
+### ⚙️ Einstellungen
+![Integration Einstellung](screenshots/integration_einstellung.jpg)
+![Systemeinstellung](screenshots/systemeinstellung.jpg)
 
-![Fixkosten](screenshots/standart_fixkosten.jpg)
+### 🛒 Einkauf
+![Einkauf](screenshots/einkauf.jpg)
+
+### 🍲 Essensplan
+![Essensplan](screenshots/essensplan.jpg)
+
+### ✅ Aufgaben
+![Aufgaben](screenshots/aufgaben.jpg)
+![Aufgaben Erstellen](screenshots/aufgaben_erstellen.jpg)
+![Aufgaben Bearbeiten](screenshots/aufgaben_bearbeiten.jpg)
+
+### 💶 Finanzen
+![Finanzen Jahr](screenshots/finanzen_jahr.jpg)
+![Finanzen Monat](screenshots/finanzen_monat.jpg)
+![Finanzen Monats Eingabe](screenshots/finanzen_monats_eingabe.jpg)
+![Standard Fixkosten](screenshots/standart_fixkosten.jpg)
+![Fixkosten Intervall](screenshots/fixkosten_intervall.jpg)
+
  
