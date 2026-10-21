@@ -1,4 +1,5 @@
 {
   "name": "Haushaltshilfe Pro",
-  "render_readme": true
+  "render_readme": true,
+  "category": "integration"
 }
