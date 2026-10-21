@@ -10,14 +10,23 @@ on:
 jobs:
   validate_hacs:
     runs-on: ubuntu-latest
+    name: HACS Validation
     steps:
-      - uses: actions/checkout@v4
-      - uses: hacs/action@main
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: HACS Action
+        uses: hacs/action@v3.0.0  # Nutze eine stabile, aktuelle Version statt @main
         with:
           category: integration
 
   validate_hassfest:
     runs-on: ubuntu-latest
+    name: Hassfest Validation
     steps:
-      - uses: actions/checkout@v4
-      - uses: home-assistant/actions/hassfest@master
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Hassfest Action
+        uses: home-assistant/actions/hassfest@v1.3.0  # Von @master auf stabile v1 Version gewechselt
+
