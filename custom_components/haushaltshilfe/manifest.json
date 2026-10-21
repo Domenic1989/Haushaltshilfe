@@ -1,5 +1,5 @@
 {
-  "domain": "haushaltshilfe pro",
+  "domain": "haushaltshilfe",
   "name": "Haushaltshilfe Pro",
   "codeowners": ["@Domenic1989"],
   "config_flow": true,
