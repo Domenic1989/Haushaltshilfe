@@ -2,7 +2,7 @@
   "domain": "haushaltshilfe",
   "name": "Haushaltshilfe Pro",
   "categories": [
-    "productivity_information"
+    "system"
   ],
   "codeowners": [
     "@Domenic1989"
