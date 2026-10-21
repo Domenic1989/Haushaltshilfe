@@ -1,6 +1,10 @@
 {
   "domain": "haushaltshilfe",
   "name": "Haushaltshilfe Pro",
+  "categories": [
+    "productivity_information.calendars_todos",
+    "productivity_information.shopping_groceries"
+  ],
   "codeowners": [
     "@Domenic1989"
   ],
