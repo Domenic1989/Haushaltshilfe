@@ -12,6 +12,8 @@
 
 Eine elegante, benutzerfreundliche All-in-One-Lösung für die Organisation deines Haushalts direkt in Home Assistant. Verwalte Einkaufslisten, Finanzen, Aufgaben, Essenspläne und Müllabfuhr-Termine in einem übersichtlichen Custom Panel.
 
+[![Open your Home Assistant instance and open your repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Domenic1989&repository=Haushaltshilfe&category=integration)
+
 ---
 
 ## ✨ Features
