@@ -106,7 +106,7 @@ Solltest du bereits die HACS-Integration *Waste Collection Schedule* nutzen, pas
     { id: "sensor.restmull", dateId: "sensor.restmull_datum", name: "Restmüll", icon: "🗑️" }
   ];
 
-# 📖 Bedienungsanleitung – Haus-Zentrale Pro 🏠
+# 📖 Bedienungsanleitung – Haushaltshilfe Pro 🏠
 
 ## 🔑 Übersicht der Standard-Passwörter & Einstellungen
 
