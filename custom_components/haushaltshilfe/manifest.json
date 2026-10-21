@@ -1,6 +1,9 @@
 {
   "domain": "haushaltshilfe",
   "name": "Haushaltshilfe Pro",
+  "categories": [
+    "system"
+  ],
   "codeowners": ["@Domenic1989"],
   "config_flow": true,
   "dependencies": ["frontend", "http", "input_text"],
@@ -8,8 +11,5 @@
   "integration_type": "service",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/Domenic1989/Haushaltshilfe/issues",
-  "categories": [
-    "productivity_information.shopping_groceries"
-  ],
   "version": "1.0.3"
 }
