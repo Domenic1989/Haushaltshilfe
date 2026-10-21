@@ -234,4 +234,9 @@ Klicke oben auf das Paletten-Symbol **`🎨`**, um das Erscheinungsbild der Ober
 
 ## 🚪 Abmelden (`Logout`)
 Klicke in der untersten Navigationsleiste auf das Tür-Symbol **`🚪 Logout`**, um zur Benutzerauswahl zurückzukehren.
-  
+## Screenshots
+
+![Integration Einstellungen](screenshots/integration_einstellung.jpg)
+
+![Fixkosten](screenshots/standart_fixkosten.jpg)
+ 
