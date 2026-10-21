@@ -1,9 +1,6 @@
 {
   "domain": "haushaltshilfe",
   "name": "Haushaltshilfe Pro",
-  "categories": [
-    "system"
-  ],
   "codeowners": ["@Domenic1989"],
   "config_flow": true,
   "dependencies": ["frontend", "http", "input_text"],
