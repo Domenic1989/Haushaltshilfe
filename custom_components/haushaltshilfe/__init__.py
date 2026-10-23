@@ -74,7 +74,7 @@ class HaushaltshilfeCredentialsView(HomeAssistantView):
 
 
 class HaushaltshilfeUpdateCredentialsView(HomeAssistantView):
-    """API Endpoint um Master- und Admin-Passwort sowie sichtbare Tabs zentral zu speichern."""
+    """API Endpoint um Master- und Admin-Passwort, sichtbare Tabs sowie den Zoom zentral zu speichern."""
     url = "/api/haushaltshilfe/update_credentials"
     name = "api:haushaltshilfe:update_credentials"
     requires_auth = False
@@ -97,6 +97,8 @@ class HaushaltshilfeUpdateCredentialsView(HomeAssistantView):
         new_master = data.get("master_pw")
         new_admin = data.get("admin_pw")
         new_tabs = data.get("visible_tabs")
+        new_device_id = data.get("device_id")
+        new_zoom = data.get("zoom")
 
         new_options = {**entry.data, **entry.options}
         updated = False
@@ -123,8 +125,10 @@ class HaushaltshilfeUpdateCredentialsView(HomeAssistantView):
                 new_options[CONF_VISIBLE_TABS] = parsed_tabs
                 updated = True
 
-        if updated:
-            hass.config_entries.async_update_entry(entry, options=new_options)
+        # HIER DER FIX: Speichert auch dann, wenn NUR der Zoom geändert wurde!
+        if updated or (new_device_id and new_zoom is not None):
+            if updated:
+                hass.config_entries.async_update_entry(entry, options=new_options)
             
             store_data = hass.data[DOMAIN].get("data", {})
             store = hass.data[DOMAIN].get("store")
@@ -139,6 +143,16 @@ class HaushaltshilfeUpdateCredentialsView(HomeAssistantView):
                     current_state = hass.states.get("input_text.helper_visible_tabs")
                     attrs = current_state.attributes.copy() if current_state else {}
                     hass.states.async_set("input_text.helper_visible_tabs", tabs_str, attrs)
+
+                # ZOOM SPEICHERN LOGIK
+                if new_device_id and new_zoom is not None:
+                    zooms_raw = store_data.get("device_zooms", "{}")
+                    try:
+                        zooms = json.loads(zooms_raw) if isinstance(zooms_raw, str) else zooms_raw
+                    except Exception:
+                        zooms = {}
+                    zooms[new_device_id] = float(new_zoom)
+                    store_data["device_zooms"] = json.dumps(zooms)
 
                 await store.async_save(store_data)
 
@@ -400,6 +414,83 @@ class HaushaltshilfeStateProxyView(HomeAssistantView):
 
         return self.json({"error": "Unknown action"}, status=400)
 
+class HaushaltshilfeGetZoomView(HomeAssistantView):
+    """API Endpoint um Zoom und Theme gerätespezifisch abzurufen."""
+    url = "/api/haushaltshilfe/get_zoom"
+    name = "api:haushaltshilfe:get_zoom"
+    requires_auth = False
+
+    async def get(self, request):
+        hass = request.app["hass"]
+        store_data = hass.data.get(DOMAIN, {}).get("data", {})
+        device_id = request.query.get("device_id", "default")
+        
+        zooms_raw = store_data.get("device_zooms", "{}")
+        themes_raw = store_data.get("device_themes", "{}")
+        try:
+            zooms = json.loads(zooms_raw) if isinstance(zooms_raw, str) else zooms_raw
+            themes = json.loads(themes_raw) if isinstance(themes_raw, str) else themes_raw
+        except Exception:
+            zooms = {}
+            themes = {}
+            
+        zoom_val = zooms.get(device_id, 1.0)
+        theme_val = themes.get(device_id, "theme-glass")
+        
+        return self.json({"zoom": zoom_val, "theme": theme_val})
+
+
+class HaushaltshilfeUpdateZoomView(HomeAssistantView):
+    """API Endpoint um Zoom und Theme gerätespezifisch auf dem Server zu speichern."""
+    url = "/api/haushaltshilfe/update_zoom"
+    name = "api:haushaltshilfe:update_zoom"
+    requires_auth = False
+
+    async def post(self, request):
+        hass = request.app["hass"]
+        store_data = hass.data.get(DOMAIN, {}).get("data", {})
+        store = hass.data[DOMAIN].get("store")
+
+        try:
+            data = await request.json()
+        except Exception:
+            try:
+                raw_text = await request.text()
+                data = json.loads(raw_text)
+            except Exception:
+                data = {}
+
+        device_id = data.get("device_id")
+        zoom = data.get("zoom")
+        theme = data.get("theme")
+
+        if device_id:
+            # 1. Daten aus dem Store laden
+            zooms_raw = store_data.get("device_zooms", "{}")
+            themes_raw = store_data.get("device_themes", "{}")
+            try:
+                zooms = json.loads(zooms_raw) if isinstance(zooms_raw, str) else zooms_raw
+                themes = json.loads(themes_raw) if isinstance(themes_raw, str) else themes_raw
+            except Exception:
+                zooms = {}
+                themes = {}
+
+            # 2. Werte aktualisieren (wenn übergeben)
+            if zoom is not None:
+                zooms[device_id] = float(zoom)
+                store_data["device_zooms"] = json.dumps(zooms)
+                
+            if theme is not None:
+                themes[device_id] = str(theme)
+                store_data["device_themes"] = json.dumps(themes)
+
+            # 3. Auf der Festplatte speichern
+            if store is not None:
+                await store.async_save(store_data)
+
+            return self.json({"success": True})
+
+        return self.json({"success": False, "message": "Ungültige Device-ID"}, status=400)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Haushaltshilfe Pro with persistent JSON storage."""
@@ -578,6 +669,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.http.register_view(HaushaltshilfePublicUsersView())
     hass.http.register_view(HaushaltshilfeAppLoginView())
     hass.http.register_view(HaushaltshilfeStateProxyView())
+    hass.http.register_view(HaushaltshilfeGetZoomView())
+    hass.http.register_view(HaushaltshilfeUpdateZoomView())
 
     entry.async_on_unload(entry.add_update_listener(update_listener))
 
