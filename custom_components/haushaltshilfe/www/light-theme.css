@@ -187,3 +187,11 @@ body.theme-light #customFoodMessage { color: #997a00 !important; font-weight: 70
 body.theme-light #customFoodField { background: rgba(255, 255, 255, 0.8) !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 800 !important; }
 body.theme-light #customFoodModal button[onclick*="resolveFoodPrompt(true)"] { background: #ffcc00 !important; color: #7a5e00 !important; font-weight: 800 !important; border-radius: 12px !important; }
 body.theme-light #customFoodModal button[onclick*="resolveFoodPrompt(false)"] { background: rgba(255, 255, 255, 0.8) !important; color: #997a00 !important; font-weight: 800 !important; border-radius: 12px !important; border: 1px solid #ffcc00 !important; }
+/* --- SUNNY LIGHT THEME: ZOOM REGLER STYLING (FÜR LOGIN & THEME-MENÜ) --- */
+body.theme-light .zoom-control-row { background: rgba(255, 255, 255, 0.4) !important; border: 1px solid rgba(255, 255, 255, 0.7) !important; }
+body.theme-light .theme-dropdown .zoom-control-row { background: rgba(0, 0, 0, 0.08) !important; border: none !important; border-top: 1px solid rgba(0, 0, 0, 0.1) !important; }
+body.theme-light .zoom-btn { background: rgba(255, 255, 255, 0.9) !important; color: #997a00 !important; border: 1px solid rgba(255, 204, 0, 0.6) !important; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important; }
+body.theme-light .zoom-btn:active { background: #ffcc00 !important; color: #000000 !important; border-color: #ffcc00 !important; }
+body.theme-light .zoom-display { color: #997a00 !important; font-weight: 800 !important; }
+body.theme-light .theme-dropdown .zoom-display { color: #000000 !important; }
+body.theme-light #systemZoomRange { accent-color: #ffcc00 !important; }

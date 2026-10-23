@@ -72,11 +72,19 @@
         
         <!-- MASTER-PASSWORT -->
         <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">MASTER-PASSWORT</label>
-        <input type="password" id="set_master_pw" placeholder="Master-Passwort..." style="width:100%; padding:12px; margin-bottom:15px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; font-size: 0.9rem; background: #f9f9fb; outline: none;">
+        <input type="password" id="set_master_pw" placeholder="Master-Passwort..." style="width:100%; padding:12px; margin-bottom:15px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; font-size: 0.9rem; background: var(--bg); color: var(--text); outline: none;">
 
         <!-- ADMIN-PASSWORT -->
         <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">ADMIN-PASSWORT</label>
-        <input type="password" id="set_admin_pw" placeholder="Admin-Passwort..." style="width:100%; padding:12px; margin-bottom:20px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; font-size: 0.9rem; background: #f9f9fb; outline: none;">
+        <input type="password" id="set_admin_pw" placeholder="Admin-Passwort..." style="width:100%; padding:12px; margin-bottom:20px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; font-size: 0.9rem; background: var(--bg); color: var(--text); outline: none;">
+
+        <!-- ZOOM-EINSTELLUNG FÜR DIESES GERÄT -->
+        <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">GERÄTE-ZOOM (<span id="zoomPercentLabel">100%</span>)</label>
+        <div class="zoom-control-row" style="display:flex; align-items:center; gap:12px; margin-bottom:20px; padding:12px; border-radius:12px;">
+            <button type="button" class="zoom-btn" onclick="adjustSystemZoom(-0.05)">−</button>
+            <input type="range" id="systemZoomRange" min="0.6" max="1.6" step="0.05" value="1" oninput="previewSystemZoom(this.value)" style="flex:1; cursor:pointer; accent-color: var(--primary);">
+            <button type="button" class="zoom-btn" onclick="adjustSystemZoom(0.05)">+</button>
+        </div>
 
         <!-- TABS AUSWAHL -->
         <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:10px; letter-spacing: 0.5px;">SICHTBARE TABS IN DER LEISTE</label>
@@ -201,7 +209,7 @@
         <!-- MODAL 1: FINANZ-DETAILS / MONAT -->
         <div id="finance-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:10001; backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:20px;">
             <div style="background:var(--card); width:100%; max-width:550px; border-radius:30px; position:relative; max-height:90vh; display:flex; flex-direction:column; box-shadow: 0 20px 50px rgba(0,0,0,0.3); overflow:hidden;">
-                <button type="button" onclick="closeFinanceModal()" style="position:absolute; top:20px; right:20px; background:var(--bg); border:none; border-radius:50%; width:40px; height:40px; cursor:pointer; color:var(--text); font-weight:bold; z-index:100;">✕</button>
+               <button type="button" onclick="closeFinanceModal()" style="position:absolute; top:1px; right:1px; background:var(--bg); border:none; border-radius:50%; width:20px; height:20px; cursor:pointer; color:var(--text); font-weight:bold; z-index:100;">✕</button>
 
                 <div id="modal-header-fixed" style="padding:10px; background:var(--card); border-bottom:1px solid rgba(0,0,0,0.1); z-index:10;">
                 </div>

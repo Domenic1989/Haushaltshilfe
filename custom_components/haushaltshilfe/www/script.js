@@ -238,6 +238,92 @@ function resolveConfirm(val) {
 }
 
 
+// --- 1. GERÄTE-ID (Muss als allererstes da sein) ---
+let deviceId = localStorage.getItem('house_central_device_id');
+if (!deviceId) {
+    const ua = navigator.userAgent;
+    const screenRes = window.screen.width + 'x' + window.screen.height;
+    const rawStr = ua + '_' + screenRes;
+    let hash = 0;
+    for (let i = 0; i < rawStr.length; i++) {
+        hash = ((hash << 5) - hash) + rawStr.charCodeAt(i);
+        hash |= 0;
+    }
+    deviceId = 'dev_' + Math.abs(hash);
+    localStorage.setItem('house_central_device_id', deviceId);
+}
+
+// Globale Variablen (nur einmal deklariert!)
+let currentAppZoom = parseFloat(localStorage.getItem('house_central_zoom')) || 1.0;
+window.curTheme = localStorage.getItem('app_theme') || 'theme-glass';
+
+// Sofort beim Start lokal anwenden, damit alles sofort da ist!
+document.addEventListener("DOMContentLoaded", () => {
+    applyAppZoom(currentAppZoom);
+    document.body.className = window.curTheme;
+    
+    // Versuche im Hintergrund die Server-Werte zu holen (blockiert den Start nicht!)
+    loadDeviceZoom();
+});
+
+// Wendet den Zoom auf das gesamte Dokument an
+function applyAppZoom(zoomVal) {
+    currentAppZoom = zoomVal;
+    document.documentElement.style.setProperty('--app-zoom', currentAppZoom);
+    document.body.style.zoom = currentAppZoom; // Für Desktop/Fully Kiosk/Tablet
+    
+    // Aktualisiert die Anzeige im Einstellungs-Menü (falls vorhanden)
+    const label = document.getElementById('zoomPercentLabel');
+    if (label) {
+        label.innerText = Math.round(currentAppZoom * 100) + '%';
+    }
+    const range = document.getElementById('systemZoomRange');
+    if (range) {
+        range.value = currentAppZoom;
+    }
+}
+
+// Live-Vorschau beim Verschieben des Reglers in den System-Einstellungen
+window.previewSystemZoom = function(val) {
+    applyAppZoom(parseFloat(val));
+};
+
+// Feinjustierung über die Plus/Minus-Buttons in den System-Einstellungen
+window.adjustSystemZoom = function(step) {
+    let newVal = Math.min(1.6, Math.max(0.6, Math.round((currentAppZoom + step) * 100) / 100));
+    applyAppZoom(newVal);
+};
+
+async function loadDeviceZoom() {
+    try {
+        const baseUrl = getBaseUrl();
+        const res = await fetch(`${baseUrl}/api/haushaltshilfe/get_zoom?device_id=${deviceId}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data) {
+                // Zoom vom Server übernehmen, falls vorhanden
+                if (data.zoom !== undefined && parseFloat(data.zoom) !== currentAppZoom) {
+                    currentAppZoom = parseFloat(data.zoom);
+                    applyAppZoom(currentAppZoom);
+                }
+                // Theme vom Server übernehmen, falls vorhanden
+                if (data.theme) {
+                    window.curTheme = data.theme;
+                    const themes = ["theme-light", "theme-dark", "theme-glass", "theme-blue", "theme-green"];
+                    document.body.classList.remove(...themes);
+                    document.body.className = window.curTheme;
+                    localStorage.setItem('app_theme', window.curTheme);
+                }
+            }
+        }
+    } catch (e) {
+        console.log("Server im Hintergrund nicht erreichbar, nutze lokale Werte.");
+    }
+}
+
+
+/* --- ERWEITERTE SYSTEM-EINSTELLUNGEN --- */
+
 window.openSystemSettings = async function() {
     try {
         const currentMasterPw = await getMasterPw();
@@ -257,6 +343,9 @@ window.openSystemSettings = async function() {
             if (elToken) elToken.value = token;
             if (elMaster) elMaster.value = currentMasterPw || eingabe;
             if (elAdmin) elAdmin.value = currentAdminPw;
+
+            // Zoom-Wert beim Öffnen im Regler & Label anzeigen
+            applyAppZoom(currentAppZoom);
 
             document.querySelectorAll(".tab-toggle").forEach(cb => {
                 cb.checked = visibleTabs.includes(cb.value);
@@ -291,6 +380,9 @@ window.saveSystemSettings = async function() {
             return;
         }
 
+        // Zoom-Faktor lokal als Backup sichern
+        localStorage.setItem('house_central_zoom', currentAppZoom);
+
         let activeToken = (elToken && elToken.value.trim() !== "") ? elToken.value.trim() : (HA_TOKEN || getHAToken());
         if (activeToken) {
             HA_TOKEN = activeToken;
@@ -306,14 +398,16 @@ window.saveSystemSettings = async function() {
 
         const baseUrl = getBaseUrl();
         
-        // Passwörter UND Tabs gemeinsam über den funktionierenden Credentials-Endpoint speichern!
+        // Passwörter, Tabs UND den gerätespezifischen Zoom an den Server senden
         const updateRes = await fetch(`${baseUrl}/api/haushaltshilfe/update_credentials`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 master_pw: newMasterPw, 
                 admin_pw: newAdminPw,
-                visible_tabs: selectedTabs
+                visible_tabs: selectedTabs,
+                device_id: deviceId,
+                zoom: currentAppZoom
             })
         });
 
@@ -332,6 +426,15 @@ window.saveSystemSettings = async function() {
         await showAlert("Schwerwiegender Fehler beim Speichern: " + err.message, "Fehler ❌");
     }
 };
+
+window.closeSystemSettingsCancel = function() {
+    const overlay = document.getElementById("settingsOverlay");
+    if (overlay) {
+        overlay.style.display = "none";
+    }
+};
+
+
 
 async function toggleUserAdmin() {  
     const check = await showPasswordPrompt("ADMIN-BEREICH:\nAdmin-Passwort eingeben:");
@@ -531,12 +634,27 @@ function toggleThemeMenu(event) {
     }
 }
 
-function setTheme(themeName) {
+async function setTheme(themeName) {
     const themes = ["theme-light", "theme-dark", "theme-glass", "theme-blue", "theme-green"];
     document.body.classList.remove(...themes);
-    curTheme = themeName;
-    document.body.className = curTheme;
-    localStorage.setItem("app_theme", curTheme);
+    window.curTheme = themeName;
+    document.body.className = window.curTheme;
+    localStorage.setItem("app_theme", window.curTheme);
+    
+    // Schickt das Theme sofort an den Server (genau wie im Konsolen-Test!)
+    try {
+        const baseUrl = getBaseUrl();
+        await fetch(`${baseUrl}/api/haushaltshilfe/update_zoom`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                device_id: deviceId, 
+                theme: window.curTheme 
+            })
+        });
+    } catch (e) {
+        console.error("Konnte Theme nicht speichern:", e);
+    }
     
     const dropdown = document.getElementById("themeDropdown");
     if (dropdown) dropdown.classList.remove("show");
@@ -1511,7 +1629,6 @@ async function syncUp() {
         console.error(`❌ Fehler beim Speichern der Favoriten für ${curTab}:`, e);
     } 
 }
-
 async function load() {
     if (typeof renderSidebars === "function") await renderSidebars();
     if (curTab === 'trash' || isUpdatingFood) return;
@@ -1535,7 +1652,12 @@ async function load() {
                     });
                 }
 
-                if (inp && document.activeElement !== inp && !isUpdatingFood) {
+                // --- HIER IST DER SCHUTZ: Wenn du im Feld tippst, wird dieser Tag übersprungen ---
+                if (inp && document.activeElement === inp) {
+                    continue;
+                }
+
+                if (inp && !isUpdatingFood) {
                     const raw = (d.state === 'unknown' || d.state === '---') ? '' : d.state;
                     if (raw.includes(' | ')) {
                         const parts = raw.split(' | ');
@@ -1577,6 +1699,8 @@ async function load() {
 
     if (typeof updateAppBadges === "function") updateAppBadges();
 }
+
+
 
 async function delItem(t) {
     try {

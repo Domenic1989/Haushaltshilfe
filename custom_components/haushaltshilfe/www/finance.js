@@ -566,23 +566,34 @@ window.openFinanceModal = async function(mIdx) {
 
     modal.style.display = 'flex';
 
+    // Dem Modal-Container direkt per JS den sicheren Anker verpassen
+    const modalContentDiv = modal.querySelector('div');
+    if (modalContentDiv) {
+        modalContentDiv.style.setProperty('position', 'relative', 'important');
+    }
+
+    // Perfekte Positionierung des Schließen-Buttons (X) für Mobile & Desktop
     setTimeout(() => {
         const closeBtn = modal.querySelector('button[onclick="closeFinanceModal()"]');
         if (closeBtn) {
+            closeBtn.style.setProperty('position', 'absolute', 'important');
+            closeBtn.style.setProperty('left', 'auto', 'important');
+            closeBtn.style.setProperty('bottom', 'auto', 'important');
+            
             if (!isMobile) {
-                closeBtn.style.setProperty('top', '100px', 'important');
-                closeBtn.style.setProperty('right', '70px', 'important');
-                closeBtn.style.setProperty('width', '100px', 'important');
-                closeBtn.style.setProperty('height', '100px', 'important');
-                closeBtn.style.setProperty('font-size', '2.4rem', 'important');
+                closeBtn.style.setProperty('top', '70px', 'important');
+                closeBtn.style.setProperty('right', '40px', 'important');
+                closeBtn.style.setProperty('width', '70px', 'important');
+                closeBtn.style.setProperty('height', '70px', 'important');
+                closeBtn.style.setProperty('font-size', '2.5rem', 'important');
             } else {
-                closeBtn.style.setProperty('top', '15px', 'important');
-                closeBtn.style.setProperty('right', '15px', 'important');
-                closeBtn.style.setProperty('width', '45px', 'important');
-                closeBtn.style.setProperty('height', '45px', 'important');
+                closeBtn.style.setProperty('top', '10px', 'important');
+                closeBtn.style.setProperty('right', '10px', 'important');
+                closeBtn.style.setProperty('width', '30px', 'important');
+                closeBtn.style.setProperty('height', '30px', 'important');
                 closeBtn.style.setProperty('font-size', '1.1rem', 'important');
             }
-            closeBtn.style.setProperty('z-index', '1000', 'important');
+            closeBtn.style.setProperty('z-index', '99999', 'important');
             closeBtn.style.setProperty('color', 'var(--primary-text-color)', 'important');
         }
     }, 10);

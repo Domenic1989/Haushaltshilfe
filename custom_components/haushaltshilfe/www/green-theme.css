@@ -50,7 +50,7 @@ body.theme-green #modal-header-fixed h2 { color:  #003d33 !important; font-weigh
 body.theme-green .finance-input-row input, body.theme-green .finance-input-row select { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003d33 !important; color: #003d33 !important; font-weight: bold !important; } /* Eingabefelder Weiß-Glas mit dunkelgrünem Rahmen */
 body.theme-green .finance-input-row input::placeholder { color: rgba(0, 61, 51, 0.4) !important; } /* Dunkelgrüne Platzhalter */
 body.theme-green .finance-input-row .btn-add { background: #00b894 !important; color: #ffffff !important; box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4) !important; } /* OK-Button Grün */
-body.theme-green #finance-modal button[onclick*="closeFinanceModal"] { color: #003d33 !important; background: rgba(255, 255, 255, 0.5) !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; } /* Schließ-X in Dunkelgrün */
+body.theme-green #finance-modal button[onclick*="closeFinanceModal"] { color: #003d33 !important; background: rgba(255, 255, 255, 0.5) !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; top:1px !important;; right:1px!important;; } /* Schließ-X in Dunkelgrün */
 body.theme-green #modal-content small { color: #003d33 !important; opacity: 0.7 !important; font-weight: 800 !important; } /* Fixkosten/Ausgaben Beschriftung */
 /* --- GREEN THEME: UHRZEIT KOMPAKT --- */
 body.theme-green #modalTime, body.theme-green #edit-time { color: #003d33 !important; font-weight: 800 !important; border: 2px solid #003d33 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 15px !important; padding: 12px; transition: all 0.2s ease; outline: none; font-family: inherit; text-align: center; }
@@ -168,3 +168,11 @@ body.theme-green #customFoodMessage { color: #003d33 !important; font-weight: 80
 body.theme-green #customFoodField { background: rgba(255, 255, 255, 0.5) !important; border: 2px solid #003d33 !important; color: #003d33 !important; font-weight: 800 !important; }
 body.theme-green #customFoodModal button[onclick*="resolveFoodPrompt(true)"] { background: #00b894 !important; color: #ffffff !important; font-weight: 800 !important; border-radius: 12px !important; }
 body.theme-green #customFoodModal button[onclick*="resolveFoodPrompt(false)"] { background: rgba(255, 255, 255, 0.5) !important; color: #003d33 !important; font-weight: 800 !important; border-radius: 12px !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; }
+/* --- GREEN THEME: ZOOM REGLER STYLING (FÜR LOGIN & THEME-MENÜ) --- */
+body.theme-green .zoom-control-row { background: rgba(255, 255, 255, 0.35) !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; }
+body.theme-green .theme-dropdown .zoom-control-row { background: rgba(0, 0, 0, 0.15) !important; border: none !important; border-top: 1px solid rgba(255, 255, 255, 0.2) !important; }
+body.theme-green .zoom-btn { background: rgba(255, 255, 255, 0.85) !important; color: #003d33 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important; }
+body.theme-green .zoom-btn:active { background: #00b894 !important; color: #ffffff !important; border-color: #ffffff !important; }
+body.theme-green .zoom-display { color: #003d33 !important; font-weight: 800 !important; }
+body.theme-green .theme-dropdown .zoom-display { color: #ffffff !important; }
+body.theme-green #systemZoomRange { accent-color: #00b894 !important; }

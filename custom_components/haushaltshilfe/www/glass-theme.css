@@ -127,6 +127,7 @@ body.theme-glass #settingsOverlay label { color: #CF00FF !important; }
 body.theme-glass #settingsOverlay button[onclick*="saveSystemSettings"] { background: #5856d6 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(88, 86, 214, 0.6) !important; font-weight: 800 !important; }
 body.theme-glass #settingsOverlay button[onclick*="settingsOverlay']"] { background: rgba(255, 255, 255, 0.1) !important; color: #CF00FF !important; border: 1px solid rgba(207, 0, 255, 0.3) !important; backdrop-filter: blur(20px); font-weight: 800 !important; }
 /* --- GLASS THEME: BENUTZER MODAL (KOMPAKT NEBENEINANDER) --- */
+/* --- GLASS THEME: BENUTZER MODAL (KOMPAKT NEBENEINANDER) --- */
 body.theme-glass #userModal > div { background: rgba(40, 40, 60, 0.85) !important; backdrop-filter: blur(30px) saturate(180%) !important; border: 1px solid rgba(255, 255, 255, 0.3) !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important; color: #ffffff !important; }
 body.theme-glass #userModal h3 { color: #CF00FF !important; font-weight: 900 !important; text-shadow: 0 0 10px rgba(207, 0, 255, 0.3); }
 body.theme-glass #userModal label { color: #CF00FF !important; font-weight: 800 !important; opacity: 0.9 !important; }
@@ -175,3 +176,11 @@ body.theme-glass #customFoodMessage { color: #CF00FF !important; font-weight: 80
 body.theme-glass #customFoodField { background: rgba(255, 255, 255, 0.15) !important; border: 2px solid #CF00FF !important; color: #CF00FF !important; font-weight: 800 !important; backdrop-filter: blur(10px); }
 body.theme-glass #customFoodModal button[onclick*="resolveFoodPrompt(true)"] { background: #5856d6 !important; color: #ffffff !important; font-weight: 800 !important; border-radius: 12px !important; }
 body.theme-glass #customFoodModal button[onclick*="resolveFoodPrompt(false)"] { background: rgba(255, 255, 255, 0.1) !important; color: #CF00FF !important; font-weight: 800 !important; border-radius: 12px !important; border: 1px solid rgba(207, 0, 255, 0.3) !important; }
+/* --- GLASS THEME (LILA): ZOOM REGLER STYLING (FÜR LOGIN & THEME-MENÜ) --- */
+body.theme-glass .zoom-control-row { background: rgba(255, 255, 255, 0.35) !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; }
+body.theme-glass .theme-dropdown .zoom-control-row { background: rgba(0, 0, 0, 0.2) !important; border: none !important; border-top: 1px solid rgba(255, 255, 255, 0.2) !important; }
+body.theme-glass .zoom-btn { background: rgba(255, 255, 255, 0.85) !important; color: #5856d6 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important; }
+body.theme-glass .zoom-btn:active { background: #5856d6 !important; color: #ffffff !important; border-color: #ffffff !important; }
+body.theme-glass .zoom-display { color: #000000 !important; font-weight: 800 !important; }
+body.theme-glass .theme-dropdown .zoom-display { color: #ffffff !important; }
+body.theme-glass #systemZoomRange { accent-color: #CF00FF !important; }

@@ -203,3 +203,12 @@ body.theme-blue #customFoodMessage { color: #003366 !important; font-weight: 700
 body.theme-blue #customFoodField { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003366 !important; color: #003366 !important; font-weight: 800 !important; }
 body.theme-blue #customFoodModal button[onclick*="resolveFoodPrompt(true)"] { background: #0984e3 !important; color: #ffffff !important; font-weight: 800 !important; border-radius: 12px !important; }
 body.theme-blue #customFoodModal button[onclick*="resolveFoodPrompt(false)"] { background: rgba(255, 255, 255, 0.6) !important; color: #003366 !important; font-weight: 800 !important; border-radius: 12px !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; }
+
+/* --- BLUE THEME: ZOOM REGLER STYLING (FÜR LOGIN & THEME-MENÜ) --- */
+body.theme-blue .zoom-control-row { background: rgba(255, 255, 255, 0.35) !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; }
+body.theme-blue .theme-dropdown .zoom-control-row { background: rgba(0, 0, 0, 0.15) !important; border: none !important; border-top: 1px solid rgba(255, 255, 255, 0.2) !important; }
+body.theme-blue .zoom-btn { background: rgba(255, 255, 255, 0.85) !important; color: #003366 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important; }
+body.theme-blue .zoom-btn:active { background: #0984e3 !important; color: #ffffff !important; border-color: #ffffff !important; }
+body.theme-blue .zoom-display { color: #003366 !important; font-weight: 800 !important; }
+body.theme-blue .theme-dropdown .zoom-display { color: #ffffff !important; }
+body.theme-blue #systemZoomRange { accent-color: #0984e3 !important; }

@@ -1,28 +1,162 @@
- :root { 
-        --primary: #34c759; --accent: #ff9500; --danger: #ff3b30; --todo: #007aff; --trash: #5856d6; 
-        --bg: #f2f2f7; --card: #ffffff; --text: #1c1c1e; --gray: #8e8e93; 
+:root { 
+    --primary: #34c759; 
+    --accent: #ff9500; 
+    --danger: #ff3b30; 
+    --todo: #007aff; 
+    --trash: #5856d6; 
+    --bg: #f2f2f7; 
+    --card: #ffffff; 
+    --text: #1c1c1e; 
+    --gray: #8e8e93; 
+    --app-zoom: 1; /* Dynamischer Zoom-Faktor (Standard 100%) */
+}
+
+/* --- BASIS SETUP --- */
+html { 
+    font-size: calc(16px * var(--app-zoom)) !important; 
+    -webkit-text-size-adjust: 100%;
+} 
+
+body { 
+    font-family: -apple-system, system-ui, sans-serif; 
+    background-color: var(--bg); 
+    margin: 0; 
+    padding: calc(env(safe-area-inset-top) + 10px) 20px calc(8.5rem + env(safe-area-inset-bottom)) 20px; 
+    color: var(--text); 
+    -webkit-tap-highlight-color: transparent; 
+    overflow-x: hidden; 
+    transition: background 0.3s ease; 
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* --- ZOOM REGLER STYLING (FÜR LOGIN & THEME-MENÜ) --- */
+.zoom-control-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0.75rem 1.1rem !important;
+    background: rgba(120, 120, 120, 0.08) !important;
+    border-radius: 16px !important;
+    margin-top: 12px !important;
+    gap: 10px !important;
+}
+
+.theme-dropdown .zoom-control-row {
+    border-radius: 0 !important;
+    margin-top: 0 !important;
+    border-top: 1px solid rgba(120, 120, 120, 0.15) !important;
+}
+
+.zoom-btn {
+    background: var(--card) !important;
+    color: var(--text) !important;
+    border: 1px solid rgba(120, 120, 120, 0.25) !important;
+    border-radius: 12px !important;
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    font-size: 1.4rem !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+}
+
+.zoom-btn:active {
+    transform: scale(0.92) !important;
+}
+
+.zoom-display {
+    font-size: 1rem !important;
+    font-weight: 800 !important;
+    color: var(--text) !important;
+    cursor: pointer !important;
+    user-select: none;
+    text-align: center;
+    flex: 1;
+    white-space: nowrap !important;
+}
+
+
+/* --- EXTRA MOBILE VERKLEINERUNG (NUR FÜRS HANDY & HA APP) --- */
+@media (max-width: 767px) {
+    html {
+        font-size: calc(14.5px * var(--app-zoom)) !important;
+    }
+    body {
+        padding: calc(env(safe-area-inset-top) + 10px) 12px calc(7.5rem + env(safe-area-inset-bottom)) 12px !important;
+    }
+    .login-card, #intervalModal > div, #editModal > div, #shopQtyModal > div {
+        width: 94% !important;
+        max-width: 420px !important;
+        padding: 16px !important;
+        border-radius: 20px !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+    }
+    .split-container {
+        gap: 10px !important;
+    }
+    /* Sidebar passt sich automatisch dem längsten Raumnamen an */
+    .sidebar {
+        width: max-content !important;
+        flex-shrink: 0 !important;
+    }
+    .side-btn { 
+        background: var(--card); 
+        border: 1px solid #ddd; 
+        padding: 0.75rem 0.65rem !important; 
+        border-radius: 18px; 
+        font-weight: 800; 
+        font-size: 0.75rem !important; 
+        text-align: center; 
+        cursor: pointer; 
+        color: var(--gray); 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+        white-space: nowrap !important;
+    }
+    
+    /* Handy: Aufgaben immer 1 pro Reihe */
+    ul {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
     }
 
-
+    .finance-input-row {
+        flex-wrap: wrap !important;
+    }
+    .finance-input-row input[type="number"] {
+        width: 35% !important;
+        flex: 1 1 30% !important;
+    }
+    .finance-input-row input[type="text"] {
+        width: 60% !important;
+        flex: 1 1 60% !important;
+    }
+    .finance-input-row select {
+        flex: 1 !important;
+    }
+}
 
 /* --- FINALES THEME-POPUP: HANDY & DESKTOP FIX --- */
-
 .theme-dropdown {
-    /* Absolutes Verstecken für Handys */
     display: none !important;
     visibility: hidden;
     opacity: 0;
-
     position: fixed; 
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0.9);
-    
     background: var(--card) !important; 
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
-    
-    min-width: 260px; /* Etwas breiter fürs Handy */
+    min-width: 16rem;
     border-radius: 25px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     z-index: 1000000 !important;
@@ -31,7 +165,6 @@
     transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-/* WICHTIG: Nur wenn .show aktiv ist, wird es sichtbar */
 .theme-dropdown.show {
     display: block !important;
     visibility: visible !important;
@@ -40,14 +173,15 @@
 }
 
 .theme-dropdown div {
-    padding: 22px; /* Größere Klickfläche für Finger */
+    padding: 1.35rem;
     text-align: center;
     font-weight: bold;
     font-size: 1.2rem;
     cursor: pointer;
     color: var(--text) !important; 
     border-bottom: 1px solid rgba(120, 120, 120, 0.1);
-    -webkit-tap-highlight-color: transparent; /* Verhindert blauen Kasten am Handy */
+    -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
 }
 
 .theme-dropdown div:active {
@@ -59,29 +193,17 @@
 }
 
 @keyframes red-pulse-bg {
-    0% { 
-        background-color: rgba(255, 59, 48, 0.3) !important; 
-    }
+    0% { background-color: rgba(255, 59, 48, 0.3) !important; }
     50% { 
-        /* Sattes Alarm-Rot */
         background-color: #ff3b30 !important; 
-        /* Roter Glüheffekt nach außen */
         box-shadow: 0 0 20px rgba(255, 59, 48, 0.6) !important;
     }
-    100% { 
-        background-color: rgba(255, 59, 48, 0.3) !important; 
-    }
+    100% { background-color: rgba(255, 59, 48, 0.3) !important; }
 }
 
-/* Der Selektor für die dringende Aufgabe */
 body[class*="theme-"] #list-todo li.urgent-blink {
-    /* Das Blinken: 1 Sekunde ist ein guter "Herzschlag"-Takt */
     animation: red-pulse-bg 2s infinite ease-in-out !important;
-    
-    /* Fester roter Rahmen */
     border: 10px solid #ff3b30 !important;
-    
-    /* WICHTIG: Themes ausschalten, damit das Rot sichtbar wird */
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     background-image: none !important;
@@ -93,44 +215,23 @@ body[class*="theme-"] #list-todo li.urgent-blink {
     position: absolute;
     top: 2px;
     right: 12px;
-    background: #ff3b30; /* Kräftiges App-Rot */
+    background: #ff3b30;
     color: white;
     font-size: 0.65rem;
     font-weight: bold;
-    padding: 1px 5px;
+    padding: 0.1rem 0.35rem;
     border-radius: 10px;
-    min-width: 16px;
-    border: 2px solid var(--bg); /* Rand in deiner Hintergrundfarbe */
-    display: none; /* Standardmäßig aus */
+    min-width: 1rem;
+    border: 2px solid var(--bg);
+    display: none;
     pointer-events: none;
     z-index: 10;
 }
 
-/* --- Mülleimer-Button im Shop absolut rahmen- und schattenlos machen --- */
-.btn-del-item {
-    background: transparent !important;
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    cursor: pointer;
-    font-size: 1.2rem;
-    padding: 0;
-    margin: 0;
-}
-
-.btn-del-item:focus, 
-.btn-del-item:active {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    transform: scale(0.9); /* Kleiner Klick-Effekt */
-}
-
 .badge.visible { display: block; }
 
-/* Blink-Effekt für fällige Aufgaben */
 .badge-blink {
-    background-color: var(--danger) !important; /* Knallrot */
+    background-color: var(--danger) !important;
     animation: badge-pulse 1.5s infinite !important;
 }
 
@@ -140,8 +241,26 @@ body[class*="theme-"] #list-todo li.urgent-blink {
     100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
 }
 
+/* --- Mülleimer-Button --- */
+.btn-del-item {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0;
+    margin: 0;
+    flex-shrink: 0;
+}
 
-
+.btn-del-item:focus, 
+.btn-del-item:active {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: scale(0.9);
+}
 
 @keyframes slideUp {
     from { opacity: 0; transform: translate(-50%, 10px); }
@@ -153,205 +272,697 @@ body[class*="theme-"] #list-todo li.urgent-blink {
     to { opacity: 1; transform: translate(-50%, 0); }
 }
 
-    /* --- GRADIENT EFFEKTE --- */
-    .btn-login-gradient { background: linear-gradient(45deg, #ff9500, #ff2d55, #5856d6, #007aff) !important; background-size: 300% 300% !important; animation: gradient-move 5s ease infinite; color: white !important; border: none !important; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+@keyframes gradient-move { 
+    0% { background-position: 0% 50%; } 
+    50% { background-position: 100% 50%; } 
+    100% { background-position: 0% 50%; } 
+}
 
-    .user-name-gradient { background: linear-gradient(45deg, #ff9500, #ff2d55, #5856d6, #007aff); background-size: 300% 300%; animation: gradient-move 5s ease infinite; -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; display: inline-block; }
-    
-    .admin-mode .user-edit-pen { display: flex !important; }    
+/* --- GRADIENT EFFEKTE & UI --- */
+.btn-login-gradient { 
+    background: linear-gradient(45deg, #ff9500, #ff2d55, #5856d6, #007aff) !important; 
+    background-size: 300% 300% !important; 
+    animation: gradient-move 5s ease infinite; 
+    color: white !important; 
+    border: none !important; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+}
+
+.user-name-gradient { 
+    background: linear-gradient(45deg, #ff9500, #ff2d55, #5856d6, #007aff); 
+    background-size: 300% 300%; 
+    animation: gradient-move 5s ease infinite; 
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent; 
+    font-weight: 800; 
+    display: inline-block; 
+    white-space: nowrap !important;
+}
+
+.admin-mode .user-edit-pen { display: flex !important; }      
         
-    .cook-select { width: 100%; margin-top: 8px; padding: 8px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); font-size: 0.8rem; background: var(--card); color: var(--text); outline: none; cursor: pointer; font-weight: 600; }
+.cook-select { flex: 1 1 100px; max-width: 45%; min-width: 90px; width: auto !important; margin-top: 0 !important; padding: 0.5rem 0.65rem; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); font-size: 0.85rem; background: var(--card); color: var(--text); outline: none; cursor: pointer; font-weight: 600; box-sizing: border-box; }
 
-    /* Damit man die Optionen im Dark Mode auch lesen kann */
-    .cook-select option { background: var(--card); color: var(--text); }
-    .user-del-x, .user-edit-pen { position: absolute; width: 26px; height: 26px; border-radius: 50%; display: none; align-items: center; justify-content: center; border: 2px solid white; z-index: 10; font-size: 12px; }
+.cook-select option { background: var(--card); color: var(--text); }
 
-    .user-edit-pen { top: -8px; left: -8px; background: var(--accent); }
-    .user-del-x { top: -8px; right: -8px; background: var(--danger); }
+.user-del-x, .user-edit-pen { 
+    position: absolute; 
+    width: 1.6rem; 
+    height: 1.6rem; 
+    border-radius: 50%; 
+    display: none; 
+    align-items: center; 
+    justify-content: center; 
+    border: 2px solid white; 
+    z-index: 10; 
+    font-size: 0.75rem; 
+}
 
-     /* Sobald das userGrid die Klasse .admin-mode bekommt, werden sie sichtbar */
-    .admin-mode .user-del-x, 
-    .admin-mode .user-edit-pen { display: flex !important; }
+.user-edit-pen { top: -0.5rem; left: -0.5rem; background: var(--accent); }
+.user-del-x { top: -0.5rem; right: -0.5rem; background: var(--danger); }
+
+.admin-mode .user-del-x, 
+.admin-mode .user-edit-pen { display: flex !important; }
     
-    #editModal input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); background: var(--bg); color: var(--text); font-size: 1rem; box-sizing: border-box; outline: none; }
-    #editModal label { font-size: 0.75rem; font-weight: bold; color: var(--gray); display: block; margin-bottom: 5px; text-transform: uppercase; }
-    button[onclick^="openEdit"] { display: flex; align-items: center; justify-content: center; transition: transform 0.1s active; }
-    button[onclick^="openEdit"]:active { transform: scale(0.9); background: #e5e5ea; }
-    body.theme-dark #editModal input { border-color: rgba(255,255,255,0.1); }
-    #editModal input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); background: var(--bg); color: var(--text); box-sizing: border-box; outline: none; margin-bottom: 10px; }
-    #editModal hr { border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0; }    
+#editModal input:not([type="time"]), 
+#intervalModal input:not([type="time"]),
+#intervalModal select,
+#editModal select,
+#shopQtyModal input { 
+    width: 100%; 
+    padding: 0.75rem; 
+    border-radius: 12px; 
+    border: 1px solid rgba(0,0,0,0.1); 
+    background: var(--bg); 
+    color: var(--text); 
+    font-size: 1rem; 
+    box-sizing: border-box; 
+    outline: none; 
+    margin-bottom: 10px; 
+}
+
+body.theme-dark #editModal input { border-color: rgba(255,255,255,0.1); }
+
+button[onclick^="openEdit"] { display: flex; align-items: center; justify-content: center; transition: transform 0.1s active; }
+button[onclick^="openEdit"]:active { transform: scale(0.9); background: #e5e5ea; }
+
+/* --- GEZIELTER FIX FÜR UHRZEIT-FELDER --- */
+#modalTime, #edit-time {
+    width: 100%;
+    padding: 0.65rem 0.75rem;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.1);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+    box-sizing: border-box;
+    outline: none;
+    margin-bottom: 10px;
+    height: auto !important;
+}
+
+#editModal label, #intervalModal label { 
+    font-size: 0.75rem; 
+    font-weight: bold; 
+    color: var(--gray); 
+    display: block; 
+    margin-bottom: 5px; 
+    text-transform: uppercase; 
+}
+
+#editModal hr, #intervalModal hr { 
+    border: 0; 
+    border-top: 1px solid rgba(255,255,255,0.1); 
+    margin: 15px 0; 
+}  
+
+.theme-toggle-top { 
+    position: absolute; 
+    top: calc(env(safe-area-inset-top) + 2.2rem); /* Sitzt genau unter dem Namen */
+    right: 20px; 
+    left: auto; 
+    transform: none; 
+    background: var(--card); 
+    border: 1px solid #ddd; 
+    border-radius: 12px; 
+    padding: 0.4rem 0.8rem; 
+    font-size: 1.1rem; 
+    cursor: pointer; 
+    z-index: 1500; 
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+    color: var(--text); 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+}
+
+.split-container { display: flex; gap: 15px; width: 100%; box-sizing: border-box; align-items: flex-start; }
+.sidebar { display: flex; flex-direction: column; gap: 10px; width: max-content; flex-shrink: 0; }
+.side-btn { 
+    background: var(--card); 
+    border: 1px solid #ddd; 
+    padding: 0.9rem 0.85rem; 
+    border-radius: 18px; 
+    font-weight: 800; 
+    font-size: 0.8rem; 
+    text-align: center; 
+    cursor: pointer; 
+    color: var(--gray); 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+    white-space: nowrap !important; /* Immer komplett in einer Reihe */
+}
+.side-btn.active-shop { background: var(--primary); color: white; border-color: var(--primary); }
+.side-btn.active-todo { background: var(--todo); color: white; border-color: var(--todo); }
+.cat-btn.active-shop { background: var(--primary) !important; color: white !important; } 
+.cat-btn.active-food { background: var(--accent) !important; color: white !important; }
+.cat-btn.active-todo { background: var(--todo) !important; color: white !important; }
+.side-btn-add { border: 2px dashed var(--accent); color: var(--accent); background: transparent; }
+.main-content { flex: 1; min-width: 0; }
+
+#loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 15px; }
+.login-card { background: var(--card); padding: 1.8rem; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center; width: 85%; max-width: 450px; position: relative; color: var(--text); }
+.user-grid-login { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+.user-btn { width: 100%; padding: 0.75rem; border-radius: 18px; border: 1px solid #ddd; background: var(--card); font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.95rem; position: relative; color: var(--text); white-space: nowrap !important; }
+.user-btn.selected { background: #d1ffd1 !important; border-color: var(--primary) !important; border-width: 2.5px; transform: scale(1.03); }
+.status-bar { 
+    position: absolute; 
+    top: calc(env(safe-area-inset-top) + 10px); 
+    right: 20px; 
+    text-align: right; 
+    font-size: 0.7rem; 
+    color: var(--gray); 
+    font-weight: 600; 
+    line-height: 1.3; 
+}
+header { margin-bottom: 20px; margin-top: 20px; }
+h1 { font-size: 2rem; font-weight: 800; margin: 0; color: var(--text); white-space: nowrap; }
+
+.input-card { background: var(--card); padding: 0.75rem; border-radius: 20px; display: flex; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; width: 100%; box-sizing: border-box; }
+.main-input { flex-grow: 1; min-width: 0; border: none; padding: 0.65rem; font-size: 1.1rem; outline: none; background: transparent; color: var(--text); }
+.btn-add { flex-shrink: 0; background: var(--primary); color: white; border: none; width: 3.1rem; height: 3.1rem; border-radius: 16px; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+.admin-row { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.admin-btn { flex: 1; background: var(--card); border: 1px dashed #c7c7cc; padding: 0.65rem; border-radius: 12px; font-size: 0.7rem; font-weight: 700; cursor: pointer; color: var(--text); white-space: nowrap !important; }
+
+.cat-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; }
+.cat-btn { background: var(--card); border: none; padding: 0.65rem 1.25rem; border-radius: 14px; font-size: 0.8rem; font-weight: 700; white-space: nowrap !important; color: var(--gray); cursor: pointer; flex-shrink: 0; }
+
+.fav-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; }
+.fav-chip { background: var(--card); padding: 0.75rem 1.1rem; border-radius: 18px; font-size: 0.9rem; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #e5e5ea; cursor: pointer; display: flex; align-items: center; color: var(--text); white-space: nowrap !important; }
+.del-fav { color: var(--danger); margin-left: 10px; font-weight: 800; font-size: 1.1rem; }
+.del-cat { color: var(--danger); margin-left: 6px; font-weight: 800; font-size: 1.1rem; }
+
+/* Standard: 1 Spalte auf Mobilgeräten */
+ul { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr; gap: 15px; align-items: stretch; width: 100%; }
+li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: column; justify-content: space-between; border-radius: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); font-size: 1rem; width: 100%; min-width: 0; box-sizing: border-box; color: var(--text); word-break: break-word; }
+
+.week-grid { display: grid; gap: 12px; margin-top: 10px; }
+.day-card { background: var(--card); padding: 0.95rem; border-radius: 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border-left: 6px solid var(--accent); color: var(--text); pointer-events: auto !important; user-select: text !important; -webkit-user-select: text !important; }
+.day-label { display: flex; flex-direction: column; align-items: center; line-height: 1; font-size: 0.7rem; min-width: 3.4rem; font-weight: 800; color: var(--accent); white-space: nowrap !important; }
+.day-label span { font-size: 1.5rem; margin-bottom: 5px; }
+.day-input { flex: 2 1 120px; min-width: 80px; border: none; font-size: 1rem; outline: none; color: var(--text); background: transparent; font-weight: 500; pointer-events: auto !important; user-select: text !important; -webkit-user-select: text !important; box-sizing: border-box; }
+
+.tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: flex; padding: 0.9rem 0 calc(1.25rem + env(safe-area-inset-bottom)); border-top: 1px solid #d1d1d6; z-index: 1000; }
+.tab-item { border: none; background: none; color: var(--gray); font-size: 0.75rem; font-weight: 700; display: flex; flex-direction: column; align-items: center; flex: 1; cursor: pointer; white-space: nowrap !important; }
+.tab-item.active-shop { color: var(--primary); }
+.tab-item.active-food { color: var(--accent); }
+.tab-item.active-todo { color: var(--todo); }
+.tab-item.active-trash { color: var(--trash); }
+.tab-item.active-finance { color: var(--primary); }
+.tab-item .icon { font-size: 1.6rem; margin-bottom: 5px; }
+
+.trash-row { display: flex; flex-direction: column; padding: 0.95rem 0; border-bottom: 1px solid #f2f2f7; color: var(--text); }
+.trash-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.trash-name { font-weight: 700; font-size: 1.1rem; white-space: nowrap !important; }
+.trash-days { font-weight: 800; font-size: 1.1rem; white-space: nowrap !important; }
+.trash-date { font-size: 0.85rem; color: var(--gray); margin-top: 5px; font-weight: 600; }
+
+/* --- MONATE & JAHRE BASIS (Handy Standard: 2 Spalten symmetrisch) --- */
+#months-container, #years-container { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+.month-card { background: var(--card); border-radius: 25px; padding: 1rem; margin-bottom: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.1s; cursor: pointer; display: flex; flex-direction: column; width: 100%; min-width: 0; box-sizing: border-box; }
+.month-card:active { transform: scale(0.96); }
+.month-card h2 { margin: 0 0 12px 0; font-size: 1.1rem; color: var(--primary); border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; white-space: nowrap !important; gap: 5px; }
+
+#years-container .month-card { padding: 1rem; margin-bottom: 0; border-radius: 25px; width: 100%; min-width: 0; box-sizing: border-box; }
+#years-container .month-card h3 { font-size: 1.1rem; margin: 0 0 10px 0; white-space: nowrap !important; }
+#years-container .month-card div { font-size: 0.85rem; }
+#years-container .month-card .summary-total { font-size: 0.95rem; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.1); }
+
+.finance-input-row { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; box-sizing: border-box; }
+.finance-input-row input, .finance-input-row select { background: var(--bg); border: none; padding: 0.75rem; border-radius: 12px; color: var(--text); font-size: 1rem; outline: none; min-width: 0; box-sizing: border-box; }
+.finance-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: rgba(0,0,0,0.03); padding: 0.5rem 0.75rem; border-radius: 12px; margin-bottom: 6px; font-size: 0.85rem; min-width: 0; }
+.finance-summary { margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.05); font-size: 0.8rem; display: grid; gap: 4px; }
+.summary-line { display: flex; justify-content: space-between; align-items: center; gap: 6px; opacity: 0.8; white-space: nowrap; }
+.summary-total { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-weight: 800; color: var(--primary); font-size: 0.95rem; margin-top: 5px; white-space: nowrap; }
+
+.modal-row, .weekday-row { display: flex !important; gap: 8px !important; margin-bottom: 15px !important; width: 100% !important; align-items: center !important; }
+.day-dot { flex: 1 !important; height: 3.1rem !important; font-size: 1rem !important; display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; font-weight: 800 !important; border-radius: 12px !important; transition: 0.2s !important; border: 1px solid rgba(0,0,0,0.1) !important; }
+.modal-row input { flex: 2 !important; min-width: 0 !important; font-size: 1rem !important; } 
+.modal-row select { flex: 3 !important; min-width: 0 !important; font-size: 1rem !important; }
+
+
+/* ========================================================
+   --- TABLET / PC / LAPTOP OPTIMIERUNG ---
+   ======================================================== */
+@media (min-width: 768px) {
+    html { 
+        font-size: calc(20px * var(--app-zoom)) !important; 
+    }
     
+    body { 
+        padding: 1.75rem !important; 
+        padding-bottom: 11rem !important; 
+        margin: 0; 
+        width: 100%; 
+        box-sizing: border-box; 
+    }
 
-    @keyframes gradient-move { 0% {background-position: 0% 50%;} 50% {background-position: 100% 50%;} 100% {background-position: 0% 50%;} }
+    .input-card { 
+        background: var(--card); 
+        padding: 0.75rem 1.25rem !important; 
+        border-radius: 20px; 
+        display: flex !important; 
+        align-items: center !important; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        margin-bottom: 1.25rem !important; 
+        width: 100% !important; 
+        box-sizing: border-box !important; 
+        gap: 15px !important; 
+    }
 
-    .theme-toggle-top { position: absolute; top: calc(env(safe-area-inset-top) + 10px); left: 70%; transform: translateX(-50%); background: var(--card); border: 1px solid #ddd; border-radius: 12px; padding: 8px 16px; font-size: 1.2rem; cursor: pointer; z-index: 1500; box-shadow: 0 2px 10px rgba(0,0,0,0.1); color: var(--text); display: flex; align-items: center; justify-content: center; }
+    .main-input { 
+        font-size: 1.5rem !important; 
+        height: 3.5rem !important; 
+        flex: 1 !important; 
+        min-width: 0 !important; 
+        border: none; 
+        outline: none; 
+        background: transparent; 
+        color: var(--text); 
+    }
 
-    /* --- TABLET / PC / FULLY OPTIMIERUNG --- */
-    @media (min-width: 768px) {
-        html { font-size: 26px !important; zoom: 1.0; -webkit-text-size-adjust: 100%; }
-        body { padding: 40px !important; padding-bottom: 250px !important; margin: 0; width: 100%; box-sizing: border-box; }
-        .input-card { background: var(--card); padding: 15px 25px !important; border-radius: 20px; display: flex !important; align-items: center !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px !important; width: 100% !important; box-sizing: border-box !important; gap: 15px !important; }
-        .main-input { font-size: 1.5rem !important; height: 70px !important; flex: 1 !important; min-width: 0 !important; border: none; outline: none; background: transparent; color: var(--text); }
-        .btn-add { flex-shrink: 0 !important; width: 90px !important; height: 90px !important; font-size: 50px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-        .sidebar { width: auto !important; gap: 20px !important; }
-        .side-btn { width: auto !important;  height: 100px !important; font-size: 0.8rem !important; border-radius: 35px !important; }
-        .week-grid { display: grid !important; grid-template-columns: 1fr !important; gap: 15px !important; }
-        .admin-btn { padding: 18px !important; font-size: 0.9rem !important; border-radius: 15px !important; margin-bottom: 15px !important; }
-        .cat-btn { padding: 35px 35px !important; font-size: 0.8rem !important; border-radius: 20px !important; margin-right: 10px !important; margin-bottom: 10px !important; }
-        .fav-chip { padding: 35px 35px !important; font-size: 0.8rem !important; border-radius: 25px !important; box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important; min-height: 10px; }
-        .del-fav { font-size: 1.5rem !important; margin-left: 20px !important; }
-        .tab-bar { height: 110px !important; padding-bottom: 30px !important; }
-        .tab-item .icon { font-size: 60px !important; }
-        .user-btn { padding: 20px !important; font-size: 1.1rem !important; }
-        .user-del-x { width: 35px !important; height: 35px !important; font-size: 20px !important; }
-        .login-card button { width: 100% !important; height: 60px !important; margin-top: 20px !important; padding: 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-        .theme-toggle-top { position: fixed !important; left: 50% !important; transform: translateX(-50%) !important; padding: 10px 30px !important; font-size: 2.8rem !important; border-radius: 20px !important; border-width: 2px !important; top: calc(env(safe-area-inset-top) + 10px) !important; box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important; z-index: 1000 !important; display: flex !important; justify-content: center !important; align-items: center !important; }
+    .btn-add { 
+        flex-shrink: 0 !important; 
+        width: 4.25rem !important; 
+        height: 4.25rem !important; 
+        font-size: 2.2rem !important; 
+        display: flex !important; 
+        align-items: center !important; 
+        justify-content: center !important; 
+    }
 
-        /* --- TABLET POPUP & FINANCE (COMPACT) --- */
-       /* --- FINANZEN FULLSCREEN: ALLES IN EINER REIHE --- */
-
-        /* 1. Das Hauptfenster: Volle Breite & Höhe */
-        #finance-modal > div { width: 100vw !important; height: 100vh !important; max-width: 100vw !important; max-height: 100vh !important; margin: 0 !important; padding: 50px !important; border-radius: 0 !important; display: flex !important; flex-direction: column !important; box-sizing: border-box !important; }
-
-        /* 2. Die Überschrift: Zentriert & Riesig */
-        #finance-modal h2 { font-size: 4rem !important; margin-bottom: 40px !important; text-align: center !important; font-weight: 900 !important; }
-
-        /* 3. Schließen-Button (X): Oben rechts, groß & rund */ 
-        #finance-modal button[onclick="closeFinanceModal()"] { width: 100px !important; height: 100px !important; font-size: 3rem !important; top: 30px !important; right: 80px !important; border-radius: 50% !important; background: rgba(0,0,0,0.05) !important; border: none !important; display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; }
-
-        /* 4. Der Inhaltsbereich (Liste): Scrollbar & Platzoptimiert */
-        #modal-content { flex: 1 !important; max-height: none !important; overflow-y: auto !important; padding: 20px 10px !important; display: block !important; }
-        #intervalModal > div, #editModal > div, #shopQtyModal > div { width: 800px !important; min-width: 800px !important; padding: 50px !important; border-radius: 30px !important; }
-        #intervalModal input, #intervalModal select, #editModal input, #editModal select { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid rgba(0,0,0,0.1); background: var(--bg); color: var(--text); font-size: 1rem; box-sizing: border-box; outline: none; }
-        /* Erreicht die Liste im Popup und überschreibt JEDEN anderen Befehl */
-        div#finance-modal .finance-item { font-size: 1.1rem !important; padding: 12px 20px !important; line-height: 1.2 !important; height: auto !important; }
-        
-        /* --- TABLET FIX (ÜBERALL GROSSE SCHRIFT) --- */
-        .month-card { padding: 35px !important; margin-bottom: 25px !important; border-radius: 35px !important; }
-        .month-card h2 { font-size: 2.2rem !important; margin-bottom: 20px !important; }
-        .month-card .finance-item { font-size: 2.4rem !important; padding: 20px !important; margin-bottom: 10px !important; border-radius: 18px !important; }
-        
-        #years-container { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 25px !important; margin: 0 !important; }
-        #years-container .month-card { padding: 35px !important; margin-bottom: 0 !important; border-radius: 35px !important; }
-        #years-container .month-card h3 { font-size: 2.2rem !important; margin-bottom: 15px !important; }
-        #years-container .month-card div { font-size: 1.3rem !important; }
-        #years-container .month-card .summary-total { font-size: 1.8rem !important; margin-top: 15px !important; padding-top: 15px !important; border-top: 3px solid rgba(0,0,0,0.1) !important; }
+    /* Sidebar passt sich automatisch der Wortlänge an, alles in 1 Zeile */
+    .sidebar { 
+        width: max-content !important; 
+        gap: 0.8rem !important; 
+        flex-shrink: 0 !important; 
+    }
     
+    .side-btn { 
+        width: 100% !important; 
+        min-height: 4.25rem !important; 
+        padding: 0.75rem 1.25rem !important; 
+        font-size: 0.9rem !important; 
+        border-radius: 28px !important; 
+        white-space: nowrap !important; 
+        display: flex !important; 
+        align-items: center !important; 
+        justify-content: center !important; 
+        box-sizing: border-box !important;
+    }
 
-        /* --- TABLET INPUT FIX (ÜBERALL GROSS & BREIT) --- */
-        .finance-input-row { gap: 15px !important; margin-bottom: 25px !important; display: flex !important; align-items: center !important; }
-        /* 1. Euro-Feld: Fest und breit */
-        .finance-input-row input[type="number"] { width: 220px !important; flex-shrink: 0 !important; height: 90px !important; font-size: 2.5rem !important; padding: 0 15px !important; border-radius: 18px !important; }
-        /* 2. Namens-Feld: Nimmt den restlichen Platz ein */
-        .finance-input-row input[type="text"] { flex: 1 !important; height: 90px !important; font-size: 2.5rem !important; padding: 0 15px !important; border-radius: 18px !important; min-width: 0; }
-        /* 3. Dropdown & Button */
-        .finance-input-row select { width: 120px !important; height: 90px !important; font-size: 2.2rem !important; border-radius: 18px !important; flex-shrink: 0 !important; }
-        .finance-input-row .btn-add { width: 100px !important; height: 90px !important; font-size: 1.8rem !important; border-radius: 18px !important; flex-shrink: 0 !important; }
-        /* Summen & Grid */
-        .finance-summary { font-size: 1.3rem !important; padding-top: 25px !important; margin-top: 15px !important; }
-        .summary-line { display: flex !important; justify-content: space-between !important; margin-bottom: 10px !important; }
-        .summary-total { font-size: 1.8rem !important; margin-top: 15px !important; padding-top: 15px !important; border-top: 3px solid rgba(0,0,0,0.1) !important; }
-        #months-container { grid-template-columns: repeat(6, 1fr) !important; gap: 20px !important; }
-        #intervalModal > div, #editModal > div, #shopQtyModal > div { width: 800px !important; min-width: 800px !important; max-width: 95vw !important; padding: 50px !important; border-radius: 30px !important; }
-        #intervalModal input, #intervalModal select, #editModal input, #shopQtyModal input { width: 100% !important; padding: 15px !important; margin-bottom: 15px !important; border-radius: 12px !important; border: 1px solid rgba(0,0,0,0.1) !important; background: var(--bg) !important; color: var(--text) !important; font-size: 1.2rem !important; box-sizing: border-box !important; outline: none !important; }
-        .day-dot { height: 85px; font-size: 1.5rem; border-radius: 15px; }
-        .weekday-row { gap: 15px; }
-        #intervalModal button, #editModal button, #shopQtyModal button { 
-        height: 80px !important; 
+    /* PC/Laptop: Aufgaben bis zu 6 nebeneinander */
+    ul {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 15px !important;
+        align-items: stretch !important;
+        width: 100% !important;
+    }
+
+    li {
+        flex: 1 1 max(10rem, calc((100% - 75px) / 6)) !important;
+        width: auto !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+    }
+
+    .week-grid { display: grid !important; grid-template-columns: 1fr !important; gap: 15px !important; }
+    .admin-btn { padding: 0.9rem !important; font-size: 0.9rem !important; border-radius: 15px !important; margin-bottom: 15px !important; white-space: nowrap !important; }
+    .cat-btn { padding: 1rem 1.4rem !important; font-size: 0.85rem !important; border-radius: 20px !important; margin-right: 10px !important; margin-bottom: 10px !important; white-space: nowrap !important; }
+    .fav-chip { padding: 1rem 1.4rem !important; font-size: 0.85rem !important; border-radius: 25px !important; box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important; min-height: 0.5rem; white-space: nowrap !important; }
+    .del-fav { font-size: 1.5rem !important; margin-left: 1rem !important; }
+    
+    .tab-bar { min-height: 5.5rem !important; height: auto !important; padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !important; }
+    .tab-item .icon { font-size: 2.2rem !important; }
+    .user-btn { padding: 1rem !important; font-size: 1.1rem !important; white-space: nowrap !important; }
+    .user-del-x, .user-edit-pen { width: 1.8rem !important; height: 1.8rem !important; font-size: 0.9rem !important; }
+    
+    .login-card button:not(.zoom-btn) { 
+        width: 100% !important; 
+        min-height: 3rem !important; 
+        height: auto !important;
+        margin-top: 1rem !important; 
+        padding: 0.5rem !important; 
+        font-size: 1.1rem !important;
+        display: flex !important; 
+        align-items: center !important; 
+        justify-content: center !important; 
+    }
+
+    .theme-toggle-top { 
+        position: absolute !important; 
+        top: calc(env(safe-area-inset-top) + 2.5rem) !important; 
+        right: 1.75rem !important; 
+        left: auto !important; 
+        transform: none !important; 
+        padding: 0.4rem 1rem !important; 
+        font-size: 1.5rem !important; 
+        border-radius: 16px !important; 
+        border-width: 2px !important; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important; 
+        z-index: 1000 !important; 
+        display: flex !important; 
+        justify-content: center !important; 
+        align-items: center !important; 
+    }
+    
+    .status-bar {
+        right: 1.75rem !important;
+        font-size: 0.85rem !important;
+    }
+
+   
+
+    #modal-content { 
+        flex: 1 !important; 
+        max-height: none !important; 
+        overflow-y: auto !important; 
+        padding: 1rem 0.5rem !important; 
+        display: block !important; 
+    }
+
+    div#finance-modal .finance-item { 
+        font-size: 1.05rem !important; 
+        padding: 0.6rem 0.9rem !important; 
+        line-height: 1.2 !important; 
+        height: auto !important; 
+    }
+    
+    /* 1. Das Hauptfenster (Vollbild mit abgerundeten Ecken & Anker) */
+    #finance-modal > div { 
+        width: 100vw !important; 
+        height: 100vh !important; 
+        max-width: 130vw !important; 
+        max-height: 130vh !important; 
+        margin: 0 !important; 
+        padding: 50px !important; 
+        border-radius: 15px !important; 
+        display: flex !important; 
+        flex-direction: column !important; 
+        box-sizing: border-box !important; 
+        position: relative !important; /* Wichtiger Anker für das X */
+    }
+
+    /* Verhindert, dass innere Container das X festhalten */
+    #finance-modal > div div {
+        position: static !important;
+    }
+
+    /* 2. Die Überschrift: Zentriert & Riesig */
+    #finance-modal h2 { 
+        font-size: 4rem !important; 
+        margin-bottom: 40px !important; 
+        text-align: center !important; 
+        font-weight: 900 !important; 
+    }
+
+    /* 3. Schließen-Button (X): Oben rechts, groß & rund */ 
+    #finance-modal button[onclick="closeFinanceModal()"],
+    #finance-modal .finance-close-btn { 
+        position: absolute !important; 
+        top: 30px !important; 
+        right: 30px !important; 
+        left: auto !important;
+        bottom: auto !important;
+        width: 50px !important; 
+        height: 50px !important; 
+        font-size: 3rem !important; 
+        border-radius: 50% !important; 
+        background: rgba(0, 0, 0, 0.05) !important; 
+        border: none !important; 
+        display: flex !important; 
+        align-items: center !important; 
+        justify-content: center !important; 
+        cursor: pointer !important; 
+        z-index: 10005 !important;
+    }
+
+
+    
+    /* Laptop/PC: 4 Monate und 4 Jahre nebeneinander */
+    #months-container, #years-container { 
+        display: grid !important; 
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important; 
+        gap: 1rem !important; 
+        margin: 0 !important;
+        width: 100% !important;
+    }
+
+    .month-card, #years-container .month-card { 
+        padding: 1.1rem !important; 
+        margin-bottom: 0 !important; 
+        border-radius: 26px !important; 
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+    
+    .month-card h2, #years-container .month-card h3 { 
         font-size: 1.4rem !important; 
+        margin-bottom: 0.75rem !important; 
+        white-space: nowrap !important;
+    }
+    
+    .month-card .finance-item { 
+        font-size: 1.1rem !important; 
+        padding: 0.6rem 0.7rem !important; 
+        margin-bottom: 0.4rem !important; 
+        border-radius: 14px !important; 
+    }
+    
+    #years-container .month-card div { 
+        font-size: 1rem !important; 
+    }
+    
+    #years-container .month-card .summary-total, .summary-total { 
+        font-size: 1.25rem !important; 
+        margin-top: 0.6rem !important; 
+        padding-top: 0.6rem !important; 
+        border-top: 2px solid rgba(0,0,0,0.1) !important; 
+    }
+
+    .finance-input-row { 
+        gap: 0.75rem !important; 
+        margin-bottom: 1.25rem !important; 
+        display: flex !important; 
+        align-items: center !important; 
+    }
+    
+    .finance-input-row input[type="number"] { 
+        width: 9rem !important; 
+        flex-shrink: 0 !important; 
+        height: 3.75rem !important; 
+        font-size: 1.6rem !important; 
+        padding: 0 0.75rem !important; 
+        border-radius: 18px !important; 
+    }
+    
+    .finance-input-row input[type="text"] { 
+        flex: 1 !important; 
+        height: 3.75rem !important; 
+        font-size: 1.6rem !important; 
+        padding: 0 0.75rem !important; 
+        border-radius: 18px !important; 
+        min-width: 0; 
+    }
+    
+    .finance-input-row select { 
+        width: max-content !important; 
+        min-width: 5.5rem !important;
+        height: 3.75rem !important; 
+        font-size: 1.4rem !important; 
+        padding: 0 0.75rem !important;
+        border-radius: 18px !important; 
+        flex-shrink: 0 !important; 
+    }
+    
+    .finance-input-row .btn-add { 
+        width: 4.25rem !important; 
+        height: 3.75rem !important; 
+        font-size: 1.6rem !important; 
+        border-radius: 18px !important; 
+        flex-shrink: 0 !important; 
+    }
+
+    .finance-summary { 
+        font-size: 1rem !important; 
+        padding-top: 0.75rem !important; 
+        margin-top: 0.75rem !important; 
+    }
+    
+    .summary-line { 
+        display: flex !important; 
+        justify-content: space-between !important; 
+        margin-bottom: 0.3rem !important; 
+    }
+
+    #intervalModal > div, #editModal > div, #shopQtyModal > div { 
+        width: 90vw !important; 
+        max-width: 37.5rem !important; 
+        min-width: unset !important; 
+        padding: 2rem !important; 
+        border-radius: 30px !important; 
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+    }
+
+    #intervalModal input:not([type="time"]), 
+    #intervalModal select, 
+    #editModal input:not([type="time"]), 
+    #editModal select,
+    #shopQtyModal input { 
+        width: 100% !important; 
+        padding: 0.75rem !important; 
+        margin-bottom: 0.75rem !important; 
+        border-radius: 12px !important; 
+        border: 1px solid rgba(0,0,0,0.1) !important; 
+        background: var(--bg) !important; 
+        color: var(--text) !important; 
+        font-size: 1.2rem !important; 
+        box-sizing: border-box !important; 
+        outline: none !important; 
+    }
+
+    #modalTime, #edit-time {
+        min-height: 3rem !important;
+        height: auto !important;
+        font-size: 1.2rem !important;
+        padding: 0.5rem 0.75rem !important;
+    }
+
+    .day-dot { height: 3.75rem !important; font-size: 1.3rem !important; border-radius: 15px !important; }
+    .weekday-row { gap: 0.6rem !important; }
+
+    #intervalModal button, #editModal button, #shopQtyModal button { 
+        min-height: 3.75rem !important; 
+        height: auto !important;
+        font-size: 1.3rem !important; 
         border-radius: 15px !important; 
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        }
+    }
+}
 
-        
-    
+/* ========================================================
+   --- HANDY & HA APP SCHUTZ BEI JEDEM ZOOM (50%, 67%, 100%) ---
+   Überschreibt das versehentliche PC-Layout auf Touch-Geräten
+   ======================================================== */
+@media (hover: none), (pointer: coarse), (max-device-width: 900px) {
+    /* 1. Monate & Jahre immer exakt 2 Spalten, volle Breite und mittig zentriert */
+    body #months-container,
+    body #years-container {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
     }
 
-    /* --- BASIS SETUP --- */
-    html { font-size: 16px; } 
-    body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg); margin: 0; padding: env(safe-area-inset-top) 20px 140px 20px; color: var(--text); -webkit-tap-highlight-color: transparent; overflow-x: hidden; transition: background 0.3s ease; }
-    .split-container { display: flex; gap: 15px; }
-    .sidebar { display: flex; flex-direction: column; gap: 10px; width: 140px; flex-shrink: 0; }
-    .side-btn { background: var(--card); border: 1px solid #ddd; padding: 15px 5px; border-radius: 18px; font-weight: 800; font-size: 0.8rem; text-align: center; cursor: pointer; color: var(--gray); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .side-btn.active-shop { background: var(--primary); color: white; border-color: var(--primary); }
-    .side-btn.active-todo { background: var(--todo); color: white; border-color: var(--todo); }
-    .cat-btn.active-shop { background: var(--primary) !important; color: white !important; } 
-    .cat-btn.active-food { background: var(--accent) !important; color: white !important; }
-    .cat-btn.active-todo { background: var(--todo) !important; color: white !important; }
-    .side-btn-add { border: 2px dashed var(--accent); color: var(--accent); background: transparent; }
-    .main-content { flex: 1; min-width: 0; }
-    #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-    .login-card { background: var(--card); padding: 30px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center; width: 85%; max-width: 450px; position: relative; color: var(--text); }
-    .user-grid-login { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
-    .user-btn { width: 100%; padding: 12px; border-radius: 18px; border: 1px solid #ddd; background: var(--card); font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.95rem; position: relative; color: var(--text); }
-    .user-btn.selected { background: #d1ffd1 !important; border-color: var(--primary) !important; border-width: 2.5px; transform: scale(1.03); }
-    .user-del-x { position: absolute; top: -8px; right: -8px; background: var(--danger); color: white; width: 24px; height: 24px; border-radius: 50%; font-size: 14px; display: none; align-items: center; justify-content: center; border: 2.5px solid white; z-index: 10; }
-    .admin-mode .user-del-x { display: flex !important; }
-    .status-bar { position: absolute; top: calc(env(safe-area-inset-top) + 10px); right: 20px; text-align: right; font-size: 0.7rem; color: var(--gray); font-weight: 600; line-height: 1.3; }
-    header { margin-bottom: 20px; margin-top: 20px; }
-    h1 { font-size: 2rem; font-weight: 800; margin: 0; color: var(--text); }
-    .input-card { background: var(--card); padding: 12px; border-radius: 20px; display: flex; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
-    .main-input { flex-grow: 1; border: none; padding: 10px; font-size: 1.1rem; outline: none; background: transparent; color: var(--text); }
-    .btn-add { background: var(--primary); color: white; border: none; width: 50px; height: 50px; border-radius: 16px; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-    .admin-row { display: flex; gap: 10px; margin-bottom: 20px; }
-    .admin-btn { flex: 1; background: var(--card); border: 1px dashed #c7c7cc; padding: 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; cursor: pointer; color: var(--text); }
-    .cat-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; scrollbar-width: none; }
-    .cat-btn { background: var(--card); border: none; padding: 10px 20px; border-radius: 14px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; color: var(--gray); cursor: pointer; }
-    .fav-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; }
-    .fav-chip { background: var(--card); padding: 12px 18px; border-radius: 18px; font-size: 0.9rem; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #e5e5ea; cursor: pointer; display: flex; align-items: center; color: var(--text); }
-    .del-fav { color: var(--danger); margin-left: 10px; font-weight: 800; font-size: 1.1rem; }
-    .del-cat { color: var(--danger); margin-left: 6px; font-weight: 800; font-size: 1.1rem; }
-    ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 15px; align-items: stretch; }
-    li { background: var(--card); padding: 18px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); font-size: 1rem; flex: 1 1 300px; max-width: 100%; box-sizing: border-box; color: var(--text); }
-    .week-grid { display: grid; gap: 12px; margin-top: 10px; }
-    .day-card { background: var(--card); padding: 15px; border-radius: 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border-left: 6px solid var(--accent); color: var(--text); }
-    .day-label { display: flex; flex-direction: column; align-items: center; line-height: 1; font-size: 0.7rem; min-width: 55px; font-weight: 800; color: var(--accent); }
-    .day-label span { font-size: 1.5rem; margin-bottom: 5px; }
-    .day-input { flex: 1; border: none; font-size: 1rem; outline: none; color: var(--text); background: transparent; font-weight: 500; }
-    .tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); backdrop-filter: blur(20px); display: flex; padding: 15px 0 calc(20px + env(safe-area-inset-bottom)); border-top: 1px solid #d1d1d6; z-index: 1000; }
-    .tab-item { border: none; background: none; color: var(--gray); font-size: 0.75rem; font-weight: 700; display: flex; flex-direction: column; align-items: center; flex: 1; cursor: pointer; }
-    .tab-item.active-shop { color: var(--primary); }
-    .tab-item.active-food { color: var(--accent); }
-    .tab-item.active-todo { color: var(--todo); }
-    .tab-item.active-trash { color: var(--trash); }
-    .tab-item.active-finance { color: var(--primary); }
-    .tab-item .icon { font-size: 1.6rem; margin-bottom: 5px; }
-    .trash-row { display: flex; flex-direction: column; padding: 15px 0; border-bottom: 1px solid #f2f2f7; color: var(--text); }
-    .trash-header { display: flex; justify-content: space-between; align-items: center; }
-    .trash-name { font-weight: 700; font-size: 1.1rem; }
-    .trash-days { font-weight: 800; font-size: 1.1rem; }
-    .trash-date { font-size: 0.85rem; color: var(--gray); margin-top: 5px; font-weight: 600; }
-    /* --- FINANCE HISTORY COMPACT --- */
+    body #months-container .month-card,
+    body #years-container .month-card {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        flex: unset !important;
+        padding: 12px !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
 
-    #months-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 0 15px; }
-
-    .month-card { background: var(--card); border-radius: 25px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.1s; cursor: pointer; display: flex; flex-direction: column; }
-    .month-card:active { transform: scale(0.96); }
-
-    .month-card h2 { margin: 0 0 15px 0; font-size: 1.3rem; color: var(--primary); border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    body #months-container .month-card h2,
+    body #years-container .month-card h3,
+    body .month-card .summary-total {
+        white-space: normal !important;
+        word-break: break-word !important;
+        font-size: 0.95rem !important;
+    }
     
-    #years-container { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 15px !important; margin: 0 15px !important; }
-    #years-container .month-card { padding: 20px !important; margin-bottom: 0 !important; border-radius: 25px !important; }
-    #years-container .month-card h3 { font-size: 1.3rem !important; margin-bottom: 10px !important; }
-    #years-container .month-card div { font-size: 0.9rem !important; }
-    #years-container .month-card .summary-total { font-size: 1rem !important; margin-top: 10px !important; padding-top: 10px !important; border-top: 1px solid rgba(0,0,0,0.1) !important; }
-
-    /* Eingabefelder (Popup & Karte) */
-    .finance-input-row { display: flex; gap: 8px; margin-bottom: 20px; }
-    .finance-input-row input, .finance-input-row select { background: var(--bg); border: none; padding: 12px; border-radius: 12px; color: var(--text); outline: none; }
-
-    /* Die Items (Listen-Einträge) */
-    .finance-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.03); padding: 10px 15px; border-radius: 12px; margin-bottom: 6px; font-size: 0.95rem; }
-
-    /* Die 3 neuen Summen-Zeilen */
-    .finance-summary { margin-top: auto; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.05); font-size: 0.85rem; display: grid; gap: 4px; }
-    .summary-line { display: flex; justify-content: space-between; align-items: center; opacity: 0.8; }
-    .summary-total { display: flex; justify-content: space-between; align-items: center; font-weight: 800; color: var(--primary); font-size: 1rem; margin-top: 5px; }
-
-    .modal-row, .weekday-row { display: flex !important; gap: 8px !important; margin-bottom: 15px !important; width: 100% !important; align-items: center !important; }
-    .day-dot { flex: 1 !important; height: 50px !important; display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; font-weight: 800 !important; border-radius: 12px !important; transition: 0.2s !important; border: 1px solid rgba(0,0,0,0.1) !important; }
-    .modal-row input { flex: 2 !important; } .modal-row select { flex: 3 !important; }
     
+    body #finance-modal > div {
+        position: relative !important;
+        width: 56rem !important;        
+        max-width: 96vw !important;     
+        height: 75rem !important;       
+        max-height: 94vh !important;    
+        margin: auto !important;
+        padding: 2.2rem !important;     
+        border-radius: 2.5rem !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;    
+    }
+
+
+    body .finance-input-row {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        width: 100% !important;
+        margin-bottom: 15px !important;
+        box-sizing: border-box !important;
+    }
+
+    body .finance-input-row input[type="number"] {
+        width: 35% !important;
+        flex: 1 1 30% !important;
+        height: 2.8rem !important;
+        font-size: 1rem !important;
+        padding: 0 0.65rem !important;
+        border-radius: 12px !important;
+    }
+
+    body .finance-input-row input[type="text"] {
+        width: 60% !important;
+        flex: 1 1 55% !important;
+        height: 2.8rem !important;
+        font-size: 1rem !important;
+        padding: 0 0.65rem !important;
+        border-radius: 12px !important;
+    }
+
+    body .finance-input-row select {
+        flex: 1 1 auto !important;
+        height: 2.8rem !important;
+        font-size: 0.95rem !important;
+        padding: 0 0.65rem !important;
+        border-radius: 12px !important;
+    }
+
+    body .finance-input-row .btn-add {
+        width: 3.1rem !important;
+        height: 2.8rem !important;
+        font-size: 1.4rem !important;
+        border-radius: 12px !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* 3. Normale Eingabekarte oben (.input-card) ebenfalls vor PC-Riesenwuchs bei 50%/67% schützen */
+    body .input-card {
+        padding: 0.65rem !important;
+        margin-bottom: 15px !important;
+        gap: 8px !important;
+    }
+
+    body .main-input {
+        font-size: 1.05rem !important;
+        height: 2.5rem !important;
+    }
+
+    body .input-card .btn-add {
+        width: 2.8rem !important;
+        height: 2.8rem !important;
+        font-size: 1.4rem !important;
+    }
+}
+
 
