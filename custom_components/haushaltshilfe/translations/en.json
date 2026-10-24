@@ -1,0 +1,21 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure Haushaltshilfe Pro",
+        "description": "Would you like to set up the Haushaltshilfe Pro integration and automatically create all required helper entities in Home Assistant?"
+      }
+    },
+    "abort": {
+      "already_configured": "Haushaltshilfe Pro is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Haushaltshilfe Pro Options",
+        "description": "Here you can adjust the settings for Haushaltshilfe."
+      }
+    }
+  }
+}
