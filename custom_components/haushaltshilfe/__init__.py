@@ -1,4 +1,5 @@
 """The Haushaltshilfe Pro integration with persistent JSON file storage."""
+import asyncio
 import logging
 import os
 import shutil
@@ -10,8 +11,123 @@ from homeassistant.components.http import HomeAssistantView
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN, CONF_ADMIN_PW, CONF_MASTER_PW, CONF_VISIBLE_TABS
+from .security import (
+    hash_password,
+    is_hashed,
+    parse_users,
+    public_users,
+    serialize_users,
+    verify_password,
+)
 
 _LOGGER = logging.getLogger(__name__)
+
+# Verzögerung nach falschem Passwort, bremst Durchprobieren aus
+FAILED_LOGIN_DELAY = 1.0
+
+# Nur diese Events darf das Frontend über den Proxy feuern
+ALLOWED_PROXY_EVENTS = {
+    "set_tasks_data",
+    "set_todo_favs",
+    "set_shop_favs",
+    "set_food_favs",
+    "set_shopping_data",
+    "set_finance_data",
+    "set_finance_db",
+    "set_finance_templates",
+}
+
+# Nur diese Entitäten darf das Frontend über den Proxy beschreiben
+ALLOWED_WRITE_PREFIXES = (
+    "input_text.helper_",
+    "input_text.essen_",
+    "sensor.haushalt_",
+)
+
+
+async def _read_json(request) -> dict:
+    """Liest den Request-Body als JSON, auch wenn der Content-Type fehlt."""
+    try:
+        data = await request.json()
+    except Exception:
+        try:
+            data = json.loads(await request.text())
+        except Exception:
+            data = {}
+    return data if isinstance(data, dict) else {}
+
+
+def _stored_pw(hass, conf_key: str, store_key: str) -> str:
+    """Liefert den gespeicherten (gehashten) Master- oder Admin-Passwort-Wert."""
+    entry = hass.data.get(DOMAIN, {}).get("entry")
+    store_data = hass.data.get(DOMAIN, {}).get("data", {})
+    if entry is not None:
+        value = entry.options.get(conf_key, entry.data.get(conf_key))
+        if value:
+            return str(value)
+    return str(store_data.get(store_key, "") or "")
+
+
+async def _async_check_pw(hass, stored: str, given) -> bool:
+    """Prüft ein Passwort im Executor und bremst bei Fehlversuchen."""
+    ok = await hass.async_add_executor_job(verify_password, stored, given)
+    if not ok:
+        await asyncio.sleep(FAILED_LOGIN_DELAY)
+    return ok
+
+
+async def _async_check_master(hass, given) -> bool:
+    return await _async_check_pw(hass, _stored_pw(hass, CONF_MASTER_PW, "helper_master_pw"), given)
+
+
+async def _async_check_admin(hass, given) -> bool:
+    return await _async_check_pw(hass, _stored_pw(hass, CONF_ADMIN_PW, "helper_admin_pw"), given)
+
+
+async def async_migrate_secrets(hass, entry: ConfigEntry, store_data: dict) -> bool:
+    """Hasht Klartext-Passwörter und entfernt das früher gespeicherte HA-Token.
+
+    Gibt True zurück, wenn der Config-Entry geändert wurde.
+    """
+    # 1. Früher hier abgelegtes Long-Lived-Token entfernen (wurde ohne Auth ausgeliefert)
+    if store_data.pop("saved_ha_token", None):
+        _LOGGER.warning(
+            "Haushaltshilfe: Ein gespeichertes Home-Assistant-Token wurde entfernt. "
+            "Bitte das Token unter Profil -> Sicherheit -> Langlebige Zugangstoken widerrufen."
+        )
+
+    # 2. Master-/Admin-Passwort im Config-Entry hashen
+    new_data = dict(entry.data)
+    new_options = dict(entry.options)
+    changed = False
+    for container in (new_data, new_options):
+        for key in (CONF_MASTER_PW, CONF_ADMIN_PW):
+            value = container.get(key)
+            if value and not is_hashed(value):
+                container[key] = await hass.async_add_executor_job(hash_password, str(value))
+                changed = True
+    if changed:
+        hass.config_entries.async_update_entry(entry, data=new_data, options=new_options)
+
+    # 3. Kopien im Store durch die Hashes ersetzen
+    for conf_key, store_key in ((CONF_MASTER_PW, "helper_master_pw"), (CONF_ADMIN_PW, "helper_admin_pw")):
+        value = new_options.get(conf_key, new_data.get(conf_key))
+        if value:
+            store_data[store_key] = value
+        elif store_data.get(store_key) and not is_hashed(store_data[store_key]):
+            store_data[store_key] = await hass.async_add_executor_job(hash_password, str(store_data[store_key]))
+
+    # 4. Benutzer-Passwörter hashen
+    users = parse_users(store_data.get("users_list", "[]"))
+    users_changed = False
+    for u in users:
+        if not is_hashed(u["pw"]):
+            u["pw"] = await hass.async_add_executor_job(hash_password, u["pw"])
+            users_changed = True
+    if users_changed:
+        store_data["users_list"] = serialize_users(users)
+
+    return changed
 
 PLATFORMS = ["sensor"]
 STORAGE_KEY = f"{DOMAIN}_data_store"
@@ -33,22 +149,19 @@ AUTO_INPUT_TEXTS = {
 
 
 class HaushaltshilfeCredentialsView(HomeAssistantView):
-    """API Endpoint um Master- und Admin-Passwort sowie sichtbare Tabs an das Frontend zu liefern."""
+    """Liefert die sichtbaren Tabs. Passwörter werden NICHT mehr ausgeliefert."""
     url = "/api/haushaltshilfe/credentials"
     name = "api:haushaltshilfe:credentials"
-    requires_auth = False
+    requires_auth = True
 
     async def get(self, request):
         hass = request.app["hass"]
         entry = hass.data.get(DOMAIN, {}).get("entry")
         store_data = hass.data.get(DOMAIN, {}).get("data", {})
         if not entry:
-            return self.json({"error": "Config entry not found"}, status=500)
+            return self.json({"error": "Config entry not found"}, status_code=500)
 
-        m_pw = entry.options.get(CONF_MASTER_PW, entry.data.get(CONF_MASTER_PW, store_data.get("helper_master_pw", "")))
-        a_pw = entry.options.get(CONF_ADMIN_PW, entry.data.get(CONF_ADMIN_PW, store_data.get("helper_admin_pw", "")))
-        
-        # Tabs genau wie die Passwörter aus Options -> Data -> Store holen
+        # Tabs aus Options -> Data -> Store holen
         raw_tabs = entry.options.get(CONF_VISIBLE_TABS)
         if raw_tabs is None:
             raw_tabs = entry.data.get(CONF_VISIBLE_TABS)
@@ -67,32 +180,49 @@ class HaushaltshilfeCredentialsView(HomeAssistantView):
             visible_tabs = ["shop", "todo", "food", "trash", "finance"]
 
         return self.json({
-            "master_pw": str(m_pw),
-            "admin_pw": str(a_pw),
-            "visible_tabs": visible_tabs
+            "visible_tabs": visible_tabs,
+            "has_master_pw": bool(_stored_pw(hass, CONF_MASTER_PW, "helper_master_pw")),
+            "has_admin_pw": bool(_stored_pw(hass, CONF_ADMIN_PW, "helper_admin_pw")),
         })
 
 
+class HaushaltshilfeVerifyView(HomeAssistantView):
+    """Prüft Master- oder Admin-Passwort serverseitig (gibt nur ok/nicht ok zurück)."""
+    url = "/api/haushaltshilfe/verify"
+    name = "api:haushaltshilfe:verify"
+    requires_auth = True
+
+    async def post(self, request):
+        hass = request.app["hass"]
+        data = await _read_json(request)
+        kind = data.get("kind")
+        password = data.get("password", "")
+
+        if kind == "master":
+            ok = await _async_check_master(hass, password)
+        elif kind == "admin":
+            ok = await _async_check_admin(hass, password)
+        else:
+            return self.json({"success": False, "message": "Unbekannter Typ"}, status_code=400)
+
+        if ok:
+            return self.json({"success": True})
+        return self.json({"success": False}, status_code=403)
+
+
 class HaushaltshilfeUpdateCredentialsView(HomeAssistantView):
-    """API Endpoint um Master- und Admin-Passwort, sichtbare Tabs sowie den Zoom zentral zu speichern."""
+    """Speichert Master-/Admin-Passwort, sichtbare Tabs sowie den Zoom zentral."""
     url = "/api/haushaltshilfe/update_credentials"
     name = "api:haushaltshilfe:update_credentials"
-    requires_auth = False
+    requires_auth = True
 
     async def post(self, request):
         hass = request.app["hass"]
         entry = hass.data.get(DOMAIN, {}).get("entry")
         if not entry:
-            return self.json({"error": "Config entry not found"}, status=500)
+            return self.json({"error": "Config entry not found"}, status_code=500)
 
-        try:
-            data = await request.json()
-        except Exception:
-            try:
-                raw_text = await request.text()
-                data = json.loads(raw_text)
-            except Exception:
-                data = {}
+        data = await _read_json(request)
 
         new_master = data.get("master_pw")
         new_admin = data.get("admin_pw")
@@ -100,15 +230,23 @@ class HaushaltshilfeUpdateCredentialsView(HomeAssistantView):
         new_device_id = data.get("device_id")
         new_zoom = data.get("zoom")
 
+        new_master = str(new_master).strip() if new_master is not None else ""
+        new_admin = str(new_admin).strip() if new_admin is not None else ""
+
+        # Alles außer dem gerätespezifischen Zoom ist durch das Master-Passwort geschützt
+        if new_master or new_admin or new_tabs is not None:
+            if not await _async_check_master(hass, data.get("current_master_pw", "")):
+                return self.json({"success": False, "message": "Master-Passwort falsch"}, status_code=403)
+
         new_options = {**entry.data, **entry.options}
         updated = False
 
-        if new_master is not None and str(new_master).strip() != "":
-            new_options[CONF_MASTER_PW] = str(new_master).strip()
+        if new_master:
+            new_options[CONF_MASTER_PW] = await hass.async_add_executor_job(hash_password, new_master)
             updated = True
-        
-        if new_admin is not None and str(new_admin).strip() != "":
-            new_options[CONF_ADMIN_PW] = str(new_admin).strip()
+
+        if new_admin:
+            new_options[CONF_ADMIN_PW] = await hass.async_add_executor_job(hash_password, new_admin)
             updated = True
 
         parsed_tabs = None
@@ -125,18 +263,18 @@ class HaushaltshilfeUpdateCredentialsView(HomeAssistantView):
                 new_options[CONF_VISIBLE_TABS] = parsed_tabs
                 updated = True
 
-        # HIER DER FIX: Speichert auch dann, wenn NUR der Zoom geändert wurde!
+        # Speichert auch dann, wenn NUR der Zoom geändert wurde
         if updated or (new_device_id and new_zoom is not None):
             if updated:
                 hass.config_entries.async_update_entry(entry, options=new_options)
-            
+
             store_data = hass.data[DOMAIN].get("data", {})
             store = hass.data[DOMAIN].get("store")
             if store_data is not None and store is not None:
-                if new_master is not None and str(new_master).strip() != "":
-                    store_data["helper_master_pw"] = str(new_master).strip()
-                if new_admin is not None and str(new_admin).strip() != "":
-                    store_data["helper_admin_pw"] = str(new_admin).strip()
+                if new_master:
+                    store_data["helper_master_pw"] = new_options[CONF_MASTER_PW]
+                if new_admin:
+                    store_data["helper_admin_pw"] = new_options[CONF_ADMIN_PW]
                 if parsed_tabs is not None:
                     tabs_str = json.dumps(parsed_tabs)
                     store_data["helper_visible_tabs"] = tabs_str
@@ -151,280 +289,241 @@ class HaushaltshilfeUpdateCredentialsView(HomeAssistantView):
                         zooms = json.loads(zooms_raw) if isinstance(zooms_raw, str) else zooms_raw
                     except Exception:
                         zooms = {}
-                    zooms[new_device_id] = float(new_zoom)
+                    zooms[str(new_device_id)] = float(new_zoom)
                     store_data["device_zooms"] = json.dumps(zooms)
 
                 await store.async_save(store_data)
 
             return self.json({"success": True})
 
-        return self.json({"success": False, "message": "Keine Änderungen"}, status=400)
+        return self.json({"success": False, "message": "Keine Änderungen"}, status_code=400)
 
 
 class HaushaltshilfeUsersView(HomeAssistantView):
-    """API Endpoint um die Benutzerliste abzurufen und zu speichern."""
+    """Benutzerliste abrufen (ohne Passwörter) und einzelne Benutzer verwalten."""
     url = "/api/haushaltshilfe/users"
     name = "api:haushaltshilfe:users"
-    requires_auth = False
+    requires_auth = True
 
     async def get(self, request):
         hass = request.app["hass"]
         store_data = hass.data.get(DOMAIN, {}).get("data", {})
-        store = hass.data[DOMAIN].get("store")
-        
-        raw_users = store_data.get("users_list")
-        
-        if raw_users is None:
-            users_list = []
-            store_data["users_list"] = json.dumps(users_list)
-            if store is not None:
-                await store.async_save(store_data)
-        else:
-            if isinstance(raw_users, str):
-                try:
-                    users_list = json.loads(raw_users)
-                except Exception:
-                    users_list = []
-            else:
-                users_list = raw_users
-                
-        return self.json({"users": users_list})
+        users = parse_users(store_data.get("users_list", "[]"))
+        return self.json({"users": public_users(users)})
 
     async def post(self, request):
+        """Aktionen: add, update, delete. Jede Aktion braucht das Admin-Passwort."""
         hass = request.app["hass"]
         store_data = hass.data.get(DOMAIN, {}).get("data", {})
         store = hass.data[DOMAIN].get("store")
+        data = await _read_json(request)
 
-        try:
-            data = await request.json()
-        except Exception:
-            try:
-                raw_text = await request.text()
-                data = json.loads(raw_text)
-            except Exception:
-                data = {}
+        action = data.get("action")
+        if action not in ("add", "update", "delete"):
+            # Das alte Format {"users": [...]} würde Passwörter im Klartext übertragen
+            return self.json({"success": False, "message": "Ungültige Aktion"}, status_code=400)
 
-        new_users = data.get("users")
-        if new_users is not None:
-            if isinstance(new_users, list):
-                store_data["users_list"] = json.dumps(new_users)
-            else:
-                store_data["users_list"] = str(new_users)
+        if not await _async_check_admin(hass, data.get("admin_pw", "")):
+            return self.json({"success": False, "message": "Admin-Passwort falsch"}, status_code=403)
 
-            if store is not None:
-                await store.async_save(store_data)
+        users = parse_users(store_data.get("users_list", "[]"))
+        name = str(data.get("name", "")).strip()
+        password = str(data.get("password", "")).strip()
+        persistent = bool(data.get("persistent", False))
 
-            return self.json({"success": True})
+        def find(n):
+            return next((u for u in users if u["name"].lower() == n.lower()), None)
 
-        return self.json({"success": False, "message": "Keine Benutzer übergeben"}, status=400)
+        if action in ("add", "update") and (not name or ":" in name):
+            return self.json({"success": False, "message": "Ungültiger Name"}, status_code=400)
+
+        if action == "add":
+            if not password:
+                return self.json({"success": False, "message": "Passwort fehlt"}, status_code=400)
+            if find(name):
+                return self.json({"success": False, "message": "Benutzer existiert bereits"}, status_code=409)
+            users.append({
+                "name": name,
+                "pw": await hass.async_add_executor_job(hash_password, password),
+                "persistent": persistent,
+            })
+
+        elif action == "update":
+            old_name = str(data.get("old_name", name)).strip()
+            target = find(old_name)
+            if target is None:
+                return self.json({"success": False, "message": "Benutzer nicht gefunden"}, status_code=404)
+            other = find(name)
+            if other is not None and other is not target:
+                return self.json({"success": False, "message": "Benutzer existiert bereits"}, status_code=409)
+            target["name"] = name
+            target["persistent"] = persistent
+            if password:  # leer = Passwort unverändert lassen
+                target["pw"] = await hass.async_add_executor_job(hash_password, password)
+
+        elif action == "delete":
+            target = find(name)
+            if target is None:
+                return self.json({"success": False, "message": "Benutzer nicht gefunden"}, status_code=404)
+            users.remove(target)
+
+        store_data["users_list"] = serialize_users(users)
+        if store is not None:
+            await store.async_save(store_data)
+
+        return self.json({"success": True, "users": public_users(users)})
 
 
-class HaushaltshilfeSaveTokenView(HomeAssistantView):
-    """Speichert ein aktives HA-Token im Backend, damit Mobilgeräte es nach Login abrufen können."""
-    url = "/api/haushaltshilfe/save_token"
-    name = "api:haushaltshilfe:save_token"
+class HaushaltshilfePublicUsersView(HomeAssistantView):
+    """Liefert nur die Benutzernamen (ohne Passwörter) für den Login-Screen."""
+    url = "/api/haushaltshilfe/public_users"
+    name = "api:haushaltshilfe:public_users"
+    requires_auth = True
+
+    async def get(self, request):
+        hass = request.app["hass"]
+        store_data = hass.data.get(DOMAIN, {}).get("data", {})
+        users = parse_users(store_data.get("users_list", "[]"))
+        return self.json({"users": [{"name": u["name"], "persistent": u["persistent"]} for u in users]})
+
+
+class HaushaltshilfeAppLoginView(HomeAssistantView):
+    """Prüft Benutzername & Passwort. Gibt KEIN Home-Assistant-Token mehr heraus."""
+    url = "/api/haushaltshilfe/app_login"
+    name = "api:haushaltshilfe:app_login"
     requires_auth = True
 
     async def post(self, request):
         hass = request.app["hass"]
         store_data = hass.data.get(DOMAIN, {}).get("data", {})
-        store = hass.data.get(DOMAIN, {}).get("store")
+        data = await _read_json(request)
 
-        try:
-            data = await request.json()
-        except Exception:
-            data = {}
-
-        token = data.get("token")
-        if token and isinstance(token, str) and token.strip() != "":
-            store_data["saved_ha_token"] = token.strip()
-            if store is not None:
-                await store.async_save(store_data)
-            return self.json({"success": True})
-
-        return self.json({"success": False}, status=400)
-
-
-class HaushaltshilfePublicUsersView(HomeAssistantView):
-    """Liefert nur die Benutzernamen (ohne Passwörter!) für den Login-Screen ohne Token."""
-    url = "/api/haushaltshilfe/public_users"
-    name = "api:haushaltshilfe:public_users"
-    requires_auth = False
-
-    async def get(self, request):
-        hass = request.app["hass"]
-        store_data = hass.data.get(DOMAIN, {}).get("data", {})
-        raw_users = store_data.get("users_list", "[]")
-
-        if isinstance(raw_users, str):
-            try:
-                users_list = json.loads(raw_users)
-            except Exception:
-                users_list = []
-        else:
-            users_list = raw_users if isinstance(raw_users, list) else []
-
-        public_users = []
-        for u_str in users_list:
-            if isinstance(u_str, str) and ":" in u_str:
-                parts = u_str.split(":")
-                u_name = parts[0]
-                is_pers = len(parts) > 2 and parts[2] == "persistent"
-                public_users.append({"name": u_name, "persistent": is_pers})
-
-        return self.json({"users": public_users})
-
-
-class HaushaltshilfeAppLoginView(HomeAssistantView):
-    """Prüft Benutzername & Passwort ohne Token und gibt bei Erfolg das gespeicherte Token zurück."""
-    url = "/api/haushaltshilfe/app_login"
-    name = "api:haushaltshilfe:app_login"
-    requires_auth = False
-
-    async def post(self, request):
-        hass = request.app["hass"]
-        store_data = hass.data.get(DOMAIN, {}).get("data", {})
-
-        try:
-            data = await request.json()
-        except Exception:
-            try:
-                raw_text = await request.text()
-                data = json.loads(raw_text)
-            except Exception:
-                data = {}
-
-        username = data.get("username", "")
+        username = str(data.get("username", ""))
         password = data.get("password", "")
 
-        raw_users = store_data.get("users_list", "[]")
-        if isinstance(raw_users, str):
-            try:
-                users_list = json.loads(raw_users)
-            except Exception:
-                users_list = []
-        else:
-            users_list = raw_users if isinstance(raw_users, list) else []
+        users = parse_users(store_data.get("users_list", "[]"))
+        target = next((u for u in users if u["name"] == username), None)
+        stored = target["pw"] if target else ""
 
-        for u_str in users_list:
-            if isinstance(u_str, str) and ":" in u_str:
-                parts = u_str.split(":")
-                u_name = parts[0]
-                u_pw = parts[1] if len(parts) > 1 else ""
-                if u_name == username and u_pw == password:
-                    saved_token = store_data.get("saved_ha_token", "")
-                    return self.json({"success": True, "token": saved_token})
+        if target is not None and await _async_check_pw(hass, stored, password):
+            return self.json({"success": True})
 
-        return self.json({"success": False, "message": "Invalid credentials"}, status=401)
+        if target is None:
+            await asyncio.sleep(FAILED_LOGIN_DELAY)
+        return self.json({"success": False, "message": "Invalid credentials"}, status_code=401)
 
 
 class HaushaltshilfeStateProxyView(HomeAssistantView):
-    """Liest und schreibt States & Events für das Frontend komplett ohne Token-Zwang."""
+    """Liest States und schreibt die eigenen Entitäten/Events der Integration."""
     url = "/api/haushaltshilfe/proxy"
     name = "api:haushaltshilfe:proxy"
-    requires_auth = False
+    requires_auth = True
 
     async def get(self, request):
-        """Liefert den State und die Attribute einer Entität ohne Token."""
+        """Liefert State und Attribute einer Entität (nur für angemeldete HA-Benutzer)."""
         hass = request.app["hass"]
         entity_id = request.query.get("entity_id")
-        
+
         if entity_id:
             state = hass.states.get(entity_id)
             if not state:
                 return self.json({"state": "unknown", "attributes": {}})
             return self.json({"state": state.state, "attributes": dict(state.attributes)})
-            
-        return self.json({"error": "No entity_id provided"}, status=400)
+
+        return self.json({"error": "No entity_id provided"}, status_code=400)
 
     async def post(self, request):
-        """Feuert ein Event oder setzt einen input_text / sensor Wert ohne Token."""
+        """Feuert ein erlaubtes Event oder setzt eine Entität der Integration."""
         hass = request.app["hass"]
         store_data = hass.data.get(DOMAIN, {}).get("data", {})
         store = hass.data[DOMAIN].get("store")
         entry = hass.data.get(DOMAIN, {}).get("entry")
 
-        try:
-            data = await request.json()
-        except Exception:
-            try:
-                raw_text = await request.text()
-                data = json.loads(raw_text)
-            except Exception:
-                return self.json({"error": "Invalid JSON"}, status=400)
+        data = await _read_json(request)
+        if not data:
+            return self.json({"error": "Invalid JSON"}, status_code=400)
 
         action = data.get("action")
-        
+
         # 1. Custom Event feuern (für Einkaufsliste, Aufgaben, Favoriten, Finanzen, Vorlagen)
         if action == "fire_event":
             event_type = data.get("event_type")
             event_data = data.get("event_data", {})
-            if event_type:
-                hass.bus.async_fire(event_type, event_data)
-                return self.json({"success": True})
+            if event_type not in ALLOWED_PROXY_EVENTS:
+                return self.json({"error": "Event not allowed"}, status_code=403)
+            if not isinstance(event_data, dict):
+                event_data = {}
+            hass.bus.async_fire(event_type, event_data)
+            return self.json({"success": True})
 
-        # 2. Input_text oder Sensor direkt setzen & im Store sichern
-        elif action == "set_input_text":
+        # 2. Input_text oder Sensor der Integration setzen & im Store sichern
+        if action == "set_input_text":
             entity_id = data.get("entity_id")
             value = data.get("value", "")
-            if entity_id and (entity_id.startswith("input_text.") or entity_id.startswith("sensor.")):
-                helper_key = entity_id.replace("input_text.", "").replace("sensor.haushalt_", "")
-                if helper_key == "finance_templates":
-                    store_data["finance_templates"] = str(value)
-                    store_data["helper_finance_templates"] = str(value)
-                else:
-                    store_data[helper_key] = str(value)
+            if not isinstance(entity_id, str) or not entity_id.startswith(ALLOWED_WRITE_PREFIXES):
+                return self.json({"error": "Entity not allowed"}, status_code=403)
 
-                current_state = hass.states.get(entity_id)
-                attrs = current_state.attributes.copy() if current_state else {}
-                hass.states.async_set(entity_id, str(value), attrs)
+            helper_key = entity_id.replace("input_text.", "").replace("sensor.haushalt_", "")
+            if helper_key in ("helper_master_pw", "helper_admin_pw", "users_list", "saved_ha_token"):
+                return self.json({"error": "Entity not allowed"}, status_code=403)
 
-                # Falls es die Fixkosten-Vorlagen sind, halte beide Entitäten synchron
-                if "finance_templates" in entity_id:
-                    try:
-                        parsed_tpl = json.loads(str(value)) if isinstance(value, str) else value
-                    except Exception:
-                        parsed_tpl = []
-                    hass.states.async_set("input_text.helper_finance_templates", str(value), {"friendly_name": "Fixkosten Vorlagen"})
-                    hass.states.async_set("sensor.haushalt_finance_templates", "OK", {"templates": parsed_tpl})
+            if helper_key == "finance_templates":
+                store_data["finance_templates"] = str(value)
+                store_data["helper_finance_templates"] = str(value)
+            else:
+                store_data[helper_key] = str(value)
 
-                if store is not None:
-                    await store.async_save(store_data)
+            current_state = hass.states.get(entity_id)
+            attrs = current_state.attributes.copy() if current_state else {}
+            hass.states.async_set(entity_id, str(value), attrs)
 
-                if helper_key == "helper_visible_tabs" and entry is not None:
-                    try:
-                        if isinstance(value, list):
-                            parsed = value
-                        elif isinstance(value, str):
-                            try:
-                                parsed = json.loads(value)
-                            except json.JSONDecodeError:
-                                parsed = [v.strip().strip("'\"") for v in value.strip("[]").split(",") if v.strip()]
-                        else:
-                            parsed = list(value)
+            # Falls es die Fixkosten-Vorlagen sind, halte beide Entitäten synchron
+            if "finance_templates" in entity_id:
+                try:
+                    parsed_tpl = json.loads(str(value)) if isinstance(value, str) else value
+                except Exception:
+                    parsed_tpl = []
+                hass.states.async_set("input_text.helper_finance_templates", str(value), {"friendly_name": "Fixkosten Vorlagen"})
+                hass.states.async_set("sensor.haushalt_finance_templates", "OK", {"templates": parsed_tpl})
 
-                        new_options = dict(entry.options)
-                        if new_options.get(CONF_VISIBLE_TABS) != parsed:
-                            new_options[CONF_VISIBLE_TABS] = parsed
-                            hass.config_entries.async_update_entry(entry, options=new_options)
-                    except Exception as e:
-                        _LOGGER.error("Fehler beim Aktualisieren der visible_tabs Optionen im Proxy: %s", e)
+            if store is not None:
+                await store.async_save(store_data)
 
-                return self.json({"success": True})
+            if helper_key == "helper_visible_tabs" and entry is not None:
+                try:
+                    if isinstance(value, list):
+                        parsed = value
+                    elif isinstance(value, str):
+                        try:
+                            parsed = json.loads(value)
+                        except json.JSONDecodeError:
+                            parsed = [v.strip().strip("'\"") for v in value.strip("[]").split(",") if v.strip()]
+                    else:
+                        parsed = list(value)
 
-        return self.json({"error": "Unknown action"}, status=400)
+                    new_options = dict(entry.options)
+                    if new_options.get(CONF_VISIBLE_TABS) != parsed:
+                        new_options[CONF_VISIBLE_TABS] = parsed
+                        hass.config_entries.async_update_entry(entry, options=new_options)
+                except Exception as e:
+                    _LOGGER.error("Fehler beim Aktualisieren der visible_tabs Optionen im Proxy: %s", e)
+
+            return self.json({"success": True})
+
+        return self.json({"error": "Unknown action"}, status_code=400)
+
 
 class HaushaltshilfeGetZoomView(HomeAssistantView):
     """API Endpoint um Zoom und Theme gerätespezifisch abzurufen."""
     url = "/api/haushaltshilfe/get_zoom"
     name = "api:haushaltshilfe:get_zoom"
-    requires_auth = False
+    requires_auth = True
 
     async def get(self, request):
         hass = request.app["hass"]
         store_data = hass.data.get(DOMAIN, {}).get("data", {})
         device_id = request.query.get("device_id", "default")
-        
+
         zooms_raw = store_data.get("device_zooms", "{}")
         themes_raw = store_data.get("device_themes", "{}")
         try:
@@ -433,10 +532,10 @@ class HaushaltshilfeGetZoomView(HomeAssistantView):
         except Exception:
             zooms = {}
             themes = {}
-            
+
         zoom_val = zooms.get(device_id, 1.0)
         theme_val = themes.get(device_id, "theme-glass")
-        
+
         return self.json({"zoom": zoom_val, "theme": theme_val})
 
 
@@ -444,27 +543,20 @@ class HaushaltshilfeUpdateZoomView(HomeAssistantView):
     """API Endpoint um Zoom und Theme gerätespezifisch auf dem Server zu speichern."""
     url = "/api/haushaltshilfe/update_zoom"
     name = "api:haushaltshilfe:update_zoom"
-    requires_auth = False
+    requires_auth = True
 
     async def post(self, request):
         hass = request.app["hass"]
         store_data = hass.data.get(DOMAIN, {}).get("data", {})
         store = hass.data[DOMAIN].get("store")
-
-        try:
-            data = await request.json()
-        except Exception:
-            try:
-                raw_text = await request.text()
-                data = json.loads(raw_text)
-            except Exception:
-                data = {}
+        data = await _read_json(request)
 
         device_id = data.get("device_id")
         zoom = data.get("zoom")
         theme = data.get("theme")
 
         if device_id:
+            device_id = str(device_id)
             # 1. Daten aus dem Store laden
             zooms_raw = store_data.get("device_zooms", "{}")
             themes_raw = store_data.get("device_themes", "{}")
@@ -477,9 +569,12 @@ class HaushaltshilfeUpdateZoomView(HomeAssistantView):
 
             # 2. Werte aktualisieren (wenn übergeben)
             if zoom is not None:
-                zooms[device_id] = float(zoom)
+                try:
+                    zooms[device_id] = float(zoom)
+                except (TypeError, ValueError):
+                    return self.json({"success": False, "message": "Ungültiger Zoom"}, status_code=400)
                 store_data["device_zooms"] = json.dumps(zooms)
-                
+
             if theme is not None:
                 themes[device_id] = str(theme)
                 store_data["device_themes"] = json.dumps(themes)
@@ -490,7 +585,7 @@ class HaushaltshilfeUpdateZoomView(HomeAssistantView):
 
             return self.json({"success": True})
 
-        return self.json({"success": False, "message": "Ungültige Device-ID"}, status=400)
+        return self.json({"success": False, "message": "Ungültige Device-ID"}, status_code=400)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Haushaltshilfe Pro with persistent JSON storage."""
@@ -502,17 +597,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN]["store"] = store
     hass.data[DOMAIN]["data"] = store_data
 
-    opt_master = entry.options.get(CONF_MASTER_PW, entry.data.get(CONF_MASTER_PW))
-    opt_admin = entry.options.get(CONF_ADMIN_PW, entry.data.get(CONF_ADMIN_PW))
-    opt_tabs = entry.options.get(CONF_VISIBLE_TABS, entry.data.get(CONF_VISIBLE_TABS))
-
-    if opt_master is not None:
-        store_data["helper_master_pw"] = str(opt_master)
-    if opt_admin is not None:
-        store_data["helper_admin_pw"] = str(opt_admin)
-
     if "users_list" not in store_data:
         store_data["users_list"] = json.dumps([])
+
+    # Klartext-Passwörter hashen, altes HA-Token aus dem Store entfernen
+    await async_migrate_secrets(hass, entry, store_data)
+
+    opt_tabs = entry.options.get(CONF_VISIBLE_TABS, entry.data.get(CONF_VISIBLE_TABS))
 
     # Synchronisiere finance_templates und helper_finance_templates beim Start
     if "finance_templates" in store_data and store_data["finance_templates"] != "[]":
@@ -560,6 +651,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
             if entity_id and value is not None and entity_id.startswith("input_text."):
                 helper_key = entity_id.replace("input_text.", "")
+                if helper_key in ("helper_master_pw", "helper_admin_pw", "users_list", "saved_ha_token"):
+                    return
                 current_state = hass.states.get(entity_id)
                 attrs = current_state.attributes.copy() if current_state else {}
                 
@@ -601,7 +694,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "set_finance_data": "finance_db",
         "set_finance_db": "finance_db",
         "set_finance_templates": "helper_finance_templates",
-        "set_users_data": "users_list",
+        # "set_users_data" entfernt: Benutzer werden nur noch über
+        # /api/haushaltshilfe/users (mit Admin-Passwort, gehasht) geändert.
     }
 
     @callback
@@ -663,9 +757,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     hass.http.register_view(HaushaltshilfeCredentialsView())
+    hass.http.register_view(HaushaltshilfeVerifyView())
     hass.http.register_view(HaushaltshilfeUpdateCredentialsView())
     hass.http.register_view(HaushaltshilfeUsersView())
-    hass.http.register_view(HaushaltshilfeSaveTokenView())
     hass.http.register_view(HaushaltshilfePublicUsersView())
     hass.http.register_view(HaushaltshilfeAppLoginView())
     hass.http.register_view(HaushaltshilfeStateProxyView())
@@ -681,18 +775,15 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
     store = hass.data[DOMAIN].get("store")
     store_data = hass.data[DOMAIN].get("data", {})
 
-    admin_pw = entry.options.get(CONF_ADMIN_PW) or entry.data.get(CONF_ADMIN_PW)
-    master_pw = entry.options.get(CONF_MASTER_PW) or entry.data.get(CONF_MASTER_PW)
-    
+    # Im Options-Flow neu eingegebene Passwörter kommen im Klartext an -> hashen.
+    # Ändert das den Entry, ruft HA diesen Listener erneut auf (dann ist alles gehasht).
+    if await async_migrate_secrets(hass, entry, store_data):
+        return
+
     # Hier der entscheidende Fallback, damit visible_tabs nie None wird:
     visible_tabs = entry.options.get(CONF_VISIBLE_TABS)
     if visible_tabs is None:
         visible_tabs = entry.data.get(CONF_VISIBLE_TABS, ["shop", "todo", "food", "trash", "finance"])
-
-    if admin_pw is not None:
-        store_data["helper_admin_pw"] = str(admin_pw)
-    if master_pw is not None:
-        store_data["helper_master_pw"] = str(master_pw)
 
     if visible_tabs is not None:
         tabs_str = json.dumps(visible_tabs) if isinstance(visible_tabs, list) else str(visible_tabs)
