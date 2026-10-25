@@ -39,36 +39,62 @@ function getBaseUrl() {
     return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
 }
 
-async function fetchServerCredentials() {
+// Passwörter werden nur noch am Server geprüft. Ein bestätigtes Passwort bleibt
+// für diese Sitzung im Speicher (nicht im localStorage), damit man im
+// Admin-Modus nicht für jede Aktion neu tippen muss.
+let verifiedMasterPw = null;
+let verifiedAdminPw = null;
+
+// Ergebnis: "ok" | "wrong" | "noauth" | "error"
+async function verifyPassword(kind, password) {
     const baseUrl = getBaseUrl();
-    const token = HA_TOKEN || getHAToken();
-    const headers = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
     try {
-        const res = await fetch(`${baseUrl}/api/haushaltshilfe/credentials`, { headers });
-        if (res.ok) {
-            const data = await res.json();
-            if (data.master_pw) localStorage.setItem("ha_master_pw", data.master_pw);
-            if (data.admin_pw) localStorage.setItem("ha_admin_pw", data.admin_pw);
-            return data;
-        }
+        const res = await fetch(`${baseUrl}/api/haushaltshilfe/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ kind: kind, password: password })
+        });
+        if (res.ok) return "ok";
+        if (res.status === 401) return "noauth";
+        if (res.status === 403) return "wrong";
+        return "error";
     } catch (e) {
-        console.warn("Server-Credentials Abfrage fehlgeschlagen:", e);
+        console.warn("Passwortprüfung fehlgeschlagen:", e);
+        return "error";
     }
-    return null;
 }
 
-async function getMasterPw() {
-    const creds = await fetchServerCredentials();
-    if (creds && creds.master_pw) return creds.master_pw;
-    return localStorage.getItem("ha_master_pw") || "";
+// Fragt das Admin-Passwort ab (oder nutzt das bereits bestätigte) und prüft es am Server
+async function requireAdmin() {
+    if (verifiedAdminPw !== null) return true;
+    const check = await showPasswordPrompt("ADMIN-BEREICH:\nAdmin-Passwort eingeben:");
+    if (check === null) return false;
+    const result = await verifyPassword("admin", check);
+    if (result === "ok") {
+        verifiedAdminPw = check;
+        return true;
+    }
+    if (result === "wrong") {
+        await showAlert("Passwort falsch! Zugriff verweigert.", "Fehler ❌");
+    } else if (result !== "noauth") {
+        await showAlert("Server nicht erreichbar.", "Fehler ⚠️");
+    }
+    return false;
 }
 
-async function getAdminPw() {
-    const creds = await fetchServerCredentials();
-    if (creds && creds.admin_pw) return creds.admin_pw;
-    return localStorage.getItem("ha_admin_pw") || "";
+// Admin-Aktion an den Server schicken (Benutzer anlegen/ändern/löschen)
+async function userAction(payload) {
+    const baseUrl = getBaseUrl();
+    const res = await fetch(`${baseUrl}/api/haushaltshilfe/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.assign({ admin_pw: verifiedAdminPw || "" }, payload))
+    });
+    let data = {};
+    try { data = await res.json(); } catch (e) {}
+    if (res.status === 403) verifiedAdminPw = null;
+    if (res.ok && Array.isArray(data.users)) users = data.users;
+    return { ok: res.ok, message: data.message || `Status ${res.status}` };
 }
 
 // ---- TOKEN-FREIE KOMMUNIKATION MIT HOME ASSISTANT (PROXY) ----
@@ -326,36 +352,55 @@ async function loadDeviceZoom() {
 
 window.openSystemSettings = async function() {
     try {
-        const currentMasterPw = await getMasterPw();
-        const currentAdminPw = await getAdminPw();
-        const token = HA_TOKEN || getHAToken();
+        const elToken = document.getElementById("set_token");
+        const elMaster = document.getElementById("set_master_pw");
+        const elAdmin = document.getElementById("set_admin_pw");
 
-        const eingabe = await showPasswordPrompt("SYSTEM-ZUGRIFF:\nMaster-Passwort eingeben:");
-        if (eingabe === null) return;
+        // Ohne Anmeldung (Kiosk ohne Token) kann der Server nichts prüfen:
+        // dann nur das Token-Feld anbieten.
+        const tokenOnly = !getHAToken();
 
-        if (!currentMasterPw || eingabe === currentMasterPw) {
-            const visibleTabs = await applyVisibleTabs();
-            
-            const elToken = document.getElementById("set_token");
-            const elMaster = document.getElementById("set_master_pw");
-            const elAdmin = document.getElementById("set_admin_pw");
+        if (!tokenOnly) {
+            const eingabe = await showPasswordPrompt("SYSTEM-ZUGRIFF:\nMaster-Passwort eingeben:");
+            if (eingabe === null) return;
 
-            if (elToken) elToken.value = token;
-            if (elMaster) elMaster.value = currentMasterPw || eingabe;
-            if (elAdmin) elAdmin.value = currentAdminPw;
-
-            // Zoom-Wert beim Öffnen im Regler & Label anzeigen
-            applyAppZoom(currentAppZoom);
-
-            document.querySelectorAll(".tab-toggle").forEach(cb => {
-                cb.checked = visibleTabs.includes(cb.value);
-            });
-
-            const overlay = document.getElementById("settingsOverlay");
-            if (overlay) overlay.style.display = "flex";
-        } else {
-            await showAlert("Master-Passwort falsch! Zugriff verweigert.", "Zugriff verweigert ❌");
+            const result = await verifyPassword("master", eingabe);
+            if (result === "wrong") {
+                await showAlert("Master-Passwort falsch! Zugriff verweigert.", "Zugriff verweigert ❌");
+                return;
+            }
+            if (result !== "ok" && result !== "noauth") {
+                await showAlert("Server nicht erreichbar.", "Fehler ⚠️");
+                return;
+            }
+            verifiedMasterPw = result === "ok" ? eingabe : null;
         }
+
+        const visibleTabs = await applyVisibleTabs();
+
+        // Das HA-Sitzungstoken wird nie angezeigt, nur ein manuell hinterlegtes Kiosk-Token
+        if (elToken) {
+            elToken.value = "";
+            elToken.placeholder = isInHASession()
+                ? "Nicht nötig (HA-Sitzung aktiv)"
+                : (getHAToken() ? "Token hinterlegt - leer lassen = unverändert" : "Long-Lived Access Token einfügen");
+        }
+        if (elMaster) elMaster.value = "";
+        if (elAdmin) elAdmin.value = "";
+
+        document.querySelectorAll(".settings-protected").forEach(el => {
+            el.style.display = (tokenOnly || verifiedMasterPw === null) ? "none" : "";
+        });
+
+        // Zoom-Wert beim Öffnen im Regler & Label anzeigen
+        applyAppZoom(currentAppZoom);
+
+        document.querySelectorAll(".tab-toggle").forEach(cb => {
+            cb.checked = visibleTabs.includes(cb.value);
+        });
+
+        const overlay = document.getElementById("settingsOverlay");
+        if (overlay) overlay.style.display = "flex";
     } catch (err) {
         await showAlert("Fehler beim Öffnen der Einstellungen: " + err.message, "Fehler ⚠️");
     }
@@ -367,55 +412,50 @@ window.saveSystemSettings = async function() {
         const elAdmin = document.getElementById("set_admin_pw");
         const elToken = document.getElementById("set_token");
 
-        if (!elMaster || !elAdmin) {
-            await showAlert("Fehler: Eingabefelder konnten im HTML nicht gefunden werden!", "Fehler ⚠️");
-            return;
-        }
-
-        const newMasterPw = elMaster.value.trim();
-        const newAdminPw = elAdmin.value.trim();
-
-        if (!newMasterPw || !newAdminPw) {
-            await showAlert("Bitte Master- und Admin-Passwort ausfüllen!", "Achtung ⚠️");
-            return;
-        }
-
         // Zoom-Faktor lokal als Backup sichern
         localStorage.setItem('house_central_zoom', currentAppZoom);
 
-        let activeToken = (elToken && elToken.value.trim() !== "") ? elToken.value.trim() : (HA_TOKEN || getHAToken());
-        if (activeToken) {
-            HA_TOKEN = activeToken;
-            localStorage.setItem("ha_token", activeToken);
+        // Kiosk-Token nur auf diesem Gerät speichern
+        const newToken = elToken ? elToken.value.trim() : "";
+        if (newToken) {
+            setKioskToken(newToken);
+            HA_TOKEN = newToken;
         }
 
-        const selectedTabs = Array.from(document.querySelectorAll(".tab-toggle:checked")).map(cb => cb.value);
-        const tabsJson = JSON.stringify(selectedTabs);
-
-        localStorage.setItem("ha_master_pw", newMasterPw);
-        localStorage.setItem("ha_admin_pw", newAdminPw);
-        localStorage.setItem("ha_visible_tabs", tabsJson);
-
         const baseUrl = getBaseUrl();
-        
-        // Passwörter, Tabs UND den gerätespezifischen Zoom an den Server senden
+        const payload = { device_id: deviceId, zoom: currentAppZoom };
+
+        // Passwörter/Tabs nur, wenn das Master-Passwort in dieser Sitzung bestätigt wurde
+        if (verifiedMasterPw !== null) {
+            const newMasterPw = elMaster ? elMaster.value.trim() : "";
+            const newAdminPw = elAdmin ? elAdmin.value.trim() : "";
+            const selectedTabs = Array.from(document.querySelectorAll(".tab-toggle:checked")).map(cb => cb.value);
+
+            payload.current_master_pw = verifiedMasterPw;
+            payload.visible_tabs = selectedTabs;
+            if (newMasterPw) payload.master_pw = newMasterPw;   // leer = unverändert
+            if (newAdminPw) payload.admin_pw = newAdminPw;      // leer = unverändert
+            localStorage.setItem("ha_visible_tabs", JSON.stringify(selectedTabs));
+        }
+
         const updateRes = await fetch(`${baseUrl}/api/haushaltshilfe/update_credentials`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                master_pw: newMasterPw, 
-                admin_pw: newAdminPw,
-                visible_tabs: selectedTabs,
-                device_id: deviceId,
-                zoom: currentAppZoom
-            })
+            body: JSON.stringify(payload)
         });
 
+        if (newToken && updateRes.status === 401) {
+            await showAlert("Das eingegebene Token wird von Home Assistant nicht akzeptiert.", "Token ungültig ❌");
+            return;
+        }
         if (!updateRes.ok) {
             const errText = await updateRes.text();
             await showAlert(`Server-Fehler (Status ${updateRes.status}): ${errText}`, "Server-Fehler ❌");
             return;
         }
+
+        verifiedMasterPw = null;
+        verifiedAdminPw = null;
 
         await showAlert("Einstellungen erfolgreich gespeichert!", "Erfolg 🎉");
         const overlay = document.getElementById("settingsOverlay");
@@ -428,6 +468,7 @@ window.saveSystemSettings = async function() {
 };
 
 window.closeSystemSettingsCancel = function() {
+    verifiedMasterPw = null;
     const overlay = document.getElementById("settingsOverlay");
     if (overlay) {
         overlay.style.display = "none";
@@ -437,20 +478,15 @@ window.closeSystemSettingsCancel = function() {
 
 
 async function toggleUserAdmin() {  
-    const check = await showPasswordPrompt("ADMIN-BEREICH:\nAdmin-Passwort eingeben:");
-    if (check === null) return;
-    const currentAdminPw = await getAdminPw();
-    
-    if (currentAdminPw && check === currentAdminPw) {
+    if (await requireAdmin()) {
         document.getElementById("userGrid").classList.add("admin-mode");
         document.getElementById("admin-open-btn").style.setProperty("display", "none", "important");
         document.getElementById("admin-close-btn").style.setProperty("display", "block", "important");
-    } else {  
-        await showAlert("Passwort falsch! Zugriff verweigert.", "Fehler ❌");  
     }
 }
 
 function closeUserAdmin() {
+    verifiedAdminPw = null;
     document.getElementById("userGrid").classList.remove("admin-mode");
     document.getElementById("admin-open-btn").style.setProperty("display", "block", "important");
     document.getElementById("admin-close-btn").style.setProperty("display", "none", "important");
@@ -495,11 +531,7 @@ function closePasswordModal(confirmed) {
 let isEditingUser = false;
 
 async function addUserPrompt() {
-    const check = await showPasswordPrompt("ADMIN-BEREICH:\nAdmin-Passwort eingeben:");
-    if (check === null) return;
-    const currentAdminPw = await getAdminPw();
-
-    if (currentAdminPw && check === currentAdminPw) {
+    if (await requireAdmin()) {
         isEditingUser = false;
         document.getElementById("userModalTitle").innerText = "Neuen Benutzer erstellen";
         document.getElementById("userModalOldStr").value = "";
@@ -507,10 +539,9 @@ async function addUserPrompt() {
         document.getElementById("userModalPw").value = "";
         document.getElementById("userModalPersistent").checked = false;
         
+        document.getElementById("userModalPw").placeholder = "Passwort";
         document.getElementById("userModal").style.display = "flex";
         document.getElementById("userModalName").focus();
-    } else { 
-        await showAlert("Passwort falsch! Zugriff verweigert.", "Fehler ❌"); 
     }
 }
 
@@ -524,30 +555,26 @@ async function saveUserModal() {
     const persistentChecked = document.getElementById("userModalPersistent").checked;
     const oldStr = document.getElementById("userModalOldStr").value;
 
-    if (!nameInput || !pwInput) {
+    // Beim Bearbeiten darf das Passwort leer bleiben (= unverändert)
+    if (!nameInput || (!isEditingUser && !pwInput)) {
         alert("Bitte Name und Passwort ausfüllen!");
         return;
     }
-
-    const newUserStr = persistentChecked ? `${nameInput}:${pwInput}:persistent` : `${nameInput}:${pwInput}`;
-
-    if (isEditingUser) {
-        const index = users.indexOf(oldStr);
-        if (index !== -1) {
-            users[index] = newUserStr;
-        } else {
-            const nameIdx = users.findIndex(u => u.split(':')[0] === oldStr.split(':')[0]);
-            if (nameIdx !== -1) users[nameIdx] = newUserStr;
-        }
-    } else {
-        if (users.some(u => u.split(':')[0].toLowerCase() === nameInput.toLowerCase())) {
-            alert("Ein Benutzer mit diesem Namen existiert bereits!");
-            return;
-        }
-        users.push(newUserStr);
+    if (nameInput.includes(":")) {
+        alert("Der Name darf keinen Doppelpunkt enthalten!");
+        return;
     }
 
-    await saveUsers();
+    const payload = isEditingUser
+        ? { action: "update", old_name: oldStr.split(':')[0], name: nameInput, password: pwInput, persistent: persistentChecked }
+        : { action: "add", name: nameInput, password: pwInput, persistent: persistentChecked };
+
+    const result = await userAction(payload);
+    if (!result.ok) {
+        await showAlert("Speichern fehlgeschlagen: " + result.message, "Fehler ❌");
+        return;
+    }
+
     renderUserGrid();
     closeUserModal();
 }
@@ -598,28 +625,16 @@ function resolveInput(confirmed) {
 }
 
 async function addNewCat(t) {  
-    const check = await showPasswordPrompt("ADMIN-BEREICH:\nAdmin-Passwort eingeben:");  
-    if (check === null) return;
-    const currentAdminPw = await getAdminPw();
-
-    if (currentAdminPw && check === currentAdminPw) {  
+    if (await requireAdmin()) {
         const n = await showInputPrompt("Bitte Namen der neuen Kategorie eingeben:", "Kategorie hinzufügen");  
         if(n) { db[t].cats.push(n); syncUp(); render(); }  
-    } else {  
-        await showAlert("Passwort falsch! Zugriff verweigert.", "Fehler ❌");  
     }  
 }
 
 async function addNewFav(t) {  
-    const check = await showPasswordPrompt("ADMIN-BEREICH:\nAdmin-Passwort eingeben:");  
-    if (check === null) return;
-    const currentAdminPw = await getAdminPw();
-
-    if (currentAdminPw && check === currentAdminPw) {  
+    if (await requireAdmin()) {
         const n = await showInputPrompt("Bitte Namen des Favoriten eingeben:", "Favorit hinzufügen");  
         if(n) { db[t].favs.push({n, c:curCat}); syncUp(); render(); }  
-    } else {  
-        await showAlert("Passwort falsch! Zugriff verweigert.", "Fehler ❌");  
     }  
 }
 
@@ -740,21 +755,8 @@ async function loadUsers() {
     }
 }
 
-async function saveUsers() {
-    try {
-        const baseUrl = getBaseUrl();
-        const response = await fetch(`${baseUrl}/api/haushaltshilfe/users`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ users: users })
-        });
-        if (response.ok) {
-            console.log("✅ Benutzer erfolgreich über API gespeichert:", users);
-        }
-    } catch(e) {
-        console.error("❌ Fehler beim Speichern der Benutzer:", e);
-    }
-}
+// saveUsers() entfernt: Die komplette Liste (mit Passwörtern) wird nicht mehr
+// hochgeladen. Änderungen laufen einzeln über userAction() mit Admin-Passwort.
 
 function renderUserGrid() {
     const grid = document.getElementById("userGrid");
@@ -792,8 +794,12 @@ async function deleteUser(uStr) {
     const confirmed = await showDeleteModal(`Möchtest du den Benutzer "${uName}" wirklich löschen?`, "Benutzer löschen");
     
     if (confirmed) {  
-        users = users.filter(item => item !== uStr);  
-        await saveUsers();  
+        if (!(await requireAdmin())) return;
+        const result = await userAction({ action: "delete", name: uName });
+        if (!result.ok) {
+            await showAlert("Löschen fehlgeschlagen: " + result.message, "Fehler ❌");
+            return;
+        }
         renderUserGrid();  
     }
 }
@@ -806,18 +812,8 @@ function selUser(u, b) {
 
 async function doLogin() { 
     const enteredPw = document.getElementById("pw").value;
-    let foundUser = users.find(uStr => {
-        const [uName, uPw] = uStr.split(':');
-        return uName === user && uPw === enteredPw;
-    });
-
-    if (!foundUser && typeof loginUserViaBackend === "function") {
-        const success = await loginUserViaBackend(user, enteredPw);
-        if (success) {
-            foundUser = true;
-            await loadUsers();
-        }
-    }
+    // Passwort wird ausschließlich am Server geprüft
+    const foundUser = await loginUserViaBackend(user, enteredPw);
 
     if (foundUser) {
         sessionStorage.setItem("session_active", "true");
@@ -832,27 +828,21 @@ async function doLogin() {
 }
     
 async function changeUserPassword(uStr) {
-    const check = await showPasswordPrompt("ADMIN-BEREICH:\nAdmin-Passwort eingeben:");
-    if (check === null) return;
-    const currentAdminPw = await getAdminPw();
-
-    if (currentAdminPw && check === currentAdminPw) {
+    if (await requireAdmin()) {
         const parts = uStr.split(':');
         const uName = parts[0];
-        const oldPw = parts[1] || '';
         const isPersistent = parts[2] === 'persistent';
 
         isEditingUser = true;
         document.getElementById("userModalTitle").innerText = `Benutzer "${uName}" bearbeiten`;
         document.getElementById("userModalOldStr").value = uStr;
         document.getElementById("userModalName").value = uName;
-        document.getElementById("userModalPw").value = oldPw;
+        document.getElementById("userModalPw").value = "";
+        document.getElementById("userModalPw").placeholder = "Leer lassen = Passwort unverändert";
         document.getElementById("userModalPersistent").checked = isPersistent;
 
         document.getElementById("userModal").style.display = "flex";
         document.getElementById("userModalPw").focus();
-    } else {
-        await showAlert("Passwort falsch! Zugriff verweigert.", "Fehler ❌");
     }
 }
     
@@ -907,26 +897,54 @@ async function renderSidebars() {
         console.error("Sidebar-Zählung Shop fehlgeschlagen", e); 
     }
 
+    // --- SHOP SIDEBAR ---
     const shopSide = document.getElementById("shopSidebar");
     if(shopSide) {
-        shopSide.innerHTML = stores.map(s => {
+        shopSide.innerHTML = "";
+        stores.forEach(s => {
             const count = allOptions.filter(opt => opt.endsWith(` @${s}`)).length;
             const badge = count > 0 ? `<span class="shop-badge">${count}</span>` : '';
             
-            return `<button class="side-btn ${activeStore === s ? 'active-shop' : ''}" 
-                onclick="activeStore='${s}'; renderSidebars(); load();" 
-                oncontextmenu="event.preventDefault(); deleteSidebarItem('shop','${s}')">
-                ${s} ${badge}
-            </button>`;
-        }).join('') + `<button class="side-btn side-btn-add" onclick="addSidebarItem('shop')">+ Ort</button>`;
+            const btn = document.createElement('button');
+            btn.className = `side-btn ${activeStore === s ? 'active-shop' : ''}`;
+            btn.onclick = () => { activeStore = s; renderSidebars(); load(); };
+            btn.oncontextmenu = (e) => { e.preventDefault(); deleteSidebarItem('shop', s); };
+
+            // 1. Mülleimer zuerst (links)
+            const del = document.createElement('span');
+            del.innerHTML = "🗑️ ";
+            del.className = "del-sidebar";
+            del.style.marginRight = "6px";
+            del.style.cursor = "pointer";
+            del.onclick = (e) => {
+                e.stopPropagation();
+                deleteSidebarItem('shop', s);
+            };
+            btn.appendChild(del);
+
+            // 2. Danach Name + Badge (rechts daneben)
+            const txt = document.createElement('span');
+            txt.innerHTML = `${s} ${badge}`;
+            btn.appendChild(txt);
+
+            shopSide.appendChild(btn);
+        });
+
+        const addBtn = document.createElement('button');
+        addBtn.className = "side-btn side-btn-add";
+        addBtn.innerText = "+ Ort";
+        addBtn.onclick = () => addSidebarItem('shop');
+        shopSide.appendChild(addBtn);
     }
 
+    // --- TODO SIDEBAR (RÄUME) ---
     const todoSide = document.getElementById("todoSidebar");
     if(todoSide) {
+        todoSide.innerHTML = "";
         const now = new Date();
         const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
-        todoSide.innerHTML = rooms.map(r => {
+        rooms.forEach(r => {
             const roomTasks = todoDb.filter(t => t.room === r);
             const totalCount = roomTasks.length;
             const hasUrgent = roomTasks.some(t => new Date(t.nextDate) <= todayEnd);
@@ -941,12 +959,36 @@ async function renderSidebars() {
             const badgeClass = hasUrgent ? 'shop-badge badge-blink' : 'shop-badge';
             const badge = totalCount > 0 ? `<span class="${badgeClass}" style="${badgeStyle}">${totalCount}</span>` : '';
 
-            return `<button class="side-btn ${isActive ? 'active-todo' : ''}" 
-                onclick="activeRoom='${r}'; renderSidebars(); renderTodoList();" 
-                oncontextmenu="event.preventDefault(); deleteSidebarItem('todo','${r}')">
-                ${r} ${badge}
-            </button>`;
-        }).join('') + `<button class="side-btn side-btn-add" onclick="addSidebarItem('todo')">+ Raum</button>`;
+            const btn = document.createElement('button');
+            btn.className = `side-btn ${isActive ? 'active-todo' : ''}`;
+            btn.onclick = () => { activeRoom = r; renderSidebars(); renderTodoList(); };
+            btn.oncontextmenu = (e) => { e.preventDefault(); deleteSidebarItem('todo', r); };
+
+            // 1. Mülleimer zuerst (links)
+            const del = document.createElement('span');
+            del.innerHTML = "🗑️ ";
+            del.className = "del-sidebar";
+            del.style.marginRight = "6px";
+            del.style.cursor = "pointer";
+            del.onclick = (e) => {
+                e.stopPropagation();
+                deleteSidebarItem('todo', r);
+            };
+            btn.appendChild(del);
+
+            // 2. Danach Raumname + Badge (rechts daneben)
+            const txt = document.createElement('span');
+            txt.innerHTML = `${r} ${badge}`;
+            btn.appendChild(txt);
+
+            todoSide.appendChild(btn);
+        });
+
+        const addBtnTodo = document.createElement('button');
+        addBtnTodo.className = "side-btn side-btn-add";
+        addBtnTodo.innerText = "+ Raum";
+        addBtnTodo.onclick = () => addSidebarItem('todo');
+        todoSide.appendChild(addBtnTodo);
     }
 }  
 
@@ -1570,7 +1612,6 @@ function renderTodoList() {
 async function syncDown() {
     try {
         console.log("🔄 SyncDown gestartet...");
-        ADMIN_PW = await getAdminPw();
 
         for (let t of ['shop', 'food', 'todo']) {
             const cfg = SYNC_CONFIG[t];

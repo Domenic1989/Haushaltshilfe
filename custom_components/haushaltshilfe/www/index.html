@@ -70,13 +70,19 @@
             <span style="font-size: 1.4rem;">⚙️</span> System-Einstellungen
         </h3>
         
+        <!-- HA-TOKEN (nur für Kiosk/direkten URL-Aufruf, wird nur auf diesem Gerät gespeichert) -->
+        <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">HOME-ASSISTANT-TOKEN (NUR KIOSK-MODUS)</label>
+        <input type="password" id="set_token" placeholder="Long-Lived Access Token einfügen" autocomplete="off" style="width:100%; padding:12px; margin-bottom:15px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; font-size: 0.9rem; background: var(--bg); color: var(--text); outline: none;">
+
+        <div class="settings-protected">
         <!-- MASTER-PASSWORT -->
-        <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">MASTER-PASSWORT</label>
-        <input type="password" id="set_master_pw" placeholder="Master-Passwort..." style="width:100%; padding:12px; margin-bottom:15px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; font-size: 0.9rem; background: var(--bg); color: var(--text); outline: none;">
+        <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">NEUES MASTER-PASSWORT (LEER = UNVERÄNDERT)</label>
+        <input type="password" id="set_master_pw" placeholder="Neues Master-Passwort..." autocomplete="new-password" style="width:100%; padding:12px; margin-bottom:15px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; font-size: 0.9rem; background: var(--bg); color: var(--text); outline: none;">
 
         <!-- ADMIN-PASSWORT -->
-        <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">ADMIN-PASSWORT</label>
-        <input type="password" id="set_admin_pw" placeholder="Admin-Passwort..." style="width:100%; padding:12px; margin-bottom:20px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; font-size: 0.9rem; background: var(--bg); color: var(--text); outline: none;">
+        <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">NEUES ADMIN-PASSWORT (LEER = UNVERÄNDERT)</label>
+        <input type="password" id="set_admin_pw" placeholder="Neues Admin-Passwort..." autocomplete="new-password" style="width:100%; padding:12px; margin-bottom:20px; border-radius:12px; border:1px solid #ddd; box-sizing:border-box; font-size: 0.9rem; background: var(--bg); color: var(--text); outline: none;">
+        </div>
 
         <!-- ZOOM-EINSTELLUNG FÜR DIESES GERÄT -->
         <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px; letter-spacing: 0.5px;">GERÄTE-ZOOM (<span id="zoomPercentLabel">100%</span>)</label>
@@ -86,6 +92,7 @@
             <button type="button" class="zoom-btn" onclick="adjustSystemZoom(0.05)">+</button>
         </div>
 
+        <div class="settings-protected">
         <!-- TABS AUSWAHL -->
         <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:10px; letter-spacing: 0.5px;">SICHTBARE TABS IN DER LEISTE</label>
         <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:25px; background:#f9f9fb; padding:12px; border-radius:12px; border:1px solid #ddd;">
@@ -105,11 +112,12 @@
                 <input type="checkbox" class="tab-toggle" value="finance" checked> 💶 Finanzen
             </label>
         </div>
+        </div>
         
         <!-- BUTTONS -->
         <div style="display:flex; gap:12px;">
             <button type="button" style="flex:1; background:var(--primary); height:50px; border-radius:15px; font-weight:bold; color: white; border: none; cursor: pointer;" onclick="saveSystemSettings()">Speichern</button>
-            <button type="button" style="flex:1; background:var(--gray); height:50px; border-radius:15px; font-weight:bold; color: white; border: none; cursor: pointer;" onclick="document.getElementById('settingsOverlay').style.display='none'">Abbrechen</button>
+            <button type="button" style="flex:1; background:var(--gray); height:50px; border-radius:15px; font-weight:bold; color: white; border: none; cursor: pointer;" onclick="closeSystemSettingsCancel()">Abbrechen</button>
         </div>
     </div>
 </div>
@@ -562,8 +570,8 @@
     </div>
 </div>
 <!-- SKRIPTE WITH CACHE-BUSTING -->
-<script src="config.js?v=1.0.3"></script>
-<script src="script.js?v=1.0.3"></script>
-<script src="finance.js?v=1.0.3"></script>
+<script src="config.js?v=1.0.7"></script>
+<script src="script.js?v=1.0.7"></script>
+<script src="finance.js?v=1.0.7"></script>
 </body>
 </html>
