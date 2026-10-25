@@ -18,16 +18,15 @@ Eine elegante, benutzerfreundliche All-in-One-Lösung für die Organisation dein
 
 ## ✨ Features
 
-- 🛒 **Einkaufsliste & Favoriten**: Schnellartikel hinzufügen, Kategorien filtern und Geschäfte zuweisen.
-- 💰 **Finanzplaner**: Monatsübersichten für Fixkosten und variable Ausgaben mit automatischer Summenberechnung.
-- 📋 **Aufgaben & Termine**: Aufgaben zuweisen, Räumen zuordnen und als erledigt markieren.
-- 🍽️ **Wochen-Essensplan**: Speiseplan von Montag bis Sonntag übersichtlich verwalten.
-- 🗑️ **Müllabfuhr-Übersicht**: Direkte Anbindung an bestehende Müll-Sensoren über ein zentrales Konfigurations-Makro.
-- 🔄 **Neustart-sicher**: Alle Daten (Finanzen, Einkäufe, Aufgaben) bleiben auch nach einem Home Assistant Neustart dauerhaft gespeichert.
-- 🔑 **Multi-Device Login & Token-Speicherung**: Einmalig auf jedem Gerät (Smartphone, Tablet, PC) einrichten – die Sitzung bleibt dauerhaft gespeichert!
-- 🎛️ **Dynamische Tab-Steuerung**: Blende einzelne Navigations-Tabs ganz nach Bedarf aus oder ein – entweder direkt im Dashboard-Overlay oder über die Home Assistant Integrations-Einstellungen.
-- 🔐 **Passwort- & System-Verwaltung**: Master-Passwort, Admin-Passwort und Access-Tokens bequem über die Benutzeroberfläche oder in Home Assistant anpassen.
-- 🔄 **Vollständige Bidirektionale Synchronisation**: Egal ob du Passwörter oder die Tab-Sichtbarkeit im Dashboard-Overlay oder in den HA-Integrationsoptionen änderst – beide Stellen halten sich automatisch gegenseitig synchron!
+ - 🍽️ **Wochen-Essensplan**: Speiseplan von Montag bis Sonntag übersichtlich verwalten.
+ - 🗑️ **Müllabfuhr-Übersicht**: Direkte Anbindung an bestehende Müll-Sensoren über ein zentrales Konfigurations-Makro.
+ - 🔄 **Neustart-sicher**: Alle Daten (Finanzen, Einkäufe, Aufgaben) bleiben auch nach einem Home Assistant Neustart dauerhaft gespeichert.
+-- 🔑 **Multi-Device Login & Token-Speicherung**: Einmalig auf jedem Gerät (Smartphone, Tablet, PC) einrichten – die Sitzung bleibt dauerhaft gespeichert!
++- 🔑 **Sichere Anmeldung**: Läuft über deine Home-Assistant-Sitzung. Für Wand-Tablets im Kiosk-Modus kann pro Gerät ein eigenes Token hinterlegt werden.
+ - 🎛️ **Dynamische Tab-Steuerung**: Blende einzelne Navigations-Tabs ganz nach Bedarf aus oder ein – entweder direkt im Dashboard-Overlay oder über die Home Assistant Integrations-Einstellungen.
+-- 🔐 **Passwort- & System-Verwaltung**: Master-Passwort, Admin-Passwort und Access-Tokens bequem über die Benutzeroberfläche oder in Home Assistant anpassen.
++- 🔐 **Passwort- & System-Verwaltung**: Master- und Admin-Passwort bequem über die Benutzeroberfläche oder in Home Assistant anpassen. Alle Passwörter werden nur gehasht gespeichert und am Server geprüft.
+ - 🔄 **Vollständige Bidirektionale Synchronisation**: Egal ob du Passwörter oder die Tab-Sichtbarkeit im Dashboard-Overlay oder in den HA-Integrationsoptionen änderst – beide Stellen halten sich automatisch gegenseitig synchron!
 
   ### 💰 Finanzen & Fixkosten-Vorlagen
 * Monatsübersicht für Ausgaben und Fixkosten.
@@ -68,34 +67,46 @@ Kopiere den Ordner `custom_components/haushaltshilfe` in deinen Home Assistant O
 ---
 
 ## 📱 Erstanmeldung & Geräte-Einrichtung
+ 
+-Wenn du die Haushaltshilfe Pro zum ersten Mal auf einem neuen Gerät (Smartphone, Tablet, Wand-Display oder PC) öffnest, richtest du die Verbindung einmalig ein:
++**Über die Home-Assistant-Seitenleiste (empfohlen, auch in der Companion-App):**
++Einfach auf **Haushaltshilfe** klicken. Die Anmeldung läuft über deine bestehende Home-Assistant-Sitzung, es ist nichts weiter einzurichten.
+ 
+-Da die Haushaltshilfe Pro über einen sicheren, token-freien Proxy direkt mit Home Assistant kommuniziert, ist kein manueller Long-Lived Access Token mehr auf den Geräten nötig!
++Beim ersten Start legst du über **👤 + Neu** die Benutzer an (dafür wird das Admin-Passwort abgefragt).
+ 
+-Aufrufen über die Home Assistant Seitenleiste:
+-
+-Öffne einfach deine Home Assistant Oberfläche und klicke in der Seitenleiste auf den Eintrag Haushaltshilfe Pro.
+-
+-Die Verbindung zum Server und die Authentifizierung laufen komplett im Hintergrund über den integrierten Proxy.
++---
+ 
+-Benutzer auswählen & Einrichten:
++## 🌐 Direktaufruf über den Webbrowser (Kiosk / Wand-Tablet)
+ 
+-Beim ersten Start wählst du deinen Benutzer aus oder vergibst in den System-Einstellungen (über das Zahnrad-Icon ⚙️) einmalig deine Passwörter und Konfigurationen.
 
-Wenn du die Haushaltshilfe Pro zum ersten Mal auf einem neuen Gerät (Smartphone, Tablet, Wand-Display oder PC) öffnest, richtest du die Verbindung einmalig ein:
-
-Da die Haushaltshilfe Pro über einen sicheren, token-freien Proxy direkt mit Home Assistant kommuniziert, ist kein manueller Long-Lived Access Token mehr auf den Geräten nötig!
-
-Aufrufen über die Home Assistant Seitenleiste:
-
-Öffne einfach deine Home Assistant Oberfläche und klicke in der Seitenleiste auf den Eintrag Haushaltshilfe Pro.
-
-Die Verbindung zum Server und die Authentifizierung laufen komplett im Hintergrund über den integrierten Proxy.
-
-Benutzer auswählen & Einrichten:
-
-Beim ersten Start wählst du deinen Benutzer aus oder vergibst in den System-Einstellungen (über das Zahnrad-Icon ⚙️) einmalig deine Passwörter und Konfigurationen.
-
----
-
-## 🌐 Direktaufruf über den Webbrowser (URL)
-
-Du kannst das Panel der Haushaltshilfe Pro auf zwei Arten aufrufen:
-
-1. **Über die Seitenleiste**: Klicke einfach auf den Menüeintrag **Haushaltshilfe** in deinem Home Assistant.
-2. **Direkt per Browser-URL**: Rufe die Adresse direkt auf, z. B. auf einem Wand-Tablet oder Kiosk-Browser:
-   ```text
-   http://<DEINE-HOME-ASSISTANT-IP>:8123/local/haushaltshilfe/index.html
-   http://<DEINE-HOME-ASSISTANT-IP>/local/haushaltshilfe/index.html
-
-## 🗑️ Müllabfuhr konfigurieren (Optional)
++http://<DEINE-HOME-ASSISTANT-IP>:8123/local/haushaltshilfe/index.html
++```
+ 
+----
++Beim Direktaufruf gibt es keine Home-Assistant-Sitzung. Deshalb braucht das Gerät einmalig ein eigenes Token:
+ 
+-🌐 Direktaufruf über den Webbrowser (URL)
++1. In Home Assistant unten links auf dein **Profil** ➔ **Sicherheit** ➔ **Langlebige Zugangstoken** ➔ **Token erstellen** (z. B. *Tablet Küche*). Am besten mit einem eigenen HA-Benutzer ohne Admin-Rechte.
++2. In der Haushaltshilfe auf das Zahnrad **⚙️** tippen, das Token in das Feld **Home-Assistant-Token** einfügen und speichern.
+ 
+-Du kannst das Panel der Haushaltshilfe Pro auf zwei Arten aufrufen:
++Das Token wird nur im Browser dieses Geräts gespeichert und nie an andere Geräte weitergegeben. Geht das Tablet verloren, widerrufst du einfach dieses eine Token.
+ 
+-1. **Über die Seitenleiste**: Klicke einfach auf den Menüeintrag **Haushaltshilfe** in deinem Home Assistant.
+-2. **Direkt per Browser-URL**: Rufe die Adresse direkt auf, z. B. auf einem Wand-Tablet oder Kiosk-Browser:
+-   http://<DEINE-HOME-ASSISTANT-IP>:8123/local/haushaltshilfe/index.html
+-   http://<DEINE-HOME-ASSISTANT-IP>/local/haushaltshilfe/index.html
++> 🔒 **Update-Hinweis für Versionen bis 1.0.6:** Ältere Versionen haben ein Token im Backend gespeichert und ohne Anmeldung herausgegeben. Bitte nach dem Update **alle Langlebigen Zugangstoken widerrufen**, die du für die Haushaltshilfe erstellt hast, und für Kiosk-Geräte neue anlegen.
+ 
+ ## 🗑️ Müllabfuhr konfigurieren (Optional)
 
 Solltest du bereits die HACS-Integration *Waste Collection Schedule* nutzen, passt du in der Datei `www/haushaltshilfe/config.js` einfach die Entitäten-IDs deiner Müll-Sensoren an:
 
