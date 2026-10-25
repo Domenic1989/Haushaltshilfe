@@ -67,44 +67,42 @@ Kopiere den Ordner `custom_components/haushaltshilfe` in deinen Home Assistant O
 ---
 
 ## 📱 Erstanmeldung & Geräte-Einrichtung
- 
--Wenn du die Haushaltshilfe Pro zum ersten Mal auf einem neuen Gerät (Smartphone, Tablet, Wand-Display oder PC) öffnest, richtest du die Verbindung einmalig ein:
-+**Über die Home-Assistant-Seitenleiste (empfohlen, auch in der Companion-App):**
-+Einfach auf **Haushaltshilfe** klicken. Die Anmeldung läuft über deine bestehende Home-Assistant-Sitzung, es ist nichts weiter einzurichten.
- 
--Da die Haushaltshilfe Pro über einen sicheren, token-freien Proxy direkt mit Home Assistant kommuniziert, ist kein manueller Long-Lived Access Token mehr auf den Geräten nötig!
-+Beim ersten Start legst du über **👤 + Neu** die Benutzer an (dafür wird das Admin-Passwort abgefragt).
- 
--Aufrufen über die Home Assistant Seitenleiste:
--
--Öffne einfach deine Home Assistant Oberfläche und klicke in der Seitenleiste auf den Eintrag Haushaltshilfe Pro.
--
--Die Verbindung zum Server und die Authentifizierung laufen komplett im Hintergrund über den integrierten Proxy.
-+---
- 
--Benutzer auswählen & Einrichten:
-+## 🌐 Direktaufruf über den Webbrowser (Kiosk / Wand-Tablet)
- 
--Beim ersten Start wählst du deinen Benutzer aus oder vergibst in den System-Einstellungen (über das Zahnrad-Icon ⚙️) einmalig deine Passwörter und Konfigurationen.
 
-+http://<DEINE-HOME-ASSISTANT-IP>:8123/local/haushaltshilfe/index.html
-+```
- 
-----
-+Beim Direktaufruf gibt es keine Home-Assistant-Sitzung. Deshalb braucht das Gerät einmalig ein eigenes Token:
- 
--🌐 Direktaufruf über den Webbrowser (URL)
-+1. In Home Assistant unten links auf dein **Profil** ➔ **Sicherheit** ➔ **Langlebige Zugangstoken** ➔ **Token erstellen** (z. B. *Tablet Küche*). Am besten mit einem eigenen HA-Benutzer ohne Admin-Rechte.
-+2. In der Haushaltshilfe auf das Zahnrad **⚙️** tippen, das Token in das Feld **Home-Assistant-Token** einfügen und speichern.
- 
--Du kannst das Panel der Haushaltshilfe Pro auf zwei Arten aufrufen:
-+Das Token wird nur im Browser dieses Geräts gespeichert und nie an andere Geräte weitergegeben. Geht das Tablet verloren, widerrufst du einfach dieses eine Token.
- 
--1. **Über die Seitenleiste**: Klicke einfach auf den Menüeintrag **Haushaltshilfe** in deinem Home Assistant.
--2. **Direkt per Browser-URL**: Rufe die Adresse direkt auf, z. B. auf einem Wand-Tablet oder Kiosk-Browser:
--   http://<DEINE-HOME-ASSISTANT-IP>:8123/local/haushaltshilfe/index.html
--   http://<DEINE-HOME-ASSISTANT-IP>/local/haushaltshilfe/index.html
-+> 🔒 **Update-Hinweis für Versionen bis 1.0.6:** Ältere Versionen haben ein Token im Backend gespeichert und ohne Anmeldung herausgegeben. Bitte nach dem Update **alle Langlebigen Zugangstoken widerrufen**, die du für die Haushaltshilfe erstellt hast, und für Kiosk-Geräte neue anlegen.
+Wenn du die **Haushaltshilfe Pro** zum ersten Mal auf einem neuen Gerät (Smartphone, Tablet, Wand-Display oder PC) öffnest, richtest du die Verbindung einmalig ein.
+
+### 1. Aufrufen über die Home-Assistant-Seitenleiste (empfohlen, auch in der Companion-App)
+
+Öffne einfach deine Home-Assistant-Oberfläche und klicke in der Seitenleiste auf den Eintrag **Haushaltshilfe** (bzw. **Haushaltshilfe Pro**).
+
+- Die Verbindung zum Server und die Authentifizierung laufen komplett im Hintergrund über deine bestehende Home-Assistant-Sitzung und den integrierten Proxy.
+- Bei dieser Nutzung ist kein manuelles Long-Lived Access Token auf den Geräten nötig – es ist nichts weiter einzurichten.
+
+### 2. Benutzer auswählen & Einrichten
+
+- Beim ersten Start legst du über **👤 + Neu** die Benutzer an (dafür wird das Admin-Passwort abgefragt) oder wählst deinen bestehenden Benutzer aus.
+- Über das Zahnrad-Icon **⚙️** kannst du in den System-Einstellungen jederzeit deine Passwörter und Konfigurationen verwalten.
+
+---
+
+## 🌐 Direktaufruf über den Webbrowser (URL / Kiosk / Wand-Tablet)
+
+Du kannst das Panel der Haushaltshilfe Pro auf zwei Arten aufrufen:
+
+1. **Über die Seitenleiste:** Klicke einfach auf den Menüeintrag **Haushaltshilfe** in deinem Home Assistant.
+2. **Direkt per Browser-URL:** Rufe die Adresse direkt auf, z. B. auf einem Wand-Tablet oder im Kiosk-Browser:
+   - `http://<DEINE-HOME-ASSISTANT-IP>:8123/local/haushaltshilfe/index.html`
+   - `http://<DEINE-HOME-ASSISTANT-IP>/local/haushaltshilfe/index.html`
+
+### Token-Einrichtung für den Direktaufruf
+
+Beim Direktaufruf über die Browser-URL gibt es im Hintergrund keine aktive Home-Assistant-Sitzung. Deshalb braucht das Gerät einmalig ein eigenes Token:
+
+1. In Home Assistant unten links auf dein **Profil** ➔ **Sicherheit** ➔ **Langlebige Zugangstoken** ➔ **Token erstellen** klicken (z. B. *Tablet Küche*). Am besten erstellst du dieses Token mit einem eigenen HA-Benutzer ohne Admin-Rechte.
+2. In der Haushaltshilfe auf das Zahnrad **⚙️** tippen, das Token in das Feld **Home-Assistant-Token** einfügen und speichern.
+
+Das Token wird nur im Browser dieses Geräts gespeichert und nie an andere Geräte weitergegeben. Geht das Tablet verloren, widerrufst du einfach dieses eine Token.
+
+> 🔒 **Update-Hinweis für Versionen bis 1.0.6:** Ältere Versionen haben ein Token im Backend gespeichert und ohne Anmeldung herausgegeben. Bitte nach dem Update **alle Langlebigen Zugangstoken widerrufen**, die du für die Haushaltshilfe erstellt hast, und für Kiosk-Geräte neue anlegen.
  
  ## 🗑️ Müllabfuhr konfigurieren (Optional)
 
