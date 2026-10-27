@@ -215,10 +215,18 @@ window.addFixkostenTemplate = async function() {
 };
 
 window.deleteFixkostenTemplate = async function(index) {
-    if (!Array.isArray(fixkostenTemplates)) return;
-    fixkostenTemplates.splice(index, 1);
-    await saveFixkostenTemplates();
-    renderFixkostenList();
+    if (!Array.isArray(fixkostenTemplates) || !fixkostenTemplates[index]) return;
+    
+    const item = fixkostenTemplates[index];
+    const name = item.name || item.bezeichnung || "diese Vorlage";
+    
+    const confirmed = await showDeleteModal(`Möchtest du die Fixkosten-Vorlage "${name}" wirklich löschen?`, "Vorlage löschen");
+    
+    if (confirmed) {
+        fixkostenTemplates.splice(index, 1);
+        await saveFixkostenTemplates();
+        renderFixkostenList();
+    }
 };
 
 function parseMonthIndex(monthString) {
@@ -534,9 +542,13 @@ window.addNewYear = async function() {
 };
 
 // --- JAHR LÖSCHEN ---
-window.deleteFinanceYear = function(yearStr, event) {
+window.deleteFinanceYear = async function(yearStr, event) {
     if (event) event.stopPropagation();
-    openFinanceDeleteModal(`Möchtest du das Jahr "${yearStr}" inklusive ALLER darin enthaltenen Monate wirklich löschen?`, async () => {
+    
+    // Ruft das globale showDeleteModal auf und wartet auf das Ergebnis (true/false)
+    const confirmed = await showDeleteModal(`Möchtest du das Jahr "${yearStr}" inklusive ALLER darin enthaltenen Monate wirklich löschen?`, "Jahr löschen");
+    
+    if (confirmed) {
         const s = await fetchHA('sensor.haushalt_finance_db');
         let root = parseFinanceRoot(s);
 
@@ -546,7 +558,7 @@ window.deleteFinanceYear = function(yearStr, event) {
         await saveToHA(root);
         lastFinanceDataHash = "";
         setTimeout(() => loadFinance(false), 200);
-    });
+    }
 };
 
 // --- 2. POPUP FÜR MONAT ÖFFNEN ---
@@ -560,66 +572,53 @@ window.openFinanceModal = async function(mIdx) {
     let m = root.months[mIdx];
     if (!m) return;
 
-    const isMobile = window.innerWidth < 768;
-    const accent = "var(--primary-color)";
-    const h = isMobile ? "70px" : "60px";
-
     modal.style.display = 'flex';
 
-    // Dem Modal-Container direkt per JS den sicheren Anker verpassen
+    // Dem Modal-Container direkt den sicheren Anker geben
     const modalContentDiv = modal.querySelector('div');
     if (modalContentDiv) {
         modalContentDiv.style.setProperty('position', 'relative', 'important');
     }
 
-    // Perfekte Positionierung des Schließen-Buttons (X) für Mobile & Desktop
-    setTimeout(() => {
-        const closeBtn = modal.querySelector('button[onclick="closeFinanceModal()"]');
-        if (closeBtn) {
-            closeBtn.style.setProperty('position', 'absolute', 'important');
-            closeBtn.style.setProperty('left', 'auto', 'important');
-            closeBtn.style.setProperty('bottom', 'auto', 'important');
-            
-            if (!isMobile) {
-                closeBtn.style.setProperty('top', '70px', 'important');
-                closeBtn.style.setProperty('right', '40px', 'important');
-                closeBtn.style.setProperty('width', '70px', 'important');
-                closeBtn.style.setProperty('height', '70px', 'important');
-                closeBtn.style.setProperty('font-size', '2.5rem', 'important');
-            } else {
-                closeBtn.style.setProperty('top', '10px', 'important');
-                closeBtn.style.setProperty('right', '10px', 'important');
-                closeBtn.style.setProperty('width', '30px', 'important');
-                closeBtn.style.setProperty('height', '30px', 'important');
-                closeBtn.style.setProperty('font-size', '1.1rem', 'important');
-            }
-            closeBtn.style.setProperty('z-index', '99999', 'important');
-            closeBtn.style.setProperty('color', 'var(--primary-text-color)', 'important');
-        }
-    }, 10);
+    // Schließen-Button (X) oben rechts fixieren
+    const closeBtn = modal.querySelector('button[onclick="closeFinanceModal()"]');
+    if (closeBtn) {
+        closeBtn.style.setProperty('position', 'absolute', 'important');
+        closeBtn.style.setProperty('top', '12px', 'important');
+        closeBtn.style.setProperty('right', '12px', 'important');
+        closeBtn.style.setProperty('left', 'auto', 'important');
+        closeBtn.style.setProperty('bottom', 'auto', 'important');
+        closeBtn.style.setProperty('width', '2.6rem', 'important');
+        closeBtn.style.setProperty('height', '2.6rem', 'important');
+        closeBtn.style.setProperty('font-size', '1.3rem', 'important');
+        closeBtn.style.setProperty('border-radius', '50%', 'important');
+        closeBtn.style.setProperty('display', 'flex', 'important');
+        closeBtn.style.setProperty('align-items', 'center', 'important');
+        closeBtn.style.setProperty('justify-content', 'center', 'important');
+        closeBtn.style.setProperty('padding', '0', 'important');
+        closeBtn.style.setProperty('margin', '0', 'important');
+        closeBtn.style.setProperty('z-index', '99999', 'important');
+    }
 
-    headerFixed.style.padding = isMobile ? "30px 15px" : "20px 15px";
+    headerFixed.style.padding = "10px 5px 15px 5px";
     headerFixed.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-right:110px;">
-            <h2 style="margin:0; font-size:${isMobile ? '1.5rem' : '1.4rem'}; font-weight: 800; text-transform: uppercase;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-right:3.5rem; min-height:2.6rem;">
+            <h2 style="margin:0; font-size:1.5rem; font-weight: 800; text-transform: uppercase;">
                 ${m.month_name}
             </h2>
         </div>
         
-        <div class="finance-input-row" style="display:flex; gap:${isMobile ? '5px' : '10px'}; align-items:center; width:100%;">
-            <input type="number" step="0.01" id="amt-${mIdx}" placeholder="€" 
-                style="width:22%; height:${h}; border-radius:12px; border: 2px solid ${accent} !important; padding:0 8px; font-size:1.1rem; background: var(--card-background-color, white); color: var(--primary-text-color); outline:none;">
+        <div class="finance-input-row" style="display:flex; gap:8px; align-items:center; width:100%;">
+            <input type="number" step="0.01" id="amt-${mIdx}" placeholder="€">
             
-            <input type="text" id="name-${mIdx}" placeholder="Was?" 
-                style="flex:1; height:${h}; border-radius:12px; border: 2px solid ${accent} !important; padding:0 12px; font-size:1.1rem; background: var(--card-background-color, white); color: var(--primary-text-color); outline:none; min-width:0;">
+            <input type="text" id="name-${mIdx}" placeholder="Was?">
             
-            <select id="type-${mIdx}" style="width:18%; height:${h}; border-radius:12px; border: 2px solid ${accent} !important; font-size:1.8rem; background: var(--card-background-color, white); color: var(--primary-text-color); appearance:none; text-align:center;">
+            <select id="type-${mIdx}">
                 <option value="spendings">🛒</option>
                 <option value="fixum">📌</option>
             </select>
             
-            <button class="btn-add" onclick="addEntry(${mIdx})" 
-                style="width:${isMobile ? '75px' : '65px'}; height:${h}; border-radius:12px; background:${accent}; color:white; border:none; font-size:1.1rem; cursor:pointer; font-weight:bold; flex-shrink:0;">
+            <button class="btn-add" onclick="addEntry(${mIdx})">
                 OK
             </button>
         </div>
@@ -627,6 +626,7 @@ window.openFinanceModal = async function(mIdx) {
 
     updateOpenFinanceModalContent(root, mIdx);
 };
+
 
 window.closeFinanceModal = function() {
     currentOpenMonthIdx = null;
@@ -660,7 +660,9 @@ window.addEntry = async function(mIdx) {
 
 // --- EINTRAG LÖSCHEN ---
 window.delEntry = async function(mIdx, type, iIdx) {
-    openFinanceDeleteModal("Diesen Eintrag wirklich löschen?", async () => {
+    const confirmed = await showDeleteModal("Diesen Eintrag wirklich löschen?", "Eintrag löschen");
+    
+    if (confirmed) {
         const s = await fetchHA('sensor.haushalt_finance_db');
         let root = parseFinanceRoot(s);
         if (!root.months[mIdx] || !root.months[mIdx][type]) return;
@@ -669,7 +671,7 @@ window.delEntry = async function(mIdx, type, iIdx) {
         await saveToHA(root);
         lastFinanceDataHash = "";
         setTimeout(() => loadFinance(false), 200);
-    });
+    }
 };
 
 // --- MONAT HINZUFÜGEN ---
@@ -709,7 +711,9 @@ window.addNewMonth = async function() {
 
 // --- MONAT LÖSCHEN ---
 window.deleteMonth = async function(mIdx) {
-    openFinanceDeleteModal("Gesamten Monat wirklich löschen?", async () => {
+    const confirmed = await showDeleteModal("Gesamten Monat wirklich löschen?", "Monat löschen");
+    
+    if (confirmed) {
         const s = await fetchHA('sensor.haushalt_finance_db');
         let root = parseFinanceRoot(s);
         
@@ -717,7 +721,7 @@ window.deleteMonth = async function(mIdx) {
         
         await saveToHA(root);
         closeFinanceModal();
-    });
+    }
 };
 
 // --- EIGENER AUTO-SYNC NUR FÜR DAS FINANZ-SKRIPT (ALLE 2 SEKUNDEN) ---

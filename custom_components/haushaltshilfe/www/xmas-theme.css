@@ -1,0 +1,582 @@
+/* ========================================================
+   --- CHRISTMAS THEME (TANNENGRÜN, ROT & GOLD - body.theme-xmas) ---
+   ======================================================== */
+
+/* --- GOLD- & SCHNEEFALL-ANIMATION --- */
+@keyframes xmasSnowfall {
+    0% {
+        background-position: 0px 0px, 0px 0px, 0px 0px;
+    }
+    100% {
+        background-position: 400px 900px, -300px 500px, 200px 400px;
+    }
+}
+
+/* --- CHRISTMAS BASIS & HINTERGRUND (EDLES TANNENGRÜN) --- */
+body.theme-xmas { 
+    background: linear-gradient(135deg, #0f3822 0%, #1a5235 50%, #092214 100%) !important; 
+    background-attachment: fixed !important; 
+    background-size: cover !important; 
+    --text: #1b2e22; 
+    position: relative;
+}
+
+body.theme-xmas #loginOverlay { 
+    background: linear-gradient(135deg, #0f3822 0%, #1a5235 50%, #092214 100%) !important; 
+}
+
+/* Fallender Schnee & goldener Sternenstaub im Hintergrund (blockiert keine Klicks!) */
+body.theme-xmas::before,
+body.theme-xmas #loginOverlay::before {
+    content: "🎄";
+    position: fixed;
+    inset: 0;
+    pointer-events: none !important;
+    z-index: 9999;
+    font-size: 0;
+    background-image: 
+        radial-gradient(4px 4px at 80px 40px, rgba(255, 255, 255, 0.85) 50%, transparent 100%),
+        radial-gradient(5px 5px at 220px 140px, rgba(255, 215, 0, 0.75) 50%, transparent 100%),
+        radial-gradient(3px 3px at 340px 260px, rgba(255, 255, 255, 0.7) 50%, transparent 100%),
+        radial-gradient(6px 6px at 140px 320px, rgba(255, 215, 0, 0.65) 50%, transparent 100%),
+        radial-gradient(4px 4px at 380px 80px, rgba(255, 255, 255, 0.85) 50%, transparent 100%),
+        radial-gradient(5px 5px at 50px 220px, rgba(255, 255, 255, 0.75) 50%, transparent 100%);
+    background-size: 420px 420px, 320px 320px, 260px 260px;
+    animation: xmasSnowfall 20s linear infinite;
+}
+
+/* --- ALLGEMEINER WARMER GLAS-EFFEKT (CREME-WEISS & GOLD-RAND) --- */
+body.theme-xmas .login-card, 
+body.theme-xmas .input-card, 
+body.theme-xmas li, 
+body.theme-xmas .day-card, 
+body.theme-xmas #trash-content, 
+body.theme-xmas .cat-btn, 
+body.theme-xmas .fav-chip, 
+body.theme-xmas .tab-bar, 
+body.theme-xmas .theme-toggle-top, 
+body.theme-xmas .admin-btn, 
+body.theme-xmas .cook-select, 
+body.theme-xmas .user-btn, 
+body.theme-xmas .month-card { 
+    background: rgba(255, 250, 240, 0.82) !important; 
+    backdrop-filter: blur(20px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important; 
+    border: 1.5px solid rgba(212, 175, 55, 0.65) !important; 
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), inset 0 0 10px rgba(255, 215, 0, 0.15) !important; 
+    color: #1b2e22 !important; 
+}
+
+/* Kleine Weihnachts-Deko oben rechts auf den Monats- und Tageskarten */
+body.theme-xmas .month-card,
+body.theme-xmas .day-card {
+    position: relative !important;
+}
+body.theme-xmas .month-card::after {
+    content: "🎄";
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 1.15rem;
+    opacity: 0.7;
+    pointer-events: none;
+}
+body.theme-xmas .day-card::after {
+    content: "✨";
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 0.95rem;
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+/* --- SIDEBAR BUTTONS (ZAHL DIREKT NEBEN NAME) --- */
+body.theme-xmas .side-btn { 
+    background: rgba(255, 250, 240, 0.82) !important; 
+    backdrop-filter: blur(20px) saturate(180%) !important; 
+    border: 1.5px solid rgba(212, 175, 55, 0.65) !important; 
+    color: #1b2e22 !important; 
+    display: flex !important; 
+    flex-direction: row !important; 
+    justify-content: flex-start !important; 
+    align-items: center !important; 
+    gap: 10px !important; 
+    padding: 8px 12px !important; 
+    min-height: 50px !important; 
+    border-radius: 12px !important; 
+}
+
+/* --- TEXTE DUNKELGRÜN / SCHWARZ AUF CREME-GLAS --- */
+body.theme-xmas h1 { 
+    color: #ffd700 !important; 
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4) !important;
+    font-weight: 800 !important; 
+}
+body.theme-xmas .status-bar {
+    color: #fffaf0 !important;
+    font-weight: 700 !important;
+}
+body.theme-xmas .main-input, 
+body.theme-xmas .day-input, 
+body.theme-xmas .cat-btn, 
+body.theme-xmas .admin-btn, 
+body.theme-xmas .fav-chip, 
+body.theme-xmas .trash-name, 
+body.theme-xmas .day-label span, 
+body.theme-xmas .tab-item, 
+body.theme-xmas .user-label, 
+body.theme-xmas #list-todo li div { 
+    color: #1b2e22 !important; 
+    font-weight: 700 !important; 
+}
+
+/* --- AKTIVE ELEMENTE (FESTLICHES WEIHNACHTSROT & GOLD-RAND) --- */
+body.theme-xmas .side-btn.active-shop, 
+body.theme-xmas .side-btn.active-todo, 
+body.theme-xmas .cat-btn.active-shop, 
+body.theme-xmas .cat-btn.active-food, 
+body.theme-xmas .cat-btn.active-todo, 
+body.theme-xmas .user-btn.selected { 
+    background: linear-gradient(135deg, #c62828 0%, #8e0000 100%) !important; 
+    color: #ffffff !important; 
+    border: 1.5px solid #ffd700 !important; 
+    box-shadow: 0 5px 15px rgba(198, 40, 40, 0.45) !important; 
+}
+
+/* --- TAB-BAR MIT GOLDENER KANTE --- */
+body.theme-xmas .tab-bar { 
+    padding: 0 !important; 
+    margin: 0 !important; 
+    height: 80px !important; 
+    display: flex !important; 
+    align-items: stretch !important; 
+    justify-content: space-around !important; 
+    border-top: 2px solid #ffd700 !important; 
+    background: rgba(255, 250, 240, 0.9) !important;
+}
+body.theme-xmas .tab-item { 
+    flex: 1 !important; 
+    height: 100% !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    background: transparent !important; 
+}
+body.theme-xmas .tab-item.active-shop, 
+body.theme-xmas .tab-item.active-food, 
+body.theme-xmas .tab-item.active-todo, 
+body.theme-xmas .tab-item.active-finance, 
+body.theme-xmas .tab-item.active-trash { 
+    background: linear-gradient(180deg, #c62828 0%, #8e0000 100%) !important; 
+    color: #ffffff !important; 
+    border-radius: 0 !important; 
+    height: 100% !important; 
+    width: 100% !important; 
+    transform: none !important; 
+    box-shadow: inset 0 2px 8px rgba(255, 215, 0, 0.3) !important; 
+}
+body.theme-xmas .tab-item.active-shop .icon, 
+body.theme-xmas .tab-item.active-food .icon, 
+body.theme-xmas .tab-item.active-todo .icon, 
+body.theme-xmas .tab-item.active-trash .icon, 
+body.theme-xmas .tab-item.active-finance .icon, 
+body.theme-xmas .tab-item.active-shop span, 
+body.theme-xmas .tab-item.active-food span, 
+body.theme-xmas .tab-item.active-finance span, 
+body.theme-xmas .tab-item.active-todo span,
+body.theme-xmas .tab-item.active-trash span { 
+    color: #ffffff !important; 
+}
+
+/* --- DAY-DOTS FIX (TAGES-AUSWAHL) --- */
+body.theme-xmas .day-dot { 
+    background: #fffdf9 !important; 
+    color: #1b2e22 !important; 
+    border: 1px solid rgba(212, 175, 55, 0.5) !important; 
+    cursor: pointer !important; 
+    display: flex !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+}
+body.theme-xmas .day-dot.active { 
+    background: linear-gradient(135deg, #c62828 0%, #8e0000 100%) !important; 
+    color: #ffffff !important; 
+    border: 2px solid #ffd700 !important; 
+    transform: scale(1.05) !important; 
+    box-shadow: 0 4px 12px rgba(198, 40, 40, 0.4) !important; 
+}
+
+/* --- MODALS & FINANCE --- */
+body.theme-xmas #intervalModal > div, 
+body.theme-xmas #editModal > div, 
+body.theme-xmas #shopQtyModal > div, 
+body.theme-xmas #finance-modal > div { 
+    background: rgba(255, 250, 240, 0.95) !important; 
+    backdrop-filter: blur(25px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important; 
+    border: 2px solid #d4af37 !important; 
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4) !important; 
+    color: #1b2e22 !important; 
+}
+body.theme-xmas .finance-input-row input, 
+body.theme-xmas .finance-input-row select { 
+    background: rgba(255, 255, 255, 0.9) !important; 
+    border: 2px solid #1a5235 !important; 
+    color: #1b2e22 !important; 
+}
+body.theme-xmas .summary-total { 
+    color: #c62828 !important; 
+    border-top: 2px solid rgba(212, 175, 55, 0.5) !important; 
+}
+body.theme-xmas .month-card h3, 
+body.theme-xmas #modal-content h2 { 
+    color: #b71c1c !important; 
+    font-weight: 800 !important; 
+}
+body.theme-xmas .modal-content h1, 
+body.theme-xmas .modal-content h2, 
+body.theme-xmas .modal-content h3, 
+body.theme-xmas .modal-content label { 
+    color: #1b2e22 !important; 
+}
+
+/* --- CHRISTMAS THEME: ABBRECHEN BUTTON --- */
+body.theme-xmas .modal-content button[onclick*="closeEdit"], 
+body.theme-xmas .modal-content button[onclick*="intervalModal"], 
+body.theme-xmas .modal-content button[onclick*="shopQtyModal"] { 
+    color: #b71c1c !important; 
+    font-weight: 800 !important; 
+    opacity: 1 !important; 
+    background: none; 
+    border: none; 
+    transition: all 0.2s ease; 
+    cursor: pointer; 
+}
+body.theme-xmas .modal-content button[onclick*="closeEdit"]:hover, 
+body.theme-xmas .modal-content button[onclick*="intervalModal"]:hover, 
+body.theme-xmas .modal-content button[onclick*="shopQtyModal"]:hover { 
+    color: #8e0000 !important; 
+    transform: scale(1.1); 
+    background: rgba(183, 28, 28, 0.08) !important; 
+    border-radius: 8px; 
+}
+
+/* --- CHRISTMAS THEME: NAMEN, DATUM, UHRZEIT & EINGABE --- */
+body.theme-xmas #editModal > div { border-radius: 20px !important; }
+body.theme-xmas #editModal h2, 
+body.theme-xmas #editModal h3, 
+body.theme-xmas #editModal label { 
+    color: #b71c1c !important; 
+    font-weight: 800 !important; 
+}
+body.theme-xmas #edit-assignee,
+body.theme-xmas #modalAssignee, 
+body.theme-xmas #edit-name, 
+body.theme-xmas #modalName, 
+body.theme-xmas #modalTitle,
+body.theme-xmas #modalDate, 
+body.theme-xmas #edit-date-val,
+body.theme-xmas #modalTime, 
+body.theme-xmas #edit-time { 
+    color: #1b2e22 !important; 
+    font-weight: 800 !important; 
+    border: 2px solid #1a5235 !important; 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border-radius: 15px !important; 
+    padding: 12px; 
+    transition: all 0.2s ease; 
+    outline: none; 
+    font-family: inherit;
+}
+body.theme-xmas #modalTime, 
+body.theme-xmas #edit-time {
+    text-align: center;
+}
+body.theme-xmas #modalTime:focus, 
+body.theme-xmas #edit-time:focus { 
+    background: #ffffff !important; 
+    border-color: #c62828 !important;
+    box-shadow: 0 0 10px rgba(198, 40, 40, 0.3) !important; 
+}
+
+/* --- CHRISTMAS THEME: ZAHLEN / INTERVALL --- */
+body.theme-xmas #modalValue, 
+body.theme-xmas #edit-interval-val, 
+body.theme-xmas #shopQtyValue { 
+    color: #b71c1c !important; 
+    font-weight: 900 !important; 
+    border: 2px solid #d4af37 !important; 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border-radius: 15px !important; 
+    padding: 15px; 
+    text-align: center; 
+    font-size: 1.8rem !important; 
+    transition: all 0.2s ease; 
+    outline: none; 
+}
+
+/* --- CHRISTMAS THEME: FINANCE MODAL FIX --- */
+body.theme-xmas #modal-header-fixed { background: transparent !important; }
+body.theme-xmas #modal-header-fixed h2 { color: #b71c1c !important; font-weight: 800 !important; }
+body.theme-xmas .finance-input-row input::placeholder { color: rgba(27, 46, 34, 0.5) !important; }
+body.theme-xmas .finance-input-row .btn-add { 
+    background: linear-gradient(135deg, #c62828 0%, #8e0000 100%) !important; 
+    color: #ffffff !important; 
+    border: 1px solid #ffd700 !important;
+    box-shadow: 0 4px 15px rgba(198, 40, 40, 0.4) !important; 
+}
+body.theme-xmas #finance-modal button[onclick*="closeFinanceModal"] { 
+    color: #b71c1c !important; 
+    background: rgba(255, 255, 255, 0.8) !important; 
+    border: 1.5px solid #d4af37 !important; 
+}
+body.theme-xmas #modal-content small { 
+    color: #1b2e22 !important; 
+    opacity: 0.85 !important; 
+    font-weight: 800 !important; 
+}
+
+/* --- TABLET & PC OPTIMIERUNGEN --- */
+@media screen and (min-width: 768px) {
+    body.theme-xmas .tab-bar { height: 120px !important; }
+    body.theme-xmas .tab-item .icon { font-size: 2rem !important; }
+    body.theme-xmas .tab-item span { font-size: 1.2rem !important; }
+    body.theme-xmas .modal-content { 
+        width: 550px !important; 
+        padding: 45px !important; 
+        border-radius: 20px !important; 
+        background: rgba(255, 250, 240, 0.96) !important; 
+        border: 2px solid #d4af37 !important; 
+    }
+    body.theme-xmas .modal-content h1, 
+    body.theme-xmas .modal-content h2, 
+    body.theme-xmas .modal-content h3, 
+    body.theme-xmas .modal-content label { color: #1b2e22 !important; }
+    
+    /* Riesen-Schrift NUR für Zahlen (nicht für Passwort oder normale Texte) */
+    body.theme-xmas .modal-content input:not([type="password"]):not([type="text"]) { 
+        height: 90px !important; 
+        font-size: 3.5rem !important; 
+        color: #b71c1c !important; 
+        -webkit-text-fill-color: #b71c1c !important; 
+        border: 2px solid #d4af37 !important; 
+        text-align: center !important; 
+    }
+    body.theme-xmas .day-dot { height: 80px !important; font-size: 1.8rem !important; }
+}
+
+/* --- SONSTIGES --- */
+body.theme-xmas .btn-add { 
+    background: linear-gradient(135deg, #c62828 0%, #8e0000 100%) !important; 
+    color: #ffffff !important; 
+    border: 1px solid #ffd700 !important; 
+    box-shadow: 0 4px 15px rgba(198, 40, 40, 0.4) !important; 
+}
+body.theme-xmas .shop-badge { 
+    display: flex !important; 
+    background: rgba(198, 40, 40, 0.15) !important; 
+    color: #b71c1c !important; 
+    width: 24px !important; 
+    height: 24px !important; 
+    border-radius: 50% !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    border: 1px solid rgba(198, 40, 40, 0.3) !important; 
+}
+body.theme-xmas .side-btn.active-shop .shop-badge,
+body.theme-xmas .side-btn.active-todo .shop-badge { 
+    background: #ffd700 !important; 
+    color: #8e0000 !important; 
+    font-weight: 900 !important;
+}
+body.theme-xmas .login-card input[type="password"]::placeholder { 
+    color: #1a5235 !important; 
+    font-weight: 700 !important; 
+}
+body.theme-xmas .admin-close-btn { 
+    background: #c62828 !important; 
+    color: #ffffff !important; 
+    border-radius: 12px !important; 
+}
+
+/* --- THEME DROPDOWN CHRISTMAS --- */
+body.theme-xmas .theme-dropdown { 
+    background: rgba(15, 56, 34, 0.92) !important; 
+    backdrop-filter: blur(25px) !important; 
+    border: 1.5px solid #d4af37 !important; 
+}
+body.theme-xmas .theme-dropdown div { 
+    color: #fffaf0 !important; 
+    border-bottom: 1px solid rgba(212, 175, 55, 0.25) !important; 
+}
+body.theme-xmas .theme-dropdown div:hover { 
+    background: rgba(198, 40, 40, 0.6) !important; 
+}
+
+/* --- CHRISTMAS THEME: SKRIPT-FREUNDLICH (AUFGABENLISTE) --- */
+body.theme-xmas #list-todo li div { color: #1b2e22 !important; }
+body.theme-xmas #list-todo li strong { color: #1b2e22 !important; }
+body.theme-xmas #list-todo li span[style*="color:var(--gray)"],
+body.theme-xmas #list-todo li .user-label { 
+    color: #b71c1c !important; 
+    font-weight: 800 !important; 
+}
+
+/* --- CHRISTMAS THEME: PASSWORT MODAL (WIE IM BLUE THEME) --- */
+body.theme-xmas #passwordModal > div { 
+    background: rgba(255, 250, 240, 0.96) !important; 
+    backdrop-filter: blur(25px) saturate(180%) !important; 
+    border: 2px solid #d4af37 !important; 
+    color: #1b2e22 !important; 
+}
+body.theme-xmas #passwordModal h3 { color: #b71c1c !important; font-weight: 800 !important; }
+body.theme-xmas #passwordModal input[type="password"] { 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border: 2px solid #1a5235 !important; 
+    color: #1b2e22 !important; 
+    font-weight: 800 !important; 
+    border-radius: 10px !important; 
+    outline: none !important; 
+    font-size: 1.2rem !important; 
+}
+body.theme-xmas #passwordModal button[onclick*="closePasswordModal(true)"] { 
+    background: linear-gradient(135deg, #c62828 0%, #8e0000 100%) !important; 
+    color: #ffffff !important; 
+    font-weight: 800 !important; 
+}
+body.theme-xmas #passwordModal button[onclick*="closePasswordModal(false)"] { 
+    background: rgba(255, 255, 255, 0.75) !important; 
+    color: #1b2e22 !important; 
+    font-weight: 800 !important; 
+}
+
+/* --- CHRISTMAS THEME: FIXKOSTEN, SETTINGS, USER & WEITERE MODALS --- */
+body.theme-xmas #fixkostenModal > div,
+body.theme-xmas #userModal > div,
+body.theme-xmas #roomModal > div, 
+body.theme-xmas #deleteModal > div,
+body.theme-xmas #customConfirmModal .modal-card,
+body.theme-xmas #customDeleteModal .modal-card,
+body.theme-xmas #customInputModal .modal-card,
+body.theme-xmas #customFoodModal .modal-card { 
+    background: rgba(255, 250, 240, 0.96) !important; 
+    backdrop-filter: blur(25px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important; 
+    border: 2px solid #d4af37 !important; 
+    color: #1b2e22 !important; 
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35) !important; 
+    border-radius: 20px !important; 
+}
+
+body.theme-xmas #fixkostenModal h2,
+body.theme-xmas #userModal h3,
+body.theme-xmas #roomModal h3, 
+body.theme-xmas #deleteModal h3,
+body.theme-xmas #customConfirmTitle,
+body.theme-xmas #customDeleteTitle,
+body.theme-xmas #customInputTitle,
+body.theme-xmas #customFoodTitle { 
+    color: #b71c1c !important; 
+    font-weight: 800 !important; 
+}
+
+body.theme-xmas #fixkostenModal label, 
+body.theme-xmas #fixkostenModal p,
+body.theme-xmas #userModal label,
+body.theme-xmas #deleteModal p,
+body.theme-xmas #customConfirmMessage,
+body.theme-xmas #customDeleteMessage,
+body.theme-xmas #customInputMessage,
+body.theme-xmas #customFoodMessage,
+body.theme-xmas #settingsOverlay label { 
+    color: #1b2e22 !important; 
+    font-weight: 700 !important; 
+}
+
+/* Eingabefelder in allen Modals */
+body.theme-xmas #fixkostenModal input, 
+body.theme-xmas #fixkostenModal select,
+body.theme-xmas #set_token,
+body.theme-xmas #set_master_pw, 
+body.theme-xmas #set_admin_pw,
+body.theme-xmas #userModal input[type="text"], 
+body.theme-xmas #userModal input[type="password"],
+body.theme-xmas #newRoomInput,
+body.theme-xmas #customInputField,
+body.theme-xmas #customFoodField,
+body.theme-xmas #finance-modal .finance-input-row input[type="number"], 
+body.theme-xmas #finance-modal .finance-input-row input[type="text"],
+body.theme-xmas #finance-modal .finance-input-row select { 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border: 2px solid #1a5235 !important; 
+    color: #1b2e22 !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important; 
+    outline: none !important; 
+}
+
+/* Primäre Bestätigungs-Buttons in Modals (Weihnachtsrot & Gold) */
+body.theme-xmas #fixkostenModal button[onclick*="addFixkostenTemplate"],
+body.theme-xmas .finance-controls button[onclick*="addNewYear"],
+body.theme-xmas .finance-controls button[onclick*="addNewMonth"],
+body.theme-xmas #settingsOverlay button[onclick*="saveSystemSettings"],
+body.theme-xmas #userModal button[onclick*="saveUserModal"],
+body.theme-xmas #roomModal button[onclick*="confirmAddRoom"], 
+body.theme-xmas #deleteModal button[onclick*="confirmDelete"],
+body.theme-xmas #customFoodModal button[onclick*="resolveFoodPrompt(true)"],
+body.theme-xmas #finance-modal .finance-input-row .btn-add { 
+    background: linear-gradient(135deg, #c62828 0%, #8e0000 100%) !important; 
+    color: #ffffff !important; 
+    border: 1px solid #ffd700 !important; 
+    box-shadow: 0 4px 15px rgba(198, 40, 40, 0.4) !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important;
+}
+
+/* Sekundäre / Schließen-Buttons in Modals */
+body.theme-xmas #fixkostenModal button[onclick*="fixkostenModal"],
+body.theme-xmas .finance-controls button[onclick*="fixkostenModal"],
+body.theme-xmas #settingsOverlay button[onclick*="settingsOverlay']"],
+body.theme-xmas #userModal button[onclick*="closeUserModal"],
+body.theme-xmas #roomModal button[onclick*="closeRoomModal"], 
+body.theme-xmas #deleteModal button[onclick*="closeDeleteModal"],
+body.theme-xmas #customConfirmNo,
+body.theme-xmas #customDeleteModal button[onclick*="resolveDelete(false)"],
+body.theme-xmas #customFoodModal button[onclick*="resolveFoodPrompt(false)"] { 
+    background: rgba(255, 255, 255, 0.8) !important; 
+    color: #1b2e22 !important; 
+    border: 1.5px solid #d4af37 !important; 
+    font-weight: 800 !important; 
+    backdrop-filter: blur(10px); 
+    border-radius: 12px !important;
+}
+
+/* Lösch-Buttons */
+body.theme-xmas #customConfirmYes,
+body.theme-xmas #customDeleteModal button[onclick*="resolveDelete(true)"] { 
+    background: #d32f2f !important; 
+    color: #ffffff !important; 
+    border: 1px solid #ffd700 !important; 
+    box-shadow: 0 4px 15px rgba(211, 47, 47, 0.4) !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important; 
+}
+
+/* Fixkosten-Liste Details */
+body.theme-xmas #fixkostenList > div { background: rgba(255, 255, 255, 0.8) !important; border: 1.5px solid rgba(212, 175, 55, 0.6) !important; }
+body.theme-xmas #fixkostenList strong { color: #1b2e22 !important; }
+body.theme-xmas #fixkostenList span[style*="var(--primary)"] { color: #b71c1c !important; font-weight: 800 !important; }
+body.theme-xmas #fixkostenList div[style*="var(--gray)"] { color: #1b2e22 !important; opacity: 0.8 !important; font-weight: 700 !important; }
+
+/* --- CHRISTMAS THEME: ZOOM REGLER STYLING --- */
+body.theme-xmas .zoom-control-row { background: rgba(255, 250, 240, 0.6) !important; border: 1.5px solid #d4af37 !important; }
+body.theme-xmas .theme-dropdown .zoom-control-row { background: rgba(0, 0, 0, 0.25) !important; border: none !important; border-top: 1px solid rgba(212, 175, 55, 0.3) !important; }
+body.theme-xmas .zoom-btn { background: #fffaf0 !important; color: #b71c1c !important; border: 1px solid #d4af37 !important; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important; }
+body.theme-xmas .zoom-btn:active { background: #c62828 !important; color: #ffffff !important; }
+body.theme-xmas .zoom-display { color: #1b2e22 !important; font-weight: 800 !important; }
+body.theme-xmas .theme-dropdown .zoom-display { color: #ffd700 !important; }
+body.theme-xmas #systemZoomRange,
+body.theme-xmas #settingsOverlay .tab-toggle,
+body.theme-xmas #userModal input[type="checkbox"] { accent-color: #c62828 !important; }

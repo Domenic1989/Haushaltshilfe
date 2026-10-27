@@ -184,3 +184,9 @@ body.theme-glass .zoom-btn:active { background: #5856d6 !important; color: #ffff
 body.theme-glass .zoom-display { color: #000000 !important; font-weight: 800 !important; }
 body.theme-glass .theme-dropdown .zoom-display { color: #ffffff !important; }
 body.theme-glass #systemZoomRange { accent-color: #CF00FF !important; }
+/* --- GLASS THEME: FINANZ-EINGABEZEILE STYLING --- */
+body.theme-glass #finance-modal .finance-input-row input[type="number"], body.theme-glass #finance-modal .finance-input-row input[type="text"] { background: rgba(255, 255, 255, 0.15) !important; border: 2px solid #CF00FF !important; color: #CF00FF !important; font-weight: 800 !important; border-radius: 12px !important; backdrop-filter: blur(10px) !important; box-shadow: inset 0 0 10px rgba(207, 0, 255, 0.1) !important; }
+body.theme-glass #finance-modal .finance-input-row input::placeholder { color: rgba(207, 0, 255, 0.5) !important; font-weight: 700 !important; }
+body.theme-glass #finance-modal .finance-input-row select { background: rgba(255, 255, 255, 0.15) !important; border: 2px solid #CF00FF !important; color: #CF00FF !important; font-weight: 800 !important; border-radius: 12px !important; backdrop-filter: blur(10px) !important; }
+body.theme-glass #finance-modal .finance-input-row .btn-add { background: #5856d6 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(88, 86, 214, 0.6) !important; font-weight: 800 !important; border-radius: 12px !important; }
+body.theme-glass #finance-modal .finance-input-row input:focus, body.theme-glass #finance-modal .finance-input-row select:focus { background: rgba(255, 255, 255, 0.25) !important; border-color: #CF00FF !important; box-shadow: 0 0 15px rgba(207, 0, 255, 0.4) !important; outline: none !important; }

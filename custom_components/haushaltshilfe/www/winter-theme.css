@@ -1,0 +1,549 @@
+/* ========================================================
+   --- WINTER FROST & SNOW THEME (body.theme-winter) ---
+   ======================================================== */
+
+/* --- SCHNEEFALL-ANIMATION (REINES CSS) --- */
+@keyframes winterSnowfall {
+    0% {
+        background-position: 0px 0px, 0px 0px, 0px 0px;
+    }
+    100% {
+        background-position: 500px 1000px, 400px 400px, -300px 300px;
+    }
+}
+
+/* --- WINTER GLASS THEME BASIS & HINTERGRUND --- */
+body.theme-winter { 
+    background: linear-gradient(135deg, #b2ebf2 0%, #4dd0e1 50%, #0288d1 100%) !important; 
+    background-attachment: fixed !important; 
+    background-size: cover !important; 
+    --text: #002b49; 
+    position: relative;
+}
+
+body.theme-winter #loginOverlay { 
+    background: linear-gradient(135deg, #b2ebf2 0%, #4dd0e1 50%, #0288d1 100%) !important; 
+}
+
+/* Schneeflocken-Layer im Hintergrund (blockiert keine Klicks!) */
+body.theme-winter::before,
+body.theme-winter #loginOverlay::before {
+    content: "❄️";
+    position: fixed;
+    inset: 0;
+    pointer-events: none !important;
+    z-index: 9999;
+    font-size: 0; /* Versteckt den Text-Dummy */
+    background-image: 
+        radial-gradient(4px 4px at 100px 50px, rgba(255, 255, 255, 0.9) 50%, transparent 100%),
+        radial-gradient(6px 6px at 200px 150px, rgba(255, 255, 255, 0.8) 50%, transparent 100%),
+        radial-gradient(3px 3px at 300px 250px, rgba(255, 255, 255, 0.7) 50%, transparent 100%),
+        radial-gradient(5px 5px at 400px 350px, rgba(255, 255, 255, 0.9) 50%, transparent 100%),
+        radial-gradient(4px 4px at 50px 300px, rgba(255, 255, 255, 0.75) 50%, transparent 100%),
+        radial-gradient(6px 6px at 250px 50px, rgba(255, 255, 255, 0.85) 50%, transparent 100%),
+        radial-gradient(3px 3px at 150px 380px, rgba(255, 255, 255, 0.8) 50%, transparent 100%);
+    background-size: 450px 450px, 350px 350px, 250px 250px;
+    animation: winterSnowfall 18s linear infinite;
+}
+
+/* --- ALLGEMEINER EIS-GLAS-EFFEKT --- */
+body.theme-winter .login-card, 
+body.theme-winter .input-card, 
+body.theme-winter li, 
+body.theme-winter .day-card, 
+body.theme-winter #trash-content, 
+body.theme-winter .cat-btn, 
+body.theme-winter .fav-chip, 
+body.theme-winter .tab-bar, 
+body.theme-winter .theme-toggle-top, 
+body.theme-winter .admin-btn, 
+body.theme-winter .cook-select, 
+body.theme-winter .user-btn, 
+body.theme-winter .month-card { 
+    background: rgba(255, 255, 255, 0.55) !important; 
+    backdrop-filter: blur(22px) saturate(190%) !important; 
+    -webkit-backdrop-filter: blur(22px) saturate(190%) !important; 
+    border: 1.5px solid rgba(255, 255, 255, 0.85) !important; 
+    box-shadow: 0 8px 32px rgba(2, 136, 209, 0.12), inset 0 0 12px rgba(255, 255, 255, 0.6) !important; 
+    color: #002b49 !important; 
+}
+
+/* Kleine Deko-Schneeflocke oben rechts auf den Monats- und Tageskarten */
+body.theme-winter .month-card,
+body.theme-winter .day-card {
+    position: relative !important;
+}
+body.theme-winter .month-card::after {
+    content: "❄️";
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 1.1rem;
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+/* --- SIDEBAR BUTTONS (ZAHL DIREKT NEBEN NAME) --- */
+body.theme-winter .side-btn { 
+    background: rgba(255, 255, 255, 0.55) !important; 
+    backdrop-filter: blur(20px) saturate(180%) !important; 
+    border: 1.5px solid rgba(255, 255, 255, 0.8) !important; 
+    color: #002b49 !important; 
+    display: flex !important; 
+    flex-direction: row !important; 
+    justify-content: flex-start !important; 
+    align-items: center !important; 
+    gap: 10px !important; 
+    padding: 8px 12px !important; 
+    min-height: 50px !important; 
+    border-radius: 12px !important; 
+    box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* --- TEXTE DUNKEL-EISBLAU AUF GLAS --- */
+body.theme-winter h1, 
+body.theme-winter .main-input, 
+body.theme-winter .day-input, 
+body.theme-winter .cat-btn, 
+body.theme-winter .admin-btn, 
+body.theme-winter .fav-chip, 
+body.theme-winter .trash-name, 
+body.theme-winter .day-label span, 
+body.theme-winter .status-bar, 
+body.theme-winter .tab-item, 
+body.theme-winter .user-label, 
+body.theme-winter #list-todo li div { 
+    color: #002b49 !important; 
+    font-weight: 700 !important; 
+}
+
+/* --- AKTIVE ELEMENTE (EIS-BLAU & WEISSE SCHRIFT) --- */
+body.theme-winter .side-btn.active-shop, 
+body.theme-winter .side-btn.active-todo, 
+body.theme-winter .cat-btn.active-shop, 
+body.theme-winter .cat-btn.active-food, 
+body.theme-winter .cat-btn.active-todo, 
+body.theme-winter .user-btn.selected { 
+    background: linear-gradient(135deg, #0288d1 0%, #01579b 100%) !important; 
+    color: #ffffff !important; 
+    border-color: #ffffff !important; 
+    box-shadow: 0 5px 15px rgba(2, 136, 209, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.4) !important; 
+}
+
+/* --- TAB-BAR TOTAL-RESET WINTER --- */
+body.theme-winter .tab-bar { 
+    padding: 0 !important; 
+    margin: 0 !important; 
+    height: 80px !important; 
+    display: flex !important; 
+    align-items: stretch !important; 
+    justify-content: space-around !important; 
+    border-top: 2px solid rgba(255, 255, 255, 0.8) !important; 
+}
+body.theme-winter .tab-item { 
+    flex: 1 !important; 
+    height: 100% !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    background: transparent !important; 
+}
+body.theme-winter .tab-item.active-shop, 
+body.theme-winter .tab-item.active-food, 
+body.theme-winter .tab-item.active-todo, 
+body.theme-winter .tab-item.active-finance, 
+body.theme-winter .tab-item.active-trash { 
+    background: linear-gradient(180deg, #0288d1 0%, #01579b 100%) !important; 
+    color: #ffffff !important; 
+    border-radius: 0 !important; 
+    height: 100% !important; 
+    width: 100% !important; 
+    transform: none !important; 
+    box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.3) !important; 
+}
+body.theme-winter .tab-item.active-shop .icon, 
+body.theme-winter .tab-item.active-food .icon, 
+body.theme-winter .tab-item.active-todo .icon, 
+body.theme-winter .tab-item.active-trash .icon, 
+body.theme-winter .tab-item.active-finance .icon, 
+body.theme-winter .tab-item.active-shop span, 
+body.theme-winter .tab-item.active-food span, 
+body.theme-winter .tab-item.active-finance span, 
+body.theme-winter .tab-item.active-todo span { 
+    color: #ffffff !important; 
+}
+
+/* --- DAY-DOTS FIX (TAGES-AUSWAHL) --- */
+body.theme-winter .day-dot { 
+    background: rgba(255, 255, 255, 0.85) !important; 
+    color: #002b49 !important; 
+    border: 1px solid rgba(255, 255, 255, 0.9) !important; 
+    cursor: pointer !important; 
+    display: flex !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+}
+body.theme-winter .day-dot.active { 
+    background: linear-gradient(135deg, #0288d1 0%, #01579b 100%) !important; 
+    color: #ffffff !important; 
+    border: 2px solid #ffffff !important; 
+    transform: scale(1.05) !important; 
+    box-shadow: 0 4px 12px rgba(2, 136, 209, 0.4) !important; 
+}
+
+/* --- MODALS & FINANCE --- */
+body.theme-winter #intervalModal > div, 
+body.theme-winter #editModal > div, 
+body.theme-winter #shopQtyModal > div, 
+body.theme-winter #finance-modal > div { 
+    background: rgba(224, 247, 250, 0.92) !important; 
+    backdrop-filter: blur(25px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important; 
+    border: 2px solid #ffffff !important; 
+    box-shadow: 0 20px 60px rgba(0, 43, 73, 0.25), inset 0 0 20px rgba(255, 255, 255, 0.8) !important; 
+    color: #002b49 !important; 
+}
+body.theme-winter .finance-input-row input, 
+body.theme-winter .finance-input-row select { 
+    background: rgba(255, 255, 255, 0.85) !important; 
+    border: 1.5px solid #0288d1 !important; 
+    color: #002b49 !important; 
+}
+body.theme-winter .summary-total { 
+    color: #01579b !important; 
+    border-top: 2px solid rgba(2, 136, 209, 0.3) !important; 
+}
+body.theme-winter .month-card h3, 
+body.theme-winter #modal-content h2 { 
+    color: #01579b !important; 
+    font-weight: 800 !important; 
+}
+body.theme-winter .modal-content h1, 
+body.theme-winter .modal-content h2, 
+body.theme-winter .modal-content h3, 
+body.theme-winter .modal-content label { 
+    color: #002b49 !important; 
+}
+
+/* --- WINTER THEME: ABBRECHEN BUTTON --- */
+body.theme-winter .modal-content button[onclick*="closeEdit"], 
+body.theme-winter .modal-content button[onclick*="intervalModal"], 
+body.theme-winter .modal-content button[onclick*="shopQtyModal"] { 
+    color: #002b49 !important; 
+    font-weight: 800 !important; 
+    opacity: 1 !important; 
+    background: none; 
+    border: none; 
+    transition: all 0.2s ease; 
+    cursor: pointer; 
+}
+body.theme-winter .modal-content button[onclick*="closeEdit"]:hover, 
+body.theme-winter .modal-content button[onclick*="intervalModal"]:hover, 
+body.theme-winter .modal-content button[onclick*="shopQtyModal"]:hover { 
+    color: #0288d1 !important; 
+    transform: scale(1.1); 
+    background: rgba(2, 136, 209, 0.1) !important; 
+    border-radius: 8px; 
+}
+
+/* --- WINTER THEME: NAMEN & EINGABE --- */
+body.theme-winter #editModal > div { 
+    border-radius: 20px !important; 
+}
+body.theme-winter #editModal h2, 
+body.theme-winter #editModal h3, 
+body.theme-winter #editModal label { 
+    color: #002b49 !important; 
+    font-weight: 800 !important; 
+}
+body.theme-winter #edit-assignee,
+body.theme-winter #modalAssignee, 
+body.theme-winter #edit-name, 
+body.theme-winter #modalName, 
+body.theme-winter #modalTitle { 
+    color: #002b49 !important; 
+    font-weight: 800 !important; 
+    border: 2px solid #0288d1 !important; 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border-radius: 15px !important; 
+    padding: 12px; 
+    transition: all 0.2s ease; 
+    outline: none; 
+}
+
+/* --- WINTER THEME: DATUM & UHRZEIT --- */
+body.theme-winter #modalDate, 
+body.theme-winter #edit-date-val,
+body.theme-winter #modalTime, 
+body.theme-winter #edit-time { 
+    color: #002b49 !important; 
+    font-weight: 800 !important; 
+    border: 2px solid #0288d1 !important; 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border-radius: 15px !important; 
+    padding: 12px; 
+    transition: all 0.2s ease; 
+    outline: none; 
+    font-family: inherit; 
+    text-align: center;
+}
+body.theme-winter #modalTime:focus, 
+body.theme-winter #edit-time:focus { 
+    background: #ffffff !important; 
+    box-shadow: 0 0 12px rgba(2, 136, 209, 0.4) !important; 
+}
+
+/* --- WINTER THEME: ZAHLEN / INTERVALL --- */
+body.theme-winter #modalValue, 
+body.theme-winter #edit-interval-val, 
+body.theme-winter #shopQtyValue { 
+    color: #002b49 !important; 
+    font-weight: 900 !important; 
+    border: 2px solid #0288d1 !important; 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border-radius: 15px !important; 
+    padding: 15px; 
+    text-align: center; 
+    font-size: 1.8rem !important; 
+    transition: all 0.2s ease; 
+    outline: none; 
+}
+
+/* --- WINTER THEME: FINANCE MODAL FIX --- */
+body.theme-winter #modal-header-fixed { background: transparent !important; }
+body.theme-winter #modal-header-fixed h2 { color: #01579b !important; font-weight: 800 !important; }
+body.theme-winter .finance-input-row input::placeholder { color: rgba(0, 43, 73, 0.5) !important; }
+body.theme-winter .finance-input-row .btn-add { 
+    background: linear-gradient(135deg, #0288d1 0%, #01579b 100%) !important; 
+    color: #ffffff !important; 
+    box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4) !important; 
+}
+body.theme-winter #finance-modal button[onclick*="closeFinanceModal"] { 
+    color: #002b49 !important; 
+    background: rgba(255, 255, 255, 0.7) !important; 
+    border: 1.5px solid #ffffff !important; 
+}
+body.theme-winter #modal-content small { 
+    color: #002b49 !important; 
+    opacity: 0.85 !important; 
+    font-weight: 800 !important; 
+}
+body.theme-winter #passwordModal input[type="password"] { background: rgba(255, 255, 255, 0.95) !important; border: 2px solid #0288d1 !important; color: #002b49 !important; font-weight: 800 !important; border-radius: 10px !important; outline: none !important; font-size: 1.2rem !important; }
+
+/* --- TABLET & PC OPTIMIERUNGEN --- */
+@media screen and (min-width: 768px) {
+    body.theme-winter .tab-bar { height: 120px !important; }
+    body.theme-winter .tab-item .icon { font-size: 2rem !important; }
+    body.theme-winter .tab-item span { font-size: 1.2rem !important; }
+    body.theme-winter .modal-content { 
+        width: 550px !important; 
+        padding: 45px !important; 
+        border-radius: 20px !important; 
+        background: rgba(224, 247, 250, 0.95) !important; 
+        border: 2px solid #ffffff !important; 
+    }
+    body.theme-winter .modal-content h1, 
+    body.theme-winter .modal-content h2, 
+    body.theme-winter .modal-content h3, 
+    body.theme-winter .modal-content label { color: #002b49 !important; }
+    body.theme-winter .modal-content input { 
+        height: 90px !important; 
+        font-size: 3.5rem !important; 
+        color: #002b49 !important; 
+        -webkit-text-fill-color: #002b49 !important; 
+        border: 2px solid #0288d1 !important; 
+        text-align: center !important; 
+    }
+    body.theme-winter .day-dot { height: 80px !important; font-size: 1.8rem !important; }
+}
+
+/* --- SONSTIGES --- */
+body.theme-winter .btn-add { 
+    background: linear-gradient(135deg, #0288d1 0%, #01579b 100%) !important; 
+    color: #ffffff !important; 
+    border: 1px solid rgba(255, 255, 255, 0.8) !important; 
+    box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4) !important; 
+}
+body.theme-winter .shop-badge { 
+    display: flex !important; 
+    background: rgba(2, 136, 209, 0.15) !important; 
+    color: #002b49 !important; 
+    width: 24px !important; 
+    height: 24px !important; 
+    border-radius: 50% !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    border: 1px solid rgba(2, 136, 209, 0.3) !important; 
+}
+body.theme-winter .side-btn.active-shop .shop-badge,
+body.theme-winter .side-btn.active-todo .shop-badge { 
+    background: #ffffff !important; 
+    color: #01579b !important; 
+}
+body.theme-winter .login-card input[type="password"]::placeholder { 
+    color: #0288d1 !important; 
+    font-weight: 700 !important; 
+}
+body.theme-winter .admin-close-btn { 
+    background: #ff453a !important; 
+    color: #ffffff !important; 
+    border-radius: 12px !important; 
+}
+
+/* --- THEME DROPDOWN WINTER --- */
+body.theme-winter .theme-dropdown { 
+    background: rgba(1, 87, 155, 0.85) !important; 
+    backdrop-filter: blur(25px) !important; 
+    border: 1.5px solid rgba(255, 255, 255, 0.6) !important; 
+}
+body.theme-winter .theme-dropdown div { 
+    color: #ffffff !important; 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important; 
+}
+body.theme-winter .theme-dropdown div:hover { 
+    background: rgba(255, 255, 255, 0.25) !important; 
+}
+
+/* --- WINTER THEME: SKRIPT-FREUNDLICH (AUFGABENLISTE) --- */
+body.theme-winter #list-todo li div { color: #002b49 !important; }
+body.theme-winter #list-todo li strong { color: #002b49 !important; }
+body.theme-winter #list-todo li span[style*="color:var(--gray)"],
+body.theme-winter #list-todo li .user-label { 
+    color: #01579b !important; 
+    font-weight: 800 !important; 
+}
+
+/* --- WINTER THEME: FIXKOSTEN, SETTINGS, USER & WEITERE MODALS --- */
+body.theme-winter #fixkostenModal > div,
+body.theme-winter #userModal > div,
+body.theme-winter #passwordModal > div,
+body.theme-winter #roomModal > div, 
+body.theme-winter #deleteModal > div,
+body.theme-winter #customConfirmModal .modal-card,
+body.theme-winter #customDeleteModal .modal-card,
+body.theme-winter #customInputModal .modal-card,
+body.theme-winter #customFoodModal .modal-card { 
+    background: rgba(224, 247, 250, 0.94) !important; 
+    backdrop-filter: blur(25px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important; 
+    border: 2px solid #ffffff !important; 
+    color: #002b49 !important; 
+    box-shadow: 0 20px 60px rgba(0, 43, 73, 0.25) !important; 
+    border-radius: 20px !important; 
+}
+
+body.theme-winter #fixkostenModal h2,
+body.theme-winter #userModal h3,
+body.theme-winter #passwordModal h3,
+body.theme-winter #roomModal h3, 
+body.theme-winter #deleteModal h3,
+body.theme-winter #customConfirmTitle,
+body.theme-winter #customDeleteTitle,
+body.theme-winter #customInputTitle,
+body.theme-winter #customFoodTitle { 
+    color: #01579b !important; 
+    font-weight: 800 !important; 
+}
+
+body.theme-winter #fixkostenModal label, 
+body.theme-winter #fixkostenModal p,
+body.theme-winter #userModal label,
+body.theme-winter #deleteModal p,
+body.theme-winter #customConfirmMessage,
+body.theme-winter #customDeleteMessage,
+body.theme-winter #customInputMessage,
+body.theme-winter #customFoodMessage,
+body.theme-winter #settingsOverlay label { 
+    color: #002b49 !important; 
+    font-weight: 700 !important; 
+}
+
+/* Eingabefelder in allen Modals */
+body.theme-winter #fixkostenModal input, 
+body.theme-winter #fixkostenModal select,
+body.theme-winter #set_token,
+body.theme-winter #set_master_pw, 
+body.theme-winter #set_admin_pw,
+body.theme-winter #userModal input[type="text"], 
+body.theme-winter #userModal input[type="password"],
+body.theme-winter #passwordModal input[type="password"],
+body.theme-winter #newRoomInput,
+body.theme-winter #customInputField,
+body.theme-winter #customFoodField,
+body.theme-winter #finance-modal .finance-input-row input[type="number"], 
+body.theme-winter #finance-modal .finance-input-row input[type="text"],
+body.theme-winter #finance-modal .finance-input-row select { 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border: 2px solid #0288d1 !important; 
+    color: #002b49 !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important; 
+    outline: none !important; 
+}
+
+/* Primäre Bestätigungs-Buttons in Modals */
+body.theme-winter #fixkostenModal button[onclick*="addFixkostenTemplate"],
+body.theme-winter .finance-controls button[onclick*="addNewYear"],
+body.theme-winter .finance-controls button[onclick*="addNewMonth"],
+body.theme-winter #settingsOverlay button[onclick*="saveSystemSettings"],
+body.theme-winter #userModal button[onclick*="saveUserModal"],
+body.theme-winter #passwordModal button[onclick*="closePasswordModal(true)"],
+body.theme-winter #roomModal button[onclick*="confirmAddRoom"], 
+body.theme-winter #deleteModal button[onclick*="confirmDelete"],
+body.theme-winter #customFoodModal button[onclick*="resolveFoodPrompt(true)"],
+body.theme-winter #finance-modal .finance-input-row .btn-add { 
+    background: linear-gradient(135deg, #0288d1 0%, #01579b 100%) !important; 
+    color: #ffffff !important; 
+    border: 1px solid #ffffff !important; 
+    box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4) !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important;
+}
+
+/* Sekundäre / Schließen-Buttons in Modals */
+body.theme-winter #fixkostenModal button[onclick*="fixkostenModal"],
+body.theme-winter .finance-controls button[onclick*="fixkostenModal"],
+body.theme-winter #settingsOverlay button[onclick*="settingsOverlay']"],
+body.theme-winter #userModal button[onclick*="closeUserModal"],
+body.theme-winter #passwordModal button[onclick*="closePasswordModal(false)"],
+body.theme-winter #roomModal button[onclick*="closeRoomModal"], 
+body.theme-winter #deleteModal button[onclick*="closeDeleteModal"],
+body.theme-winter #customConfirmNo,
+body.theme-winter #customDeleteModal button[onclick*="resolveDelete(false)"],
+body.theme-winter #customFoodModal button[onclick*="resolveFoodPrompt(false)"] { 
+    background: rgba(255, 255, 255, 0.75) !important; 
+    color: #002b49 !important; 
+    border: 1.5px solid #ffffff !important; 
+    font-weight: 800 !important; 
+    backdrop-filter: blur(10px); 
+    border-radius: 12px !important;
+}
+
+/* Lösch-Buttons (Rot) */
+body.theme-winter #customConfirmYes,
+body.theme-winter #customDeleteModal button[onclick*="resolveDelete(true)"] { 
+    background: #ff3b30 !important; 
+    color: #ffffff !important; 
+    border: 1px solid rgba(255, 255, 255, 0.6) !important; 
+    box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4) !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important; 
+}
+
+/* Fixkosten-Liste Details */
+body.theme-winter #fixkostenList > div { background: rgba(255, 255, 255, 0.75) !important; border: 1.5px solid #ffffff !important; }
+body.theme-winter #fixkostenList strong { color: #002b49 !important; }
+body.theme-winter #fixkostenList span[style*="var(--primary)"] { color: #0288d1 !important; font-weight: 800 !important; }
+body.theme-winter #fixkostenList div[style*="var(--gray)"] { color: #002b49 !important; opacity: 0.8 !important; font-weight: 700 !important; }
+
+/* --- WINTER THEME: ZOOM REGLER STYLING --- */
+body.theme-winter .zoom-control-row { background: rgba(255, 255, 255, 0.45) !important; border: 1.5px solid rgba(255, 255, 255, 0.8) !important; }
+body.theme-winter .theme-dropdown .zoom-control-row { background: rgba(0, 0, 0, 0.2) !important; border: none !important; border-top: 1px solid rgba(255, 255, 255, 0.25) !important; }
+body.theme-winter .zoom-btn { background: rgba(255, 255, 255, 0.9) !important; color: #002b49 !important; border: 1px solid #ffffff !important; box-shadow: 0 4px 10px rgba(2, 136, 209, 0.15) !important; }
+body.theme-winter .zoom-btn:active { background: #0288d1 !important; color: #ffffff !important; }
+body.theme-winter .zoom-display { color: #002b49 !important; font-weight: 800 !important; }
+body.theme-winter .theme-dropdown .zoom-display { color: #ffffff !important; }
+body.theme-winter #systemZoomRange,
+body.theme-winter #settingsOverlay .tab-toggle,
+body.theme-winter #userModal input[type="checkbox"] { accent-color: #0288d1 !important; }

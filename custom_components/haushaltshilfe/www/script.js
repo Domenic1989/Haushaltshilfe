@@ -298,14 +298,47 @@ function applyAppZoom(zoomVal) {
     document.documentElement.style.setProperty('--app-zoom', currentAppZoom);
     document.body.style.zoom = currentAppZoom; // Für Desktop/Fully Kiosk/Tablet
     
-    // Aktualisiert die Anzeige im Einstellungs-Menü (falls vorhanden)
+    const pctText = Math.round(currentAppZoom * 100) + '%';
+
+    // 1. Anzeige in den System-Einstellungen aktualisieren
     const label = document.getElementById('zoomPercentLabel');
     if (label) {
-        label.innerText = Math.round(currentAppZoom * 100) + '%';
+        label.innerText = pctText;
     }
+
+    // 2. Anzeige oben im Theme-Dropdown (Schnellmenü) aktualisieren
+    const quickLabel = document.getElementById('quickZoomLabel');
+    if (quickLabel) {
+        quickLabel.innerText = pctText;
+    }
+
+    // 3. Slider in den Einstellungen synchron halten
     const range = document.getElementById('systemZoomRange');
     if (range) {
         range.value = currentAppZoom;
+    }
+}
+
+// Speichert den Zoom direkt über deine bestehende API
+async function saveQuickDeviceZoom(val) {
+    localStorage.setItem('house_central_zoom', val);
+    localStorage.setItem('app_zoom', val);
+    localStorage.setItem('systemZoom', val);
+    
+    try {
+        const baseUrl = getBaseUrl();
+        const payload = { 
+            device_id: deviceId, 
+            zoom: val 
+        };
+
+        await fetch(`${baseUrl}/api/haushaltshilfe/update_credentials`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch (e) {
+        console.log("Schnell-Zoom im Hintergrund gespeichert (lokaler Fallback aktiv).");
     }
 }
 
@@ -314,10 +347,17 @@ window.previewSystemZoom = function(val) {
     applyAppZoom(parseFloat(val));
 };
 
-// Feinjustierung über die Plus/Minus-Buttons in den System-Einstellungen
+// Feinjustierung über die Plus/Minus-Buttons (Einstellungen & Schnellmenü)
 window.adjustSystemZoom = function(step) {
     let newVal = Math.min(1.6, Math.max(0.6, Math.round((currentAppZoom + step) * 100) / 100));
     applyAppZoom(newVal);
+    saveQuickDeviceZoom(newVal); // Speichert sofort ab
+};
+
+// Schnell-Reset per Klick auf die Prozentzahl im Dropdown
+window.resetQuickZoom = function() {
+    applyAppZoom(1.0);
+    saveQuickDeviceZoom(1.0);
 };
 
 async function loadDeviceZoom() {
@@ -332,10 +372,10 @@ async function loadDeviceZoom() {
                     currentAppZoom = parseFloat(data.zoom);
                     applyAppZoom(currentAppZoom);
                 }
-                // Theme vom Server übernehmen, falls vorhanden
+                // Theme vom Server übernehmen, falls vorhanden (inkl. Winter & Weihnachten!)
                 if (data.theme) {
                     window.curTheme = data.theme;
-                    const themes = ["theme-light", "theme-dark", "theme-glass", "theme-blue", "theme-green"];
+                    const themes = ["theme-light", "theme-dark", "theme-glass", "theme-blue", "theme-green", "theme-winter", "theme-xmas"];
                     document.body.classList.remove(...themes);
                     document.body.className = window.curTheme;
                     localStorage.setItem('app_theme', window.curTheme);
@@ -650,7 +690,7 @@ function toggleThemeMenu(event) {
 }
 
 async function setTheme(themeName) {
-    const themes = ["theme-light", "theme-dark", "theme-glass", "theme-blue", "theme-green"];
+    const themes = ["theme-light", "theme-dark", "theme-glass", "theme-blue", "theme-green", "theme-winter", "theme-xmas"];
     document.body.classList.remove(...themes);
     window.curTheme = themeName;
     document.body.className = window.curTheme;
@@ -901,14 +941,27 @@ async function renderSidebars() {
     const shopSide = document.getElementById("shopSidebar");
     if(shopSide) {
         shopSide.innerHTML = "";
-        stores.forEach(s => {
+        stores.forEach((s, index) => {
             const count = allOptions.filter(opt => opt.endsWith(` @${s}`)).length;
             const badge = count > 0 ? `<span class="shop-badge">${count}</span>` : '';
             
             const btn = document.createElement('button');
             btn.className = `side-btn ${activeStore === s ? 'active-shop' : ''}`;
-            btn.onclick = () => { activeStore = s; renderSidebars(); load(); };
-            btn.oncontextmenu = (e) => { e.preventDefault(); deleteSidebarItem('shop', s); };
+            btn.dataset.index = index;
+            btn.dataset.type = 'shop';
+
+            btn.onclick = () => { 
+                if (btn.dataset.wasDragged === "true") return;
+                activeStore = s; 
+                renderSidebars(); 
+                load(); 
+            };
+            btn.oncontextmenu = (e) => { 
+                e.preventDefault(); 
+                if (!btn.classList.contains('dragging-side-btn')) {
+                    deleteSidebarItem('shop', s); 
+                }
+            };
 
             // 1. Mülleimer zuerst (links)
             const del = document.createElement('span');
@@ -924,8 +977,15 @@ async function renderSidebars() {
 
             // 2. Danach Name + Badge (rechts daneben)
             const txt = document.createElement('span');
+            txt.style.display = "flex";
+            txt.style.alignItems = "center";
+            txt.style.gap = "8px";
+            txt.style.pointerEvents = "none"; // Verhindert Probleme beim Ziehen
             txt.innerHTML = `${s} ${badge}`;
             btn.appendChild(txt);
+
+            // Drag & Drop (Maus + Touch) aktivieren
+            enableSidebarDragAndDrop(btn, 'shop', index);
 
             shopSide.appendChild(btn);
         });
@@ -944,7 +1004,7 @@ async function renderSidebars() {
         const now = new Date();
         const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
-        rooms.forEach(r => {
+        rooms.forEach((r, index) => {
             const roomTasks = todoDb.filter(t => t.room === r);
             const totalCount = roomTasks.length;
             const hasUrgent = roomTasks.some(t => new Date(t.nextDate) <= todayEnd);
@@ -961,8 +1021,21 @@ async function renderSidebars() {
 
             const btn = document.createElement('button');
             btn.className = `side-btn ${isActive ? 'active-todo' : ''}`;
-            btn.onclick = () => { activeRoom = r; renderSidebars(); renderTodoList(); };
-            btn.oncontextmenu = (e) => { e.preventDefault(); deleteSidebarItem('todo', r); };
+            btn.dataset.index = index;
+            btn.dataset.type = 'todo';
+
+            btn.onclick = () => { 
+                if (btn.dataset.wasDragged === "true") return;
+                activeRoom = r; 
+                renderSidebars(); 
+                renderTodoList(); 
+            };
+            btn.oncontextmenu = (e) => { 
+                e.preventDefault(); 
+                if (!btn.classList.contains('dragging-side-btn')) {
+                    deleteSidebarItem('todo', r); 
+                }
+            };
 
             // 1. Mülleimer zuerst (links)
             const del = document.createElement('span');
@@ -978,8 +1051,15 @@ async function renderSidebars() {
 
             // 2. Danach Raumname + Badge (rechts daneben)
             const txt = document.createElement('span');
+            txt.style.display = "flex";
+            txt.style.alignItems = "center";
+            txt.style.gap = "8px";
+            txt.style.pointerEvents = "none";
             txt.innerHTML = `${r} ${badge}`;
             btn.appendChild(txt);
+
+            // Drag & Drop (Maus + Touch) aktivieren
+            enableSidebarDragAndDrop(btn, 'todo', index);
 
             todoSide.appendChild(btn);
         });
@@ -990,6 +1070,150 @@ async function renderSidebars() {
         addBtnTodo.onclick = () => addSidebarItem('todo');
         todoSide.appendChild(addBtnTodo);
     }
+}
+
+// ========================================================
+// --- OPTIMIERTE DRAG & DROP LOGIK FÜR SIDEBAR ---
+// ========================================================
+let sidebarDragState = {
+    type: null,
+    fromIndex: null,
+    toIndex: null,
+    isDragging: false,
+    startY: 0,
+    activeElement: null
+};
+
+function enableSidebarDragAndDrop(btn, type, index) {
+    // --- 1. PC MAUS DRAG & DROP ---
+    btn.draggable = true;
+
+    btn.addEventListener('dragstart', (e) => {
+        sidebarDragState.type = type;
+        sidebarDragState.fromIndex = index;
+        btn.classList.add('dragging-side-btn');
+        if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', index);
+        }
+    });
+
+    btn.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (sidebarDragState.type !== type || sidebarDragState.fromIndex === index) return;
+        btn.classList.add('drag-over-side-btn');
+    });
+
+    btn.addEventListener('dragleave', () => {
+        btn.classList.remove('drag-over-side-btn');
+    });
+
+    btn.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        btn.classList.remove('drag-over-side-btn');
+        if (sidebarDragState.type !== type) return;
+        
+        const fromIdx = sidebarDragState.fromIndex;
+        const toIdx = index;
+        if (fromIdx !== null && fromIdx !== toIdx) {
+            await applySidebarNewOrder(type, fromIdx, toIdx);
+        }
+    });
+
+    btn.addEventListener('dragend', () => {
+        btn.classList.remove('dragging-side-btn');
+        document.querySelectorAll('.drag-over-side-btn').forEach(el => el.classList.remove('drag-over-side-btn'));
+        sidebarDragState.type = null;
+        sidebarDragState.fromIndex = null;
+    });
+
+    // --- 2. HANDY / TABLET TOUCH (FLÜSSIG & DIREKT) ---
+    btn.addEventListener('touchstart', (e) => {
+        // Mülleimer ausnehmen
+        if (e.target.classList.contains('del-sidebar')) return;
+
+        const touch = e.touches[0];
+        sidebarDragState.startY = touch.clientY;
+        sidebarDragState.type = type;
+        sidebarDragState.fromIndex = index;
+        sidebarDragState.toIndex = index;
+        sidebarDragState.activeElement = btn;
+        btn.dataset.wasDragged = "false";
+    }, { passive: true });
+
+    btn.addEventListener('touchmove', (e) => {
+        if (sidebarDragState.type !== type || sidebarDragState.fromIndex !== index) return;
+
+        const touch = e.touches[0];
+        const moveDistance = Math.abs(touch.clientY - sidebarDragState.startY);
+
+        // Sobald der Finger minimal bewegt wird (10px), startet das Ziehen sofort flüssig
+        if (!sidebarDragState.isDragging && moveDistance > 10) {
+            sidebarDragState.isDragging = true;
+            btn.classList.add('dragging-side-btn');
+            btn.dataset.wasDragged = "true";
+            if (navigator.vibrate) navigator.vibrate(30); // Kurzes haptisches Feedback
+        }
+
+        if (sidebarDragState.isDragging) {
+            // Verhindert, dass die ganze Seite mitgescrollt wird, während man einen Raum verschiebt
+            if (e.cancelable) e.preventDefault();
+
+            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+            const overBtn = targetEl ? targetEl.closest(`.side-btn[data-type="${type}"]`) : null;
+
+            document.querySelectorAll('.drag-over-side-btn').forEach(el => el.classList.remove('drag-over-side-btn'));
+
+            if (overBtn && overBtn !== btn) {
+                overBtn.classList.add('drag-over-side-btn');
+                sidebarDragState.toIndex = parseInt(overBtn.dataset.index, 10);
+            }
+        }
+    }, { passive: false });
+
+    const endTouchDrag = async () => {
+        if (!sidebarDragState.isDragging) {
+            sidebarDragState.type = null;
+            sidebarDragState.fromIndex = null;
+            return;
+        }
+
+        sidebarDragState.isDragging = false;
+        btn.classList.remove('dragging-side-btn');
+        document.querySelectorAll('.drag-over-side-btn').forEach(el => el.classList.remove('drag-over-side-btn'));
+
+        const fromIdx = sidebarDragState.fromIndex;
+        const toIdx = sidebarDragState.toIndex;
+        
+        sidebarDragState.type = null;
+        sidebarDragState.fromIndex = null;
+        sidebarDragState.toIndex = null;
+        sidebarDragState.activeElement = null;
+
+        if (fromIdx !== null && toIdx !== null && fromIdx !== toIdx) {
+            await applySidebarNewOrder(type, fromIdx, toIdx);
+        }
+
+        setTimeout(() => { btn.dataset.wasDragged = "false"; }, 150);
+    };
+
+    btn.addEventListener('touchend', endTouchDrag);
+    btn.addEventListener('touchcancel', endTouchDrag);
+}
+
+// Speichert die neue Reihenfolge und synchronisiert sie mit Home Assistant
+async function applySidebarNewOrder(type, fromIndex, toIndex) {
+    const arr = (type === 'shop') ? stores : rooms;
+    
+    // Element an alter Position entfernen und an neuer Position einfügen
+    const [movedItem] = arr.splice(fromIndex, 1);
+    arr.splice(toIndex, 0, movedItem);
+
+    // Direkt mit deiner bestehenden Funktion in Home Assistant speichern
+    await syncUpSidebar(type);
+    
+    // Sidebar neu zeichnen
+    renderSidebars();
 }  
 
 let currentSidebarType = 'room';
@@ -1050,16 +1274,19 @@ async function confirmAddRoom() {
 }
 
 // 3. Löschen-Modal öffnen
-function deleteSidebarItem(type, val) {
-    pendingDeleteType = type;
-    pendingDeleteVal = val;
+async function deleteSidebarItem(type, val) {
+    // Nutzt exakt dasselbe schicke Modal mit rotem Button wie bei deleteCat
+    const confirmed = await showDeleteModal(`Möchtest du "${val}" wirklich löschen?`, "Löschen bestätigen");
+    
+    if (confirmed) {
+        if (type === 'shop') {
+            stores = stores.filter(x => x !== val);
+        } else {
+            rooms = rooms.filter(x => x !== val);
+        }
 
-    const modal = document.getElementById('deleteModal');
-    const textEl = document.getElementById('deleteModalText');
-
-    if (modal && textEl) {
-        textEl.innerText = `Möchtest du "${val}" wirklich löschen?`;
-        modal.style.display = 'flex';
+        await syncUpSidebar(type);
+        renderSidebars();
     }
 }
 

@@ -8,12 +8,16 @@
     --card: #ffffff; 
     --text: #1c1c1e; 
     --gray: #8e8e93; 
-    --app-zoom: 1; /* Dynamischer Zoom-Faktor (Standard 100%) */
+    --app-zoom: 1; 
+    --primary-color: #34c759;
+    --card-background-color: rgba(255, 255, 255, 0.9);
+    --primary-text-color: #1c1c1e;
 }
 
 /* --- BASIS SETUP --- */
+/* WICHTIG: Kein calc(16px * var(--app-zoom)) mehr hier, da document.body.style.zoom bereits alles skaliert! */
 html { 
-    font-size: calc(16px * var(--app-zoom)) !important; 
+    font-size: 16px !important; 
     -webkit-text-size-adjust: 100%;
 } 
 
@@ -30,6 +34,30 @@ body {
     box-sizing: border-box;
 }
 
+/* ========================================================
+   --- SIDEBAR DRAG & DROP STYLING ---
+   ======================================================== */
+.side-btn {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease !important;
+}
+
+/* Element, das gerade gezogen wird */
+.side-btn.dragging-side-btn {
+    opacity: 0.65 !important;
+    transform: scale(0.96) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35) !important;
+    z-index: 100 !important;
+    cursor: grabbing !important;
+}
+
+/* Ziel-Position (wohin verschoben wird) */
+.side-btn.drag-over-side-btn {
+    transform: scale(1.04) !important;
+    border: 2px dashed var(--primary, #0984e3) !important;
+    box-shadow: 0 0 15px rgba(9, 132, 227, 0.5) !important;
+}
 /* --- ZOOM REGLER STYLING (FÜR LOGIN & THEME-MENÜ) --- */
 .zoom-control-row {
     display: flex !important;
@@ -82,27 +110,23 @@ body {
     white-space: nowrap !important;
 }
 
+/* --- Z-INDEX FIX: LÖSCH-MODAL IMMER ÜBER DEM MONATS-MODAL --- */
+body #customDeleteModal,
+body #deleteModal {
+    z-index: 999999 !important;
+}
 
 /* --- EXTRA MOBILE VERKLEINERUNG (NUR FÜRS HANDY & HA APP) --- */
 @media (max-width: 767px) {
     html {
-        font-size: calc(14.5px * var(--app-zoom)) !important;
+        font-size: 14.5px !important;
     }
     body {
         padding: calc(env(safe-area-inset-top) + 10px) 12px calc(7.5rem + env(safe-area-inset-bottom)) 12px !important;
     }
-    .login-card, #intervalModal > div, #editModal > div, #shopQtyModal > div {
-        width: 94% !important;
-        max-width: 420px !important;
-        padding: 16px !important;
-        border-radius: 20px !important;
-        max-height: 90vh !important;
-        overflow-y: auto !important;
-    }
     .split-container {
         gap: 10px !important;
     }
-    /* Sidebar passt sich automatisch dem längsten Raumnamen an */
     .sidebar {
         width: max-content !important;
         flex-shrink: 0 !important;
@@ -120,27 +144,10 @@ body {
         box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
         white-space: nowrap !important;
     }
-    
-    /* Handy: Aufgaben immer 1 pro Reihe */
     ul {
         display: grid !important;
         grid-template-columns: 1fr !important;
         gap: 12px !important;
-    }
-
-    .finance-input-row {
-        flex-wrap: wrap !important;
-    }
-    .finance-input-row input[type="number"] {
-        width: 35% !important;
-        flex: 1 1 30% !important;
-    }
-    .finance-input-row input[type="text"] {
-        width: 60% !important;
-        flex: 1 1 60% !important;
-    }
-    .finance-input-row select {
-        flex: 1 !important;
     }
 }
 
@@ -378,7 +385,7 @@ button[onclick^="openEdit"]:active { transform: scale(0.9); background: #e5e5ea;
 
 .theme-toggle-top { 
     position: absolute; 
-    top: calc(env(safe-area-inset-top) + 2.2rem); /* Sitzt genau unter dem Namen */
+    top: calc(env(safe-area-inset-top) + 2.2rem);
     right: 20px; 
     left: auto; 
     transform: none; 
@@ -409,7 +416,7 @@ button[onclick^="openEdit"]:active { transform: scale(0.9); background: #e5e5ea;
     cursor: pointer; 
     color: var(--gray); 
     box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
-    white-space: nowrap !important; /* Immer komplett in einer Reihe */
+    white-space: nowrap !important;
 }
 .side-btn.active-shop { background: var(--primary); color: white; border-color: var(--primary); }
 .side-btn.active-todo { background: var(--todo); color: white; border-color: var(--todo); }
@@ -419,8 +426,19 @@ button[onclick^="openEdit"]:active { transform: scale(0.9); background: #e5e5ea;
 .side-btn-add { border: 2px dashed var(--accent); color: var(--accent); background: transparent; }
 .main-content { flex: 1; min-width: 0; }
 
-#loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 15px; }
-.login-card { background: var(--card); padding: 1.8rem; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center; width: 85%; max-width: 450px; position: relative; color: var(--text); }
+#loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 0; }
+
+.login-card { 
+    background: var(--card); 
+    padding: 1.8rem; 
+    border-radius: 26px; 
+    box-shadow: 0 20px 50px rgba(0,0,0,0.1); 
+    text-align: center; 
+    position: relative; 
+    color: var(--text); 
+    box-sizing: border-box; 
+}
+
 .user-grid-login { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
 .user-btn { width: 100%; padding: 0.75rem; border-radius: 18px; border: 1px solid #ddd; background: var(--card); font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.95rem; position: relative; color: var(--text); white-space: nowrap !important; }
 .user-btn.selected { background: #d1ffd1 !important; border-color: var(--primary) !important; border-width: 2.5px; transform: scale(1.03); }
@@ -452,7 +470,6 @@ h1 { font-size: 2rem; font-weight: 800; margin: 0; color: var(--text); white-spa
 .del-fav { color: var(--danger); margin-left: 10px; font-weight: 800; font-size: 1.1rem; }
 .del-cat { color: var(--danger); margin-left: 6px; font-weight: 800; font-size: 1.1rem; }
 
-/* Standard: 1 Spalte auf Mobilgeräten */
 ul { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr; gap: 15px; align-items: stretch; width: 100%; }
 li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: column; justify-content: space-between; border-radius: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); font-size: 1rem; width: 100%; min-width: 0; box-sizing: border-box; color: var(--text); word-break: break-word; }
 
@@ -462,7 +479,21 @@ li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: co
 .day-label span { font-size: 1.5rem; margin-bottom: 5px; }
 .day-input { flex: 2 1 120px; min-width: 80px; border: none; font-size: 1rem; outline: none; color: var(--text); background: transparent; font-weight: 500; pointer-events: auto !important; user-select: text !important; -webkit-user-select: text !important; box-sizing: border-box; }
 
-.tab-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: flex; padding: 0.9rem 0 calc(1.25rem + env(safe-area-inset-bottom)); border-top: 1px solid #d1d1d6; z-index: 1000; }
+/* Tab-Bar skaliert durch Zoom ebenfalls sauber über die volle Breite */
+.tab-bar { 
+    position: fixed; 
+    bottom: 0; 
+    left: 0; 
+    right: 0; 
+    width: calc(100vw / var(--app-zoom, 1));
+    background: var(--card); 
+    backdrop-filter: blur(20px); 
+    -webkit-backdrop-filter: blur(20px); 
+    display: flex; 
+    padding: 0.9rem 0 calc(1.25rem + env(safe-area-inset-bottom)); 
+    border-top: 1px solid #d1d1d6; 
+    z-index: 1000; 
+}
 .tab-item { border: none; background: none; color: var(--gray); font-size: 0.75rem; font-weight: 700; display: flex; flex-direction: column; align-items: center; flex: 1; cursor: pointer; white-space: nowrap !important; }
 .tab-item.active-shop { color: var(--primary); }
 .tab-item.active-food { color: var(--accent); }
@@ -477,7 +508,7 @@ li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: co
 .trash-days { font-weight: 800; font-size: 1.1rem; white-space: nowrap !important; }
 .trash-date { font-size: 0.85rem; color: var(--gray); margin-top: 5px; font-weight: 600; }
 
-/* --- MONATE & JAHRE BASIS (Handy Standard: 2 Spalten symmetrisch) --- */
+/* --- MONATE & JAHRE BASIS --- */
 #months-container, #years-container { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; margin: 0 auto; box-sizing: border-box; }
 .month-card { background: var(--card); border-radius: 25px; padding: 1rem; margin-bottom: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.1s; cursor: pointer; display: flex; flex-direction: column; width: 100%; min-width: 0; box-sizing: border-box; }
 .month-card:active { transform: scale(0.96); }
@@ -500,13 +531,10 @@ li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: co
 .modal-row input { flex: 2 !important; min-width: 0 !important; font-size: 1rem !important; } 
 .modal-row select { flex: 3 !important; min-width: 0 !important; font-size: 1rem !important; }
 
-
-/* ========================================================
-   --- TABLET / PC / LAPTOP OPTIMIERUNG ---
-   ======================================================== */
+/* --- TABLET / PC / LAPTOP OPTIMIERUNG --- */
 @media (min-width: 768px) {
     html { 
-        font-size: calc(20px * var(--app-zoom)) !important; 
+        font-size: 20px !important; 
     }
     
     body { 
@@ -551,7 +579,6 @@ li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: co
         justify-content: center !important; 
     }
 
-    /* Sidebar passt sich automatisch der Wortlänge an, alles in 1 Zeile */
     .sidebar { 
         width: max-content !important; 
         gap: 0.8rem !important; 
@@ -571,7 +598,6 @@ li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: co
         box-sizing: border-box !important;
     }
 
-    /* PC/Laptop: Aufgaben bis zu 6 nebeneinander */
     ul {
         display: flex !important;
         flex-wrap: wrap !important;
@@ -598,18 +624,6 @@ li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: co
     .tab-item .icon { font-size: 2.2rem !important; }
     .user-btn { padding: 1rem !important; font-size: 1.1rem !important; white-space: nowrap !important; }
     .user-del-x, .user-edit-pen { width: 1.8rem !important; height: 1.8rem !important; font-size: 0.9rem !important; }
-    
-    .login-card button:not(.zoom-btn) { 
-        width: 100% !important; 
-        min-height: 3rem !important; 
-        height: auto !important;
-        margin-top: 1rem !important; 
-        padding: 0.5rem !important; 
-        font-size: 1.1rem !important;
-        display: flex !important; 
-        align-items: center !important; 
-        justify-content: center !important; 
-    }
 
     .theme-toggle-top { 
         position: absolute !important; 
@@ -633,75 +647,6 @@ li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: co
         font-size: 0.85rem !important;
     }
 
-   
-
-    #modal-content { 
-        flex: 1 !important; 
-        max-height: none !important; 
-        overflow-y: auto !important; 
-        padding: 1rem 0.5rem !important; 
-        display: block !important; 
-    }
-
-    div#finance-modal .finance-item { 
-        font-size: 1.05rem !important; 
-        padding: 0.6rem 0.9rem !important; 
-        line-height: 1.2 !important; 
-        height: auto !important; 
-    }
-    
-    /* 1. Das Hauptfenster (Vollbild mit abgerundeten Ecken & Anker) */
-    #finance-modal > div { 
-        width: 100vw !important; 
-        height: 100vh !important; 
-        max-width: 130vw !important; 
-        max-height: 130vh !important; 
-        margin: 0 !important; 
-        padding: 50px !important; 
-        border-radius: 15px !important; 
-        display: flex !important; 
-        flex-direction: column !important; 
-        box-sizing: border-box !important; 
-        position: relative !important; /* Wichtiger Anker für das X */
-    }
-
-    /* Verhindert, dass innere Container das X festhalten */
-    #finance-modal > div div {
-        position: static !important;
-    }
-
-    /* 2. Die Überschrift: Zentriert & Riesig */
-    #finance-modal h2 { 
-        font-size: 4rem !important; 
-        margin-bottom: 40px !important; 
-        text-align: center !important; 
-        font-weight: 900 !important; 
-    }
-
-    /* 3. Schließen-Button (X): Oben rechts, groß & rund */ 
-    #finance-modal button[onclick="closeFinanceModal()"],
-    #finance-modal .finance-close-btn { 
-        position: absolute !important; 
-        top: 30px !important; 
-        right: 30px !important; 
-        left: auto !important;
-        bottom: auto !important;
-        width: 50px !important; 
-        height: 50px !important; 
-        font-size: 3rem !important; 
-        border-radius: 50% !important; 
-        background: rgba(0, 0, 0, 0.05) !important; 
-        border: none !important; 
-        display: flex !important; 
-        align-items: center !important; 
-        justify-content: center !important; 
-        cursor: pointer !important; 
-        z-index: 10005 !important;
-    }
-
-
-    
-    /* Laptop/PC: 4 Monate und 4 Jahre nebeneinander */
     #months-container, #years-container { 
         display: grid !important; 
         grid-template-columns: repeat(4, minmax(0, 1fr)) !important; 
@@ -742,49 +687,6 @@ li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: co
         border-top: 2px solid rgba(0,0,0,0.1) !important; 
     }
 
-    .finance-input-row { 
-        gap: 0.75rem !important; 
-        margin-bottom: 1.25rem !important; 
-        display: flex !important; 
-        align-items: center !important; 
-    }
-    
-    .finance-input-row input[type="number"] { 
-        width: 9rem !important; 
-        flex-shrink: 0 !important; 
-        height: 3.75rem !important; 
-        font-size: 1.6rem !important; 
-        padding: 0 0.75rem !important; 
-        border-radius: 18px !important; 
-    }
-    
-    .finance-input-row input[type="text"] { 
-        flex: 1 !important; 
-        height: 3.75rem !important; 
-        font-size: 1.6rem !important; 
-        padding: 0 0.75rem !important; 
-        border-radius: 18px !important; 
-        min-width: 0; 
-    }
-    
-    .finance-input-row select { 
-        width: max-content !important; 
-        min-width: 5.5rem !important;
-        height: 3.75rem !important; 
-        font-size: 1.4rem !important; 
-        padding: 0 0.75rem !important;
-        border-radius: 18px !important; 
-        flex-shrink: 0 !important; 
-    }
-    
-    .finance-input-row .btn-add { 
-        width: 4.25rem !important; 
-        height: 3.75rem !important; 
-        font-size: 1.6rem !important; 
-        border-radius: 18px !important; 
-        flex-shrink: 0 !important; 
-    }
-
     .finance-summary { 
         font-size: 1rem !important; 
         padding-top: 0.75rem !important; 
@@ -796,173 +698,725 @@ li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: co
         justify-content: space-between !important; 
         margin-bottom: 0.3rem !important; 
     }
+}
 
-    #intervalModal > div, #editModal > div, #shopQtyModal > div { 
-        width: 90vw !important; 
-        max-width: 37.5rem !important; 
-        min-width: unset !important; 
-        padding: 2rem !important; 
-        border-radius: 30px !important; 
-        max-height: 90vh !important;
-        overflow-y: auto !important;
-    }
+@media (hover: none), (pointer: coarse), (max-device-width: 900px) {
+    body #months-container, body #years-container { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; width: 100% !important; max-width: 100% !important; margin: 0 auto !important; justify-content: center !important; box-sizing: border-box !important; }
+    body #months-container .month-card, body #years-container .month-card { display: flex !important; flex-direction: column !important; width: 100% !important; min-width: 0 !important; max-width: 100% !important; flex: unset !important; padding: 12px !important; margin: 0 !important; box-sizing: border-box !important; overflow: hidden !important; }
+    body #months-container .month-card h2, body #months-container .month-card h3, body #years-container .month-card h3, body .month-card .summary-total { white-space: normal !important; word-break: break-word !important; font-size: 0.95rem !important; }
+    body .input-card { padding: 0.65rem !important; margin-bottom: 15px !important; gap: 8px !important; }
+    body .main-input { font-size: 1.05rem !important; height: 2.5rem !important; }
+    body .input-card .btn-add { width: 2.8rem !important; height: 2.8rem !important; font-size: 1.4rem !important; }
+}
 
-    #intervalModal input:not([type="time"]), 
-    #intervalModal select, 
-    #editModal input:not([type="time"]), 
-    #editModal select,
-    #shopQtyModal input { 
-        width: 100% !important; 
-        padding: 0.75rem !important; 
-        margin-bottom: 0.75rem !important; 
-        border-radius: 12px !important; 
-        border: 1px solid rgba(0,0,0,0.1) !important; 
-        background: var(--bg) !important; 
-        color: var(--text) !important; 
-        font-size: 1.2rem !important; 
-        box-sizing: border-box !important; 
-        outline: none !important; 
-    }
 
-    #modalTime, #edit-time {
-        min-height: 3rem !important;
-        height: auto !important;
-        font-size: 1.2rem !important;
-        padding: 0.5rem 0.75rem !important;
-    }
+/* ========================================================
+   --- 1. AUSNAHMEN: ZENTRIERTE FENSTER (LÖSCHEN, PASSWORT, FOOD, SHOPPING) ---
+   ======================================================== */
+body #deleteModal,
+body #customDeleteModal,
+body #customConfirmModal,
+body #customInputModal,
+body #customFoodModal,
+body #roomModal,
+body #passwordModal,
+body #userModal,
+body #shopQtyModal {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: calc(100vw / var(--app-zoom, 1)) !important;
+    height: calc(100vh / var(--app-zoom, 1)) !important;
+    height: calc(100dvh / var(--app-zoom, 1)) !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
+    /* WICHTIG: Hier KEIN display: none!, damit dein JavaScript das Modal normal steuern kann */
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 999999 !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+}
 
-    .day-dot { height: 3.75rem !important; font-size: 1.3rem !important; border-radius: 15px !important; }
-    .weekday-row { gap: 0.6rem !important; }
+body #deleteModal > div,
+body #customDeleteModal > div,
+body #customConfirmModal > div,
+body #customInputModal > div,
+body #customFoodModal > div,
+body #roomModal > div,
+body #passwordModal > div,
+body #userModal > div,
+body #shopQtyModal > div {
+    position: relative !important;
+    width: 100% !important;
+    max-width: min(420px, 90vw) !important;
+    min-width: 280px !important;
+    height: auto !important;
+    max-height: 85vh !important;
+    margin: auto !important;
+    background: var(--card) !important;
+    border-radius: 26px !important;
+    padding: 24px !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: stretch !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+}
 
-    #intervalModal button, #editModal button, #shopQtyModal button { 
-        min-height: 3.75rem !important; 
-        height: auto !important;
-        font-size: 1.3rem !important; 
-        border-radius: 15px !important; 
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
+body div[id*="Modal"]:not(#loginOverlay):not(#settingsOverlay):not(#intervalModal):not(#editModal):not(#finance-modal):not(#fixkostenModal):not(#deleteModal):not(#customDeleteModal):not(#customConfirmModal):not(#customInputModal):not(#customFoodModal):not(#passwordModal):not(#shopQtyModal):not(#roomModal):not(#userModal),
+body div[id*="modal"]:not(#loginOverlay):not(#settingsOverlay):not(#intervalModal):not(#editModal):not(#finance-modal):not(#fixkostenModal):not(#deleteModal):not(#customDeleteModal):not(#customConfirmModal):not(#customInputModal):not(#customFoodModal):not(#passwordModal):not(#shopQtyModal):not(#roomModal):not(#userModal):not(#modal-header-fixed):not(#modal-content),
+body div[id*="Overlay"]:not(#loginOverlay):not(#settingsOverlay):not(#toastOverlay),
+body .modal-overlay:not(#loginOverlay):not(#settingsOverlay) {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: calc(100vw / var(--app-zoom, 1)) !important;
+    height: calc(100vh / var(--app-zoom, 1)) !important;
+    height: calc(100dvh / var(--app-zoom, 1)) !important;
+    padding: calc(15px / var(--app-zoom, 1)) !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    transform: none !important;
+}
+
+body div[id*="Modal"]:not(#intervalModal):not(#editModal):not(#finance-modal):not(#fixkostenModal):not(#deleteModal):not(#customDeleteModal):not(#customConfirmModal):not(#customInputModal):not(#customFoodModal):not(#passwordModal):not(#shopQtyModal):not(#roomModal):not(#userModal) > div,
+body div[id*="modal"]:not(#intervalModal):not(#editModal):not(#finance-modal):not(#fixkostenModal):not(#deleteModal):not(#customDeleteModal):not(#customConfirmModal):not(#customInputModal):not(#customFoodModal):not(#passwordModal):not(#shopQtyModal):not(#roomModal):not(#userModal):not(#modal-header-fixed):not(#modal-content) > div,
+body .modal-overlay > div,
+body .modal-card {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    height: calc(100dvh / var(--app-zoom, 1) - 30px / var(--app-zoom, 1)) !important;
+    max-height: calc(100dvh / var(--app-zoom, 1) - 30px / var(--app-zoom, 1)) !important;
+    margin: auto !important;
+    border-radius: 20px !important;
+    padding: calc(20px / var(--app-zoom, 1)) !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+/* ========================================================
+   --- 2. FINANZ- (MONAT) & FIXKOSTEN-MODALS (AUCH VOLLBILD) ---
+   ======================================================== */
+body #finance-modal,
+body #fixkostenModal {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    z-index: 10002 !important;
+    align-items: center !important;     /* Zentriert das innere Fenster */
+    justify-content: center !important; /* Zentriert das innere Fenster */
+    padding: calc(15px / var(--app-zoom, 1)) !important; /* Gibt den Rand rundherum vor */
+    box-sizing: border-box !important;
+    width: calc(100vw / var(--app-zoom, 1)) !important;
+    height: calc(100vh / var(--app-zoom, 1)) !important;
+    height: calc(100dvh / var(--app-zoom, 1)) !important;
+}
+
+body #finance-modal > div,
+body #fixkostenModal > div {
+    position: relative !important;
+    background: var(--card) !important;
+    color: var(--text) !important;
+    width: 96% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    height: calc(100dvh / var(--app-zoom, 1) - 30px / var(--app-zoom, 1)) !important;
+    max-height: calc(100dvh / var(--app-zoom, 1) - 30px / var(--app-zoom, 1)) !important;
+    margin: auto !important;
+    border-radius: 10px !important; /* Schöne abgerundete Ecken */
+    padding: calc(20px / var(--app-zoom, 1)) !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+body #finance-modal button[onclick="closeFinanceModal()"],
+body #fixkostenModal > div > button:first-of-type {
+    position: absolute !important;
+    top: 14px !important;
+    right: 14px !important;
+    left: auto !important;
+    bottom: auto !important;
+    width: 2.6rem !important;
+    height: 2.6rem !important;
+    min-height: unset !important;
+    font-size: 1.2rem !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.35) !important;
+    color: var(--text) !important;
+    border: 1px solid rgba(120, 120, 120, 0.2) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    z-index: 10005 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+body #fixkostenModal > div > button:last-of-type {
+    display: none !important;
+}
+
+body #finance-modal #modal-header-fixed {
+    position: relative !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    padding: 4px 0 14px 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border-bottom: 1px solid rgba(120, 120, 120, 0.2) !important;
+    box-sizing: border-box !important;
+    display: block !important;
+    z-index: 10 !important;
+}
+
+body #finance-modal #modal-header-fixed > div:first-child {
+    padding-right: 3.2rem !important;
+    margin-bottom: 12px !important;
+    height: auto !important;
+    background: transparent !important;
+}
+
+body #finance-modal #modal-header-fixed h2 {
+    font-size: 1.4rem !important;
+    margin: 0 !important;
+    text-align: left !important;
+    color: var(--text) !important;
+}
+
+body #finance-modal .finance-input-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    background: transparent !important;
+}
+
+body #finance-modal .finance-input-row input[type="number"] {
+    width: 22% !important;
+    flex: 0 0 22% !important;
+    height: 3.2rem !important;
+    font-size: 1rem !important;
+    padding: 0 8px !important;
+    margin: 0 !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    color: #1c1c1e !important;
+    border: 2px solid var(--primary) !important;
+    border-radius: 12px !important;
+    box-sizing: border-box !important;
+}
+
+body #finance-modal .finance-input-row input[type="text"] {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    height: 3.2rem !important;
+    font-size: 1rem !important;
+    padding: 0 10px !important;
+    margin: 0 !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    color: #1c1c1e !important;
+    border: 2px solid var(--primary) !important;
+    border-radius: 12px !important;
+    box-sizing: border-box !important;
+}
+
+body #finance-modal .finance-input-row select {
+    width: 3.4rem !important;
+    flex: 0 0 3.4rem !important;
+    height: 3.2rem !important;
+    font-size: 1.3rem !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    color: #1c1c1e !important;
+    border: 2px solid var(--primary) !important;
+    border-radius: 12px !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+}
+
+body #finance-modal .finance-input-row .btn-add {
+    width: 3.8rem !important;
+    flex: 0 0 3.8rem !important;
+    height: 3.2rem !important;
+    font-size: 1rem !important;
+    margin: 0 !important;
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 800 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body #finance-modal #modal-content {
+    position: relative !important;
+    background: transparent !important;
+    color: var(--text) !important;
+    overflow-y: auto !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    padding: 12px 4px !important;
+    margin: 0 !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+body #finance-modal .finance-item {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border-radius: 12px !important;
+    margin-bottom: 8px !important;
+    background: rgba(255, 255, 255, 0.65) !important;
+    color: var(--text) !important;
+}
+
+body #fixkostenList {
+    overflow-y: auto !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+    padding-right: 5px !important;
+    background: transparent !important;
 }
 
 /* ========================================================
-   --- HANDY & HA APP SCHUTZ BEI JEDEM ZOOM (50%, 67%, 100%) ---
-   Überschreibt das versehentliche PC-Layout auf Touch-Geräten
+   --- 3. ZENTRIERTE AUSNAHMEN (LÖSCH-, PASSWORT-, FOOD- & SHOPPING-FENSTER) ---
    ======================================================== */
-@media (hover: none), (pointer: coarse), (max-device-width: 900px) {
-    /* 1. Monate & Jahre immer exakt 2 Spalten, volle Breite und mittig zentriert */
-    body #months-container,
-    body #years-container {
-        display: grid !important;
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        gap: 10px !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        margin: 0 auto !important;
-        justify-content: center !important;
-        box-sizing: border-box !important;
-    }
-
-    body #months-container .month-card,
-    body #years-container .month-card {
-        display: flex !important;
-        flex-direction: column !important;
-        width: 100% !important;
-        min-width: 0 !important;
-        max-width: 100% !important;
-        flex: unset !important;
-        padding: 12px !important;
-        margin: 0 !important;
-        box-sizing: border-box !important;
-        overflow: hidden !important;
-    }
-
-    body #months-container .month-card h2,
-    body #years-container .month-card h3,
-    body .month-card .summary-total {
-        white-space: normal !important;
-        word-break: break-word !important;
-        font-size: 0.95rem !important;
-    }
-    
-    
-    body #finance-modal > div {
-        position: relative !important;
-        width: 56rem !important;        
-        max-width: 96vw !important;     
-        height: 75rem !important;       
-        max-height: 94vh !important;    
-        margin: auto !important;
-        padding: 2.2rem !important;     
-        border-radius: 2.5rem !important;
-        box-sizing: border-box !important;
-        display: flex !important;
-        flex-direction: column !important;
-        overflow-x: hidden !important;
-        overflow-y: auto !important;    
-    }
-
-
-    body .finance-input-row {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        gap: 8px !important;
-        width: 100% !important;
-        margin-bottom: 15px !important;
-        box-sizing: border-box !important;
-    }
-
-    body .finance-input-row input[type="number"] {
-        width: 35% !important;
-        flex: 1 1 30% !important;
-        height: 2.8rem !important;
-        font-size: 1rem !important;
-        padding: 0 0.65rem !important;
-        border-radius: 12px !important;
-    }
-
-    body .finance-input-row input[type="text"] {
-        width: 60% !important;
-        flex: 1 1 55% !important;
-        height: 2.8rem !important;
-        font-size: 1rem !important;
-        padding: 0 0.65rem !important;
-        border-radius: 12px !important;
-    }
-
-    body .finance-input-row select {
-        flex: 1 1 auto !important;
-        height: 2.8rem !important;
-        font-size: 0.95rem !important;
-        padding: 0 0.65rem !important;
-        border-radius: 12px !important;
-    }
-
-    body .finance-input-row .btn-add {
-        width: 3.1rem !important;
-        height: 2.8rem !important;
-        font-size: 1.4rem !important;
-        border-radius: 12px !important;
-        flex-shrink: 0 !important;
-    }
-
-    /* 3. Normale Eingabekarte oben (.input-card) ebenfalls vor PC-Riesenwuchs bei 50%/67% schützen */
-    body .input-card {
-        padding: 0.65rem !important;
-        margin-bottom: 15px !important;
-        gap: 8px !important;
-    }
-
-    body .main-input {
-        font-size: 1.05rem !important;
-        height: 2.5rem !important;
-    }
-
-    body .input-card .btn-add {
-        width: 2.8rem !important;
-        height: 2.8rem !important;
-        font-size: 1.4rem !important;
-    }
+body #deleteModal,
+body #customDeleteModal,
+body #customConfirmModal,
+body #customInputModal,
+body #customFoodModal,
+body #roomModal,
+body #passwordModal,
+body #userModal,
+body #shopQtyModal {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: calc(100vw / var(--app-zoom, 1)) !important;
+    height: calc(100vh / var(--app-zoom, 1)) !important;
+    height: calc(100dvh / var(--app-zoom, 1)) !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 999999 !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
 }
 
+body #deleteModal.show, body #deleteModal[style*="display: flex"], body #deleteModal[style*="display:flex"],
+body #customDeleteModal.show, body #customDeleteModal[style*="display: flex"], body #customDeleteModal[style*="display:flex"],
+body #customConfirmModal.show, body #customConfirmModal[style*="display: flex"], body #customConfirmModal[style*="display:flex"],
+body #customInputModal.show, body #customInputModal[style*="display: flex"], body #customInputModal[style*="display:flex"],
+body #customFoodModal.show, body #customFoodModal[style*="display: flex"], body #customFoodModal[style*="display:flex"],
+body #roomModal.show, body #roomModal[style*="display: flex"], body #roomModal[style*="display:flex"],
+body #passwordModal.show, body #passwordModal[style*="display: flex"], body #passwordModal[style*="display:flex"],
+body #userModal.show, body #userModal[style*="display: flex"], body #userModal[style*="display:flex"],
+body #shopQtyModal.show, body #shopQtyModal[style*="display: flex"], body #shopQtyModal[style*="display:flex"] {
+    display: flex !important;
+}
 
+body #deleteModal > div,
+body #customDeleteModal > div,
+body #customConfirmModal > div,
+body #customInputModal > div,
+body #customFoodModal > div,
+body #roomModal > div,
+body #passwordModal > div,
+body #userModal > div,
+body #shopQtyModal > div {
+    position: relative !important;
+    width: 100% !important;
+    max-width: min(420px, 90vw) !important;
+    min-width: 280px !important;
+    height: auto !important;             /* HIER GEÄNDERT: Höhe passt sich dem Inhalt an */
+    max-height: 85vh !important;         /* Begrenzt, damit es nicht überläuft */
+    min-height: unset !important;        /* Keine erzwungene Mindesthöhe mehr */
+    margin: auto !important;
+    background: var(--card) !important;
+    border-radius: 26px !important;
+    padding: 24px !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: stretch !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+}
+
+body #deleteModalTitle,
+body #customDeleteTitle,
+body #customConfirmTitle,
+body #customInputTitle,
+body #customFoodTitle,
+body #passwordModalTitle,
+body #userModalTitle,
+body #shopQtyTitle,
+body #roomModal h3 {
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 1.5rem !important;
+    font-weight: 900 !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    margin: 0 0 12px 0 !important;
+    word-break: break-word !important;
+}
+
+body #deleteModalText,
+body #customDeleteMessage,
+body #customConfirmMessage,
+body #customInputMessage,
+body #customFoodMessage {
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    line-height: 1.35 !important;
+    color: var(--text) !important;
+    text-align: center !important;
+    margin: 0 0 20px 0 !important;
+    word-break: break-word !important;
+}
+
+body #deleteModal > div > div:last-child,
+body #customDeleteModal > div > div:last-child,
+body #customConfirmModal > div > div:last-child,
+body #customInputModal > div > div:last-child,
+body #customFoodModal > div > div:last-child,
+body #roomModal > div > div:last-child,
+body #passwordModal > div > div:last-child,
+body #userModal > div > div:last-child,
+body #shopQtyModal > div {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin-top: auto !important;
+}
+
+body #deleteModal button,
+body #customDeleteModal button,
+body #customConfirmModal button,
+body #customInputModal button,
+body #customFoodModal button,
+body #roomModal button,
+body #passwordModal button,
+body #userModal button,
+body #shopQtyModal button {
+    width: 100% !important;
+    min-height: 3rem !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    border-radius: 14px !important;
+    margin: 0 !important;
+}
+
+/* ========================================================
+   --- 4. LOGIN-KARTE & SYSTEM-EINSTELLUNGEN (FESTE GRÖSSE UNABHÄNGIG VOM ZOOM) ---
+   ======================================================== */
+body #loginOverlay .login-card,
+body #settingsOverlay .login-card {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    max-width: 550px !important; /* Bleibt auf allen Geräten immer gleich breit (max. 450px) */
+    min-width: 350px !important;
+    height: auto !important;
+    max-height: 85vh !important; /* Begrenzt, damit es auf kleinen Handy-Bildschirmen nicht überläuft */
+    margin: auto !important;     /* Sitzt perfekt zentriert in der Bildschirmmitte */
+    border-radius: 26px !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+    padding: 24px !important;
+}
+
+/* Verteilt die Blöcke im inneren Bereich sauber */
+body #settingsOverlay .login-card > * {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    flex: 0 1 auto !important;
+}
+
+body #loginOverlay .login-card > button[onclick="openSystemSettings()"] {
+    position: absolute !important;
+    top: 14px !important;
+    right: 14px !important;
+    width: 3.8rem !important;
+    height: 3.8rem !important;
+    min-height: unset !important;
+    margin: 0 !important;
+}
+
+body #userGrid.user-grid-login {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.75rem !important;
+    width: 100% !important;
+    margin-bottom: 0.75rem !important;
+}
+
+body #userGrid.user-grid-login .user-btn {
+    width: 100% !important;
+    min-height: 3.5rem !important;
+    font-size: 1.1rem !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+body #loginOverlay .login-card > div[style*="display: flex"],
+body #loginOverlay .login-card > div[style*="display:flex"] {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+    width: 100% !important;
+}
+
+body #settingsOverlay .login-card > div[style*="display:flex"]:not(.zoom-control-row) {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+    width: 100% !important;
+}
+
+body #loginOverlay #admin-close-btn[style*="display: none"],
+body #loginOverlay #admin-close-btn[style*="display:none"] {
+    display: none !important;
+}
+
+body #loginOverlay .login-card button:not([onclick="openSystemSettings()"]):not(.user-btn):not(.user-del-x):not(.user-edit-pen),
+body #settingsOverlay .login-card button:not(.zoom-btn) {
+    width: 100% !important;
+    flex: none !important;
+    margin: 0 !important;
+    min-height: 3.5rem !important;
+    font-size: 1.1rem !important;
+}
+
+body #settingsOverlay label {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+}
+
+body #settingsOverlay input[type="checkbox"] {
+    width: 1.4rem !important;
+    height: 1.4rem !important;
+    min-height: unset !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+}
+
+//* ========================================================
+   --- EDIT- & INTERVAL-MODAL (ZENTRIERT MIT RAND & ZOOM-SCHUTZ) ---
+   ======================================================== */
+#intervalModal,
+#editModal {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: calc(100vw / var(--app-zoom, 1)) !important;
+    height: calc(100vh / var(--app-zoom, 1)) !important;
+    height: calc(100dvh / var(--app-zoom, 1)) !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 99999 !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+}
+
+/* Wenn sie geöffnet werden (egal ob per .show oder Inline-Style) */
+#intervalModal.show, 
+#intervalModal[style*="display: flex"], 
+#intervalModal[style*="display:flex"],
+#editModal.show, 
+#editModal[style*="display: flex"], 
+#editModal[style*="display:flex"] {
+    display: flex !important;
+}
+
+/* Innerer Inhalt der Modal-Karte */
+#intervalModal > div,
+#editModal > div {
+    position: relative !important;
+    background: var(--card) !important;
+    color: var(--text) !important;
+    width: 96% !important;
+    max-width: 100% !important;
+    min-width: 300px !important;
+    height: auto !important;
+    max-height: 85vh !important;
+    margin: auto !important;
+    border-radius: 26px !important;
+    padding: 25px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important;
+    text-align: left !important;
+}
+
+/* Haupt-Überschriften (Ignoriert #modalTitle, damit es ein Feld bleibt) */
+#intervalModal h3:not(#modalTitle),
+#editModal h3 {
+    font-size: 1.5rem !important;
+    font-weight: 900 !important;
+    margin-top: 0 !important;
+    margin-bottom: 15px !important;
+    text-align: center !important;
+}
+
+/* Labels */
+#intervalModal label,
+#editModal label {
+    font-size: 0.75rem !important;
+    display: block !important;
+    text-align: left !important;
+    font-weight: bold !important;
+    text-transform: uppercase !important;
+    margin-bottom: 5px !important;
+}
+
+/* Inputs, Selects, Datumsfelder UND #modalTitle bekommen exakt dieselben Box-Maße */
+#modalTitle,
+#intervalModal input:not([type="time"]):not(.day-dot),
+#intervalModal select,
+#editModal input:not([type="time"]):not(.day-dot),
+#editModal select,
+#intervalModal input[type="time"],
+#intervalModal input[type="datetime-local"],
+#editModal input[type="time"],
+#editModal input[type="datetime-local"] {
+    width: 100% !important;
+    padding: 12px 15px !important;
+    border-radius: 14px !important;
+    font-size: 1rem !important;
+    box-sizing: border-box !important;
+    outline: none !important;
+    margin-top: 0 !important;
+    margin-bottom: 15px !important;
+    font-family: inherit !important;
+}
+
+/* Einheitliche Haupt-Zahlenfelder */
+#modalValue,
+#edit-interval-val {
+    font-size: 1.8rem !important;
+    font-weight: bold !important;
+    text-align: center !important;
+}
+
+/* Aufgaben-Bezeichnung (#modalTitle & #edit-name) exakt gleich groß */
+#modalTitle,
+#intervalModal input[type="text"],
+#editModal #edit-name {
+    font-size: 1.2rem !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    padding: 12px 15px !important;
+    height: auto !important;
+    line-height: 1.4 !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+#intervalModal .weekday-row,
+#editModal .weekday-row {
+    display: flex !important;
+    flex-wrap: nowrap !important; /* Verhindert das Umspringen/Überlappen */
+    gap: 22px !important;           /* Sauberer Abstand zwischen den Kreisen */
+    justify-content: space-between !important;
+    margin-bottom: 15px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#intervalModal .day-dot,
+#editModal .day-dot {
+    flex: 1 1 0 !important;        /* Teilt den Platz gleichmäßig auf, ohne Überlappung */
+    min-width: 0 !important;
+    height: 2.8rem !important;
+    font-size: 0.95rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    font-weight: 800 !important;
+    border-radius: 12px !important;      /* Übernimmt die Theme-Textfarbe (nicht mehr hart schwarz) */
+    user-select: none !important;
+    box-sizing: border-box !important;
+}
+
+/* Trennlinien */
+#intervalModal hr,
+#editModal hr {
+    border: 0 !important;
+    margin: 15px 0 !important;
+    width: 100% !important;
+}

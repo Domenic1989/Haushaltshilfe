@@ -43,7 +43,7 @@ body.theme-dark #editModal > div { background: #1c1c1e !important; backdrop-filt
 body.theme-dark #editModal h2, body.theme-dark #editModal h3, body.theme-dark #editModal label { color: #ffffff !important; font-weight: 800 !important; }
 body.theme-dark #edit-assignee { background: #2c2c2e !important; border: 2px solid rgba(255, 255, 255, 0.3) !important; color: #ffffff !important; font-weight: 800 !important; border-radius: 12px !important; outline: none !important; }
 /* --- DARK THEME: DATUM --- */
-body.theme-dark #modalDate, body.theme-dark #edit-date-val { color: #ffffff !important; font-weight: 800 !important; border: 2px solid #444444 !important; background: #1a1a1a !important; border-radius: 15px !important; padding: 12px; transition: all 0.2s ease; outline: none; font-family: inherit; }
+body.theme-dark #modalDate, body.theme-dark #edit-date-val { color: #ffffff !important; font-weight: 800 !important; border: 2px solid #444444 !important; background: #1a1a1a !important; border-radius: 15px !important; padding: 12px; transition: all 0.2s ease; outline: none; font-family: inherit; text-align: center; }
 
 /* --- DARK THEME: ZAHLEN / INTERVALL --- */
 body.theme-dark #modalValue, body.theme-dark #edit-interval-val, body.theme-dark #shopQtyValue { color: #ffffff !important; font-weight: 900 !important; border: 2px solid #444444 !important; background: #1a1a1a !important; border-radius: 15px !important; padding: 15px; text-align: center; font-size: 1.8rem !important; transition: all 0.2s ease; outline: none; }
@@ -210,3 +210,9 @@ body.theme-dark .zoom-btn:active { background: #ffffff !important; color: #00000
 body.theme-dark .zoom-display { color: #ffffff !important; font-weight: 800 !important; }
 body.theme-dark .theme-dropdown .zoom-display { color: #ffffff !important; }
 body.theme-dark #systemZoomRange { accent-color: #ffffff !important; }
+/* --- DARK THEME: FINANZ-EINGABEZEILE STYLING --- */
+body.theme-dark #finance-modal .finance-input-row input[type="number"], body.theme-dark #finance-modal .finance-input-row input[type="text"] { background: #2c2c2e !important; border: 2px solid rgba(255, 255, 255, 0.3) !important; color: #ffffff !important; font-weight: 800 !important; border-radius: 12px !important; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2) !important; }
+body.theme-dark #finance-modal .finance-input-row input::placeholder { color: rgba(255, 255, 255, 0.4) !important; font-weight: 700 !important; }
+body.theme-dark #finance-modal .finance-input-row select { background: #2c2c2e !important; border: 2px solid rgba(255, 255, 255, 0.3) !important; color: #ffffff !important; font-weight: 800 !important; border-radius: 12px !important; }
+body.theme-dark #finance-modal .finance-input-row .btn-add { background: #ffffff !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.4) !important; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4) !important; font-weight: 800 !important; border-radius: 12px !important; }
+body.theme-dark #finance-modal .finance-input-row input:focus, body.theme-dark #finance-modal .finance-input-row select:focus { background: #1c1c1e !important; border-color: #ffffff !important; box-shadow: 0 0 10px rgba(255, 255, 255, 0.2) !important; outline: none !important; }
