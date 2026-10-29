@@ -80,7 +80,7 @@ async def async_setup_entry(
             event_type="set_finance_data",
             storage_key="finance_db",
             attr_key="data",
-            default_val='{"months":[]}',
+            default_val='{"years":[],"months":[]}',
             icon="mdi:finance",
             store_data=store_data,
             is_finance=True,
@@ -96,6 +96,19 @@ async def async_setup_entry(
             attr_key="shopping_json",
             default_val="[]",
             icon="mdi:cart-basket",
+            store_data=store_data,
+        ),
+        # 7. Fixkosten Vorlagen DB (NEU - Ohne 255-Zeichen-Limit!)
+        HaushaltshilfeStoreSensor(
+            hass=hass,
+            entity_id_name="haushalt_finance_templates",
+            friendly_name="Haushalt Fixkosten Vorlagen DB",
+            unique_id="haushalt_finance_templates_sensor",
+            event_type="set_finance_templates",
+            storage_key="finance_templates",
+            attr_key="templates",
+            default_val="[]",
+            icon="mdi:repeat",
             store_data=store_data,
         ),
     ]

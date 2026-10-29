@@ -133,11 +133,12 @@ PLATFORMS = ["sensor"]
 STORAGE_KEY = f"{DOMAIN}_data_store"
 STORAGE_VERSION = 1
 
+# WICHTIG: "helper_finance_templates" wurde hier entfernt! 
+# Läuft jetzt über sensor.haushalt_finance_templates ohne 255-Zeichen-Limit.
 AUTO_INPUT_TEXTS = {
     "helper_visible_tabs": {"name": "Sichtbare Tabs", "initial": '["shop","todo","food","trash","finance"]'},
     "helper_shop_stores": {"name": "Geschäfte", "initial": '["Aldi", "Lidl", "Rewe"]'},
     "helper_room_list": {"name": "Räume", "initial": '["Küche", "Bad", "Wohnen"]'},
-    "helper_finance_templates": {"name": "Fixkosten Vorlagen", "initial": "[]"},
     "essen_montag": {"name": "Essen Montag", "initial": ""},
     "essen_dienstag": {"name": "Essen Dienstag", "initial": ""},
     "essen_mittwoch": {"name": "Essen Mittwoch", "initial": ""},
@@ -280,7 +281,7 @@ class HaushaltshilfeUpdateCredentialsView(HomeAssistantView):
                     store_data["helper_visible_tabs"] = tabs_str
                     current_state = hass.states.get("input_text.helper_visible_tabs")
                     attrs = current_state.attributes.copy() if current_state else {}
-                    hass.states.async_set("input_text.helper_visible_tabs", tabs_str, attrs)
+                    hass.states.async_set("input_text.helper_visible_tabs", tabs_str[:255], attrs)
 
                 # ZOOM SPEICHERN LOGIK
                 if new_device_id and new_zoom is not None:
@@ -320,7 +321,6 @@ class HaushaltshilfeUsersView(HomeAssistantView):
 
         action = data.get("action")
         if action not in ("add", "update", "delete"):
-            # Das alte Format {"users": [...]} würde Passwörter im Klartext übertragen
             return self.json({"success": False, "message": "Ungültige Aktion"}, status_code=400)
 
         if not await _async_check_admin(hass, data.get("admin_pw", "")):
@@ -358,7 +358,7 @@ class HaushaltshilfeUsersView(HomeAssistantView):
                 return self.json({"success": False, "message": "Benutzer existiert bereits"}, status_code=409)
             target["name"] = name
             target["persistent"] = persistent
-            if password:  # leer = Passwort unverändert lassen
+            if password:
                 target["pw"] = await hass.async_add_executor_job(hash_password, password)
 
         elif action == "delete":
@@ -467,24 +467,44 @@ class HaushaltshilfeStateProxyView(HomeAssistantView):
             if helper_key in ("helper_master_pw", "helper_admin_pw", "users_list", "saved_ha_token"):
                 return self.json({"error": "Entity not allowed"}, status_code=403)
 
-            if helper_key == "finance_templates":
-                store_data["finance_templates"] = str(value)
-                store_data["helper_finance_templates"] = str(value)
-            else:
-                store_data[helper_key] = str(value)
+            val_str = str(value)
 
-            current_state = hass.states.get(entity_id)
-            attrs = current_state.attributes.copy() if current_state else {}
-            hass.states.async_set(entity_id, str(value), attrs)
-
-            # Falls es die Fixkosten-Vorlagen sind, halte beide Entitäten synchron
+            # Falls es die Fixkosten-Vorlagen sind, direkt über das Sensor-Event leiten
             if "finance_templates" in entity_id:
+                store_data["finance_templates"] = val_str
+                store_data.pop("helper_finance_templates", None)
                 try:
-                    parsed_tpl = json.loads(str(value)) if isinstance(value, str) else value
+                    parsed_tpl = json.loads(val_str) if isinstance(value, str) else value
                 except Exception:
                     parsed_tpl = []
-                hass.states.async_set("input_text.helper_finance_templates", str(value), {"friendly_name": "Fixkosten Vorlagen"})
-                hass.states.async_set("sensor.haushalt_finance_templates", "OK", {"templates": parsed_tpl})
+                hass.bus.async_fire("set_finance_templates", {"templates": parsed_tpl})
+                if store is not None:
+                    await store.async_save(store_data)
+                return self.json({"success": True})
+
+            # Falls jemand set_input_text auf einen haushalt-Sensor aufruft (z.B. finance_db),
+            # NIEMALS den langen JSON-String in den State schreiben (Max 255 Zeichen!),
+            # sondern als Event an den Sensor weitergeben:
+            if entity_id.startswith("sensor.haushalt_"):
+                store_data[helper_key] = val_str
+                if helper_key == "finance_db":
+                    try:
+                        parsed_db = json.loads(val_str)
+                    except Exception:
+                        parsed_db = {}
+                    hass.bus.async_fire("set_finance_db", {"data": parsed_db})
+                if store is not None:
+                    await store.async_save(store_data)
+                return self.json({"success": True})
+
+            # Normale kurze input_text Helfer (Essen, Räume, Geschäfte, Tabs)
+            store_data[helper_key] = val_str
+            current_state = hass.states.get(entity_id)
+            attrs = current_state.attributes.copy() if current_state else {}
+            
+            # Schutz vor >255 Zeichen Crash
+            safe_state = val_str if len(val_str) <= 255 else val_str[:255]
+            hass.states.async_set(entity_id, safe_state, attrs)
 
             if store is not None:
                 await store.async_save(store_data)
@@ -557,7 +577,6 @@ class HaushaltshilfeUpdateZoomView(HomeAssistantView):
 
         if device_id:
             device_id = str(device_id)
-            # 1. Daten aus dem Store laden
             zooms_raw = store_data.get("device_zooms", "{}")
             themes_raw = store_data.get("device_themes", "{}")
             try:
@@ -567,7 +586,6 @@ class HaushaltshilfeUpdateZoomView(HomeAssistantView):
                 zooms = {}
                 themes = {}
 
-            # 2. Werte aktualisieren (wenn übergeben)
             if zoom is not None:
                 try:
                     zooms[device_id] = float(zoom)
@@ -579,13 +597,13 @@ class HaushaltshilfeUpdateZoomView(HomeAssistantView):
                 themes[device_id] = str(theme)
                 store_data["device_themes"] = json.dumps(themes)
 
-            # 3. Auf der Festplatte speichern
             if store is not None:
                 await store.async_save(store_data)
 
             return self.json({"success": True})
 
         return self.json({"success": False, "message": "Ungültige Device-ID"}, status_code=400)
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Haushaltshilfe Pro with persistent JSON storage."""
@@ -605,11 +623,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     opt_tabs = entry.options.get(CONF_VISIBLE_TABS, entry.data.get(CONF_VISIBLE_TABS))
 
-    # Synchronisiere finance_templates und helper_finance_templates beim Start
-    if "finance_templates" in store_data and store_data["finance_templates"] != "[]":
-        store_data["helper_finance_templates"] = store_data["finance_templates"]
-    elif "helper_finance_templates" in store_data:
-        store_data["finance_templates"] = store_data["helper_finance_templates"]
+    # Einmalige Migration: Falls noch Daten in "helper_finance_templates" liegen,
+    # nach "finance_templates" für den neuen Sensor übernehmen und den alten Key löschen
+    if "helper_finance_templates" in store_data:
+        if "finance_templates" not in store_data or store_data["finance_templates"] == "[]":
+            store_data["finance_templates"] = store_data["helper_finance_templates"]
+        store_data.pop("helper_finance_templates", None)
+
+    if "finance_templates" not in store_data:
+        store_data["finance_templates"] = "[]"
 
     for helper_id, config in AUTO_INPUT_TEXTS.items():
         entity_id = f"input_text.{helper_id}"
@@ -622,15 +644,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         else:
             val_to_set = store_data.get(helper_id, config["initial"])
         
-        store_data[helper_id] = str(val_to_set)
+        val_str = str(val_to_set)
+        store_data[helper_id] = val_str
+
+        # Sicherheits-Check: State darf in HA niemals länger als 255 Zeichen sein!
+        safe_state = val_str if len(val_str) <= 255 else val_str[:255]
 
         hass.states.async_set(
             entity_id,
-            str(val_to_set),
+            safe_state,
             {
                 "editable": True,
                 "min": 0,
-                "max": 10000,
+                "max": 255,
                 "mode": "text",
                 "friendly_name": config["name"],
             },
@@ -656,8 +682,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 current_state = hass.states.get(entity_id)
                 attrs = current_state.attributes.copy() if current_state else {}
                 
-                hass.states.async_set(entity_id, str(value), attrs)
-                store_data[helper_key] = str(value)
+                val_str = str(value)
+                safe_state = val_str if len(val_str) <= 255 else val_str[:255]
+                hass.states.async_set(entity_id, safe_state, attrs)
+                store_data[helper_key] = val_str
                 hass.async_create_task(store.async_save(store_data))
 
                 new_options = dict(entry.options)
@@ -685,6 +713,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.bus.async_listen("call_service", handle_call_service_event)
 
+    # WICHTIG: "set_finance_templates" zeigt jetzt direkt auf "finance_templates"
+    # (den storage_key von sensor.haushalt_finance_templates in der sensor.py!)
     EVENT_MAPPING = {
         "set_tasks_data": "tasks_data",
         "set_todo_favs": "todo_favs",
@@ -693,9 +723,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "set_shopping_data": "shopping_db",
         "set_finance_data": "finance_db",
         "set_finance_db": "finance_db",
-        "set_finance_templates": "helper_finance_templates",
-        # "set_users_data" entfernt: Benutzer werden nur noch über
-        # /api/haushaltshilfe/users (mit Admin-Passwort, gehasht) geändert.
+        "set_finance_templates": "finance_templates",
     }
 
     @callback
@@ -712,17 +740,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             if raw_val is not None:
                 val_str = raw_val if isinstance(raw_val, str) else json.dumps(raw_val)
                 store_data[storage_key] = val_str
-
-                if ev_type == "set_finance_templates":
-                    store_data["finance_templates"] = val_str
-                    store_data["helper_finance_templates"] = val_str
-                    try:
-                        parsed_tpl = json.loads(val_str) if isinstance(val_str, str) else raw_val
-                    except Exception:
-                        parsed_tpl = []
-                    hass.states.async_set("input_text.helper_finance_templates", val_str, {"friendly_name": "Fixkosten Vorlagen"})
-                    hass.states.async_set("sensor.haushalt_finance_templates", "OK", {"templates": parsed_tpl})
-                
+                # Kein hass.states.async_set auf input_text mehr nötig!
+                # Der Sensor HaushaltshilfeStoreSensor aus sensor.py hört selbst auf
+                # das Event "set_finance_templates" und aktualisiert seine Attribute automatisch.
                 hass.async_create_task(store.async_save(store_data))
 
     for ev_name in EVENT_MAPPING.keys():
@@ -775,12 +795,9 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
     store = hass.data[DOMAIN].get("store")
     store_data = hass.data[DOMAIN].get("data", {})
 
-    # Im Options-Flow neu eingegebene Passwörter kommen im Klartext an -> hashen.
-    # Ändert das den Entry, ruft HA diesen Listener erneut auf (dann ist alles gehasht).
     if await async_migrate_secrets(hass, entry, store_data):
         return
 
-    # Hier der entscheidende Fallback, damit visible_tabs nie None wird:
     visible_tabs = entry.options.get(CONF_VISIBLE_TABS)
     if visible_tabs is None:
         visible_tabs = entry.data.get(CONF_VISIBLE_TABS, ["shop", "todo", "food", "trash", "finance"])
@@ -793,7 +810,7 @@ async def update_listener(hass: HomeAssistant, entry: ConfigEntry):
         current_state = hass.states.get(entity_id)
         attrs = current_state.attributes.copy() if current_state else {}
         
-        hass.states.async_set(entity_id, tabs_str, attrs)
+        hass.states.async_set(entity_id, tabs_str[:255], attrs)
 
     if store:
         await store.async_save(store_data)
