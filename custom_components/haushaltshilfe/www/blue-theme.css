@@ -218,3 +218,140 @@ body.theme-blue #finance-modal .finance-input-row input::placeholder { color: rg
 body.theme-blue #finance-modal .finance-input-row select { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003366 !important; color: #003366 !important; font-weight: 800 !important; border-radius: 12px !important; }
 body.theme-blue #finance-modal .finance-input-row .btn-add { background: #0984e3 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.6) !important; box-shadow: 0 4px 15px rgba(9, 132, 227, 0.4) !important; font-weight: 800 !important; border-radius: 12px !important; }
 body.theme-blue #finance-modal .finance-input-row input:focus, body.theme-blue #finance-modal .finance-input-row select:focus { background: #ffffff !important; border-color: #0984e3 !important; box-shadow: 0 0 10px rgba(9, 132, 227, 0.3) !important; outline: none !important; }
+/* --- BLUE THEME: FIXKOSTEN MODAL & FORMULAR BUTTONS --- */
+body.theme-blue #fixkostenModal input,
+body.theme-blue #fixkostenModal select {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 2px solid #003366 !important;
+    color: #003366 !important;
+    font-weight: 800 !important;
+    border-radius: 12px !important;
+    outline: none !important;
+}
+
+body.theme-blue #fixkostenModal input::placeholder {
+    color: rgba(0, 51, 102, 0.5) !important;
+    font-weight: 700 !important;
+}
+
+body.theme-blue #fixkostenModal label {
+    color: #003366 !important;
+    font-weight: 700 !important;
+}
+
+/* Der Speichern-Button im Royal-Blau */
+body.theme-blue #tplSaveBtn {
+    background: #0984e3 !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    box-shadow: 0 4px 15px rgba(9, 132, 227, 0.4) !important;
+    font-weight: 800 !important;
+    border-radius: 12px !important;
+}
+
+body.theme-blue #tplSaveBtn:active {
+    background: #003366 !important;
+    color: #ffffff !important;
+}
+
+/* Der Stift-Button (Bearbeiten) im Blau-Glas-Look */
+body.theme-blue #tplEditBtn {
+    background: rgba(255, 255, 255, 0.6) !important;
+    color: #003366 !important;
+    border: 2px solid #003366 !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+body.theme-blue #tplEditBtn:active {
+    background: #0984e3 !important;
+    color: #ffffff !important;
+}
+
+/* Der Abbrechen-Button (✖) */
+body.theme-blue #tplCancelEditBtn {
+    background: rgba(255, 255, 255, 0.6) !important;
+    color: #ff3b30 !important;
+    border: 2px solid #003366 !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+body.theme-blue #tplCancelEditBtn:active {
+    background: #ff3b30 !important;
+    color: #ffffff !important;
+}
+/* ========================================================
+   --- NEU: MODAL-BUTTONS & VARIABLEN (BLUE) ---
+   ======================================================== */
+
+body.theme-blue {
+    --todo: #1e3a8a;
+    --primary: #2563eb;
+    --bg: rgba(255, 255, 255, 0.95);
+    --card: rgba(240, 247, 255, 0.96);
+    --gray: #1e3a8a;
+}
+
+body.theme-blue button[onclick*="confirmInterval('m')"],
+body.theme-blue button[onclick*="confirmInterval('s')"],
+body.theme-blue button[onclick*="confirmInterval('days')"],
+body.theme-blue button[onclick*="confirmInterval('date')"],
+body.theme-blue button[onclick*="saveEdit('m')"],
+body.theme-blue button[onclick*="saveEdit('s')"],
+body.theme-blue button[onclick*="saveEdit('days')"],
+body.theme-blue button[onclick*="saveEdit('date')"] {
+    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%) !important;
+    color: #ffffff !important;
+    border: 1.5px solid #60a5fa !important;
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3) !important;
+}
+
+body.theme-blue button[onclick*="confirmInterval('t')"],
+body.theme-blue button[onclick*="saveEdit('t')"],
+body.theme-blue button[onclick*="confirmShopAdd"] {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+    color: #ffffff !important;
+    border: 1.5px solid #93c5fd !important;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.45) !important;
+}
+
+@keyframes blue-running-border {
+    0% { background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px; }
+    100% { background-position: 40px 0px, -40px 100%, 0px -40px, 100% 40px; }
+}
+
+@keyframes blue-alarm-glow {
+    0%, 100% { box-shadow: 0 0 12px rgba(37, 99, 235, 0.6) !important; }
+    50% { 
+        box-shadow: 0 0 30px #2563eb, 0 0 15px #60a5fa, inset 0 0 15px rgba(37, 99, 235, 0.4) !important; 
+        transform: scale(1.01);
+    }
+}
+
+body.theme-blue .urgent-blink::after,
+body.theme-blue #list-todo li.urgent-blink::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    border-radius: inherit !important;
+    z-index: 10 !important;
+    background-image: 
+        linear-gradient(90deg, #2563eb 50%, #60a5fa 50%),
+        linear-gradient(90deg, #2563eb 50%, #60a5fa 50%),
+        linear-gradient(0deg, #2563eb 50%, #60a5fa 50%),
+        linear-gradient(0deg, #2563eb 50%, #60a5fa 50%);
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 40px 6px, 40px 6px, 6px 40px, 6px 40px;
+    background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px;
+    animation: blue-running-border 0.3s infinite linear !important;
+}
+
+body.theme-blue .urgent-blink,
+body.theme-blue #list-todo li.urgent-blink {
+    position: relative !important;
+    overflow: hidden !important;
+}

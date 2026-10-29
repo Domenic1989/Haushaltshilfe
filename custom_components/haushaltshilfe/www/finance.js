@@ -23,7 +23,7 @@ function parseFinanceRoot(s) {
     if (!s) return { years: [], months: [] };
     let root = null;
 
-    // 1. Prüfe, ob in s.state ein aktueller JSON-String liegt (passiert durch set_input_text)
+    // 1. Prüfe, ob in s.state ein aktueller JSON-String liegt
     if (s.state && typeof s.state === "string" && s.state.trim().startsWith("{")) {
         try { root = JSON.parse(s.state); } catch(e) {}
     }
@@ -45,23 +45,19 @@ function parseFinanceRoot(s) {
     return root;
 }
 
-// Dauerhaftes Speichern: Sendet Event an Integration UND schreibt State für Neustartsicherheit
+// Dauerhaftes Speichern: Sendet Event an Integration (schreibt unbegrenzt in die Sensor-Attribute)
 async function saveToHA(dataObj) {
     try {
         const baseUrl = (typeof getBaseUrl === "function") ? getBaseUrl() : window.location.origin;
 
-        // 1. Event feuern für die Live-Aktualisierung im Sensor (Python Integration)
         await fetch(`${baseUrl}/api/haushaltshilfe/proxy`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: "fire_event", event_type: "set_finance_db", event_data: { data: dataObj } })
-        });
-
-        // 2. Zustand direkt in HA State API über den Proxy schreiben
-        await fetch(`${baseUrl}/api/haushaltshilfe/proxy`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: "set_input_text", entity_id: "sensor.haushalt_finance_db", value: JSON.stringify(dataObj) })
+            body: JSON.stringify({ 
+                action: "fire_event", 
+                event_type: "set_finance_db", 
+                event_data: { data: dataObj } 
+            })
         });
     } catch(e) { 
         console.error("HA Save Error:", e); 
@@ -72,38 +68,26 @@ async function saveToHA(dataObj) {
 
 let fixkostenTemplates = [];
 
+// --- 1. FIXKOSTEN-VORLAGEN LADEN ---
 async function loadFixkostenTemplates() {
     try {
         const baseUrl = (typeof getBaseUrl === "function") ? getBaseUrl() : window.location.origin;
-        
-        // 1. Primär über input_text.helper_finance_templates laden
-        const r1 = await fetch(`${baseUrl}/api/haushaltshilfe/proxy?entity_id=input_text.helper_finance_templates&_t=${Date.now()}`, { cache: "no-store" });
-        if (r1.ok) {
-            const s1 = await r1.json();
-            if (s1 && s1.state && s1.state !== "unknown" && s1.state !== "unavailable" && s1.state.trim() !== "") {
-                const parsed = JSON.parse(s1.state);
-                if (Array.isArray(parsed)) {
-                    fixkostenTemplates = parsed;
-                    localStorage.setItem("ha_fixkosten_templates", JSON.stringify(fixkostenTemplates));
-                    return;
+        const r = await fetch(`${baseUrl}/api/haushaltshilfe/proxy?entity_id=sensor.haushalt_finance_templates&_t=${Date.now()}`, { cache: "no-store" });
+        if (r.ok) {
+            const s = await r.json();
+            if (s && s.attributes) {
+                const rawTpl = s.attributes.templates || s.attributes.data || s.attributes.value;
+                if (rawTpl) {
+                    const parsed = typeof rawTpl === 'string' ? JSON.parse(rawTpl) : rawTpl;
+                    if (Array.isArray(parsed)) {
+                        fixkostenTemplates = parsed;
+                        localStorage.setItem("ha_fixkosten_templates", JSON.stringify(fixkostenTemplates));
+                        renderFixkostenList();
+                        return;
+                    }
                 }
             }
         }
-
-        // 2. Zweiter Check über sensor.haushalt_finance_templates
-        const r2 = await fetch(`${baseUrl}/api/haushaltshilfe/proxy?entity_id=sensor.haushalt_finance_templates&_t=${Date.now()}`, { cache: "no-store" });
-        if (r2.ok) {
-            const s2 = await r2.json();
-            if (s2 && s2.attributes && s2.attributes.templates) {
-                fixkostenTemplates = typeof s2.attributes.templates === 'string' 
-                    ? JSON.parse(s2.attributes.templates) 
-                    : s2.attributes.templates;
-                localStorage.setItem("ha_fixkosten_templates", JSON.stringify(fixkostenTemplates));
-                return;
-            }
-        }
-
-        // 3. Fallback LocalStorage
         const local = localStorage.getItem("ha_fixkosten_templates");
         if (local) fixkostenTemplates = JSON.parse(local);
     } catch(e) {
@@ -113,6 +97,7 @@ async function loadFixkostenTemplates() {
             try { fixkostenTemplates = JSON.parse(local); } catch(err) {}
         }
     }
+    renderFixkostenList();
 }
 
 async function saveFixkostenTemplates() {
@@ -121,17 +106,14 @@ async function saveFixkostenTemplates() {
 
     try {
         const baseUrl = (typeof getBaseUrl === "function") ? getBaseUrl() : window.location.origin;
-
         await fetch(`${baseUrl}/api/haushaltshilfe/proxy`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: "fire_event", event_type: "set_finance_templates", event_data: { templates: fixkostenTemplates } })
-        });
-
-        await fetch(`${baseUrl}/api/haushaltshilfe/proxy`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: "set_input_text", entity_id: "input_text.helper_finance_templates", value: jsonStr })
+            body: JSON.stringify({ 
+                action: "fire_event", 
+                event_type: "set_finance_templates", 
+                event_data: { templates: fixkostenTemplates } 
+            })
         });
     } catch(e) {
         console.error("Fehler beim Speichern der Fixkosten-Vorlagen:", e);
@@ -144,17 +126,16 @@ window.openFixkostenModal = async function() {
     } catch(e) {
         console.warn("Vorlagen-Laden fehlgeschlagen, öffne Modal dennoch:", e);
     }
-    
+    cancelFixkostenEdit(); // Setzt das Formular sauber zurück
     renderFixkostenList();
     
     const modal = document.getElementById('fixkostenModal');
     if (modal) {
         modal.style.display = 'flex';
-    } else {
-        alert("Modal 'fixkostenModal' wurde nicht im HTML-Code gefunden!");
     }
 };
 
+// --- 2. LISTE ZEICHNEN (Jetzt nur noch mit Mülleimer, Bearbeiten passiert über den Stift oben im HTML) ---
 function renderFixkostenList() {
     const listEl = document.getElementById("fixkostenList");
     if (!listEl) return;
@@ -176,53 +157,144 @@ function renderFixkostenList() {
 
     fixkostenTemplates.forEach((tpl, index) => {
         const div = document.createElement("div");
-        div.style = "display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:12px 15px; border-radius:12px;";
+        div.style = "display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:12px 15px; border-radius:12px; cursor:pointer;";
+        // Klickt man auf den Eintrag selbst oder den Stift, wird er zum Bearbeiten geladen
+        div.onclick = () => editFixkostenTemplate(index);
+
         div.innerHTML = `
             <div>
                 <strong style="color:var(--text); font-size:0.95rem;">${tpl.title}</strong> — <span style="font-weight:bold; color:var(--primary);">${parseFloat(tpl.amount).toFixed(2)} €</span>
                 <div style="font-size:0.75rem; color:var(--gray); margin-top:2px;">${monthLabels[tpl.months] || tpl.months}</div>
             </div>
-            <button type="button" onclick="deleteFixkostenTemplate(${index})" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-weight:bold; font-size:1.2rem; padding:5px;">✕</button>
+            <div style="display:flex; align-items:center; gap:4px;">
+                <button type="button" 
+                    onclick="event.stopPropagation(); event.preventDefault(); deleteFixkostenTemplate(${index});" 
+                    style="position:relative; z-index:50; background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; font-size:1.3rem; padding:12px 10px; margin:-8px -8px -8px 0; border-radius:10px;" title="Löschen">
+                    🗑️
+                </button>
+            </div>
         `;
         listEl.appendChild(div);
     });
 }
 
+// --- 3. VORLAGE IN DIE FORMULAR-FELDER LADEN (BEARBEITEN) ---
+window.editFixkostenTemplate = function(index) {
+    const tpl = fixkostenTemplates[index];
+    if (!tpl) return;
+
+    const titleInput = document.getElementById("tpl_title");
+    const amountInput = document.getElementById("tpl_amount");
+    const monthsSelect = document.getElementById("tpl_months");
+    const saveBtn = document.getElementById("tplSaveBtn");
+    const editBtn = document.getElementById("tplEditBtn");
+    const cancelBtn = document.getElementById("tplCancelEditBtn");
+
+    if (titleInput && amountInput && monthsSelect && saveBtn) {
+        titleInput.value = tpl.title;
+        amountInput.value = tpl.amount;
+        monthsSelect.value = tpl.months;
+
+        // Merkt sich den Index im HTML-Button
+        saveBtn.dataset.editIndex = index;
+        saveBtn.innerHTML = "💾 Änderung speichern";
+        saveBtn.style.background = "var(--accent)";
+
+        // Zeigt den Abbrechen-Button an und versteckt den Extra-Stift
+        if (editBtn) editBtn.style.display = "none";
+        if (cancelBtn) cancelBtn.style.display = "block";
+
+        amountInput.focus();
+    }
+};
+
+// --- 4. BEARBEITEN ABBRECHEN ---
+window.cancelFixkostenEdit = function() {
+    const titleInput = document.getElementById("tpl_title");
+    const amountInput = document.getElementById("tpl_amount");
+    const monthsSelect = document.getElementById("tpl_months");
+    const saveBtn = document.getElementById("tplSaveBtn");
+    const editBtn = document.getElementById("tplEditBtn");
+    const cancelBtn = document.getElementById("tplCancelEditBtn");
+
+    if (titleInput && amountInput && saveBtn) {
+        titleInput.value = "";
+        amountInput.value = "";
+        if (monthsSelect) monthsSelect.value = "all";
+
+        saveBtn.dataset.editIndex = "-1";
+        saveBtn.innerHTML = "➕ Fixkosten-Eintrag speichern";
+        saveBtn.style.background = "var(--primary)";
+
+        if (editBtn) editBtn.style.display = "block";
+        if (cancelBtn) cancelBtn.style.display = "none";
+    }
+};
+
+// --- 5. SPEICHERN (ENTWEDER NEU ODER ALS UPDATE) ---
 window.addFixkostenTemplate = async function() {
     const titleInput = document.getElementById("tpl_title");
     const amountInput = document.getElementById("tpl_amount");
     const monthsSelect = document.getElementById("tpl_months");
+    const saveBtn = document.getElementById("tplSaveBtn");
 
     if (!titleInput || !amountInput || !monthsSelect) return;
 
     const title = titleInput.value.trim();
     const amount = parseFloat(amountInput.value);
     const months = monthsSelect.value;
+    const editIndex = saveBtn ? parseInt(saveBtn.dataset.editIndex || "-1", 10) : -1;
 
     if (!title || isNaN(amount)) {
-        alert("Bitte eine Bezeichnung und einen gültigen Betrag eingeben!");
+        // Schickes eigenes Modal statt alert(...)
+        const modal = document.getElementById("customConfirmModal");
+        const titleEl = document.getElementById("customConfirmTitle");
+        const msgEl = document.getElementById("customConfirmMessage");
+        
+        if (modal && titleEl && msgEl) {
+            titleEl.innerText = "Fehlende Eingabe";
+            msgEl.innerText = "Bitte eine Bezeichnung und einen gültigen Betrag eingeben!";
+            modal.style.display = "flex";
+            
+            // Definiert die Schließen-Funktion für den OK-Button
+            window.resolveConfirm = function() {
+                modal.style.display = "none";
+            };
+        } else {
+            alert("Bitte eine Bezeichnung und einen gültigen Betrag eingeben!");
+        }
         return;
     }
 
     if (!Array.isArray(fixkostenTemplates)) fixkostenTemplates = [];
-    fixkostenTemplates.push({ title: title, amount: amount, months: months });
+
+    if (editIndex >= 0 && editIndex < fixkostenTemplates.length) {
+        // Bestehende Vorlage aktualisieren
+        fixkostenTemplates[editIndex] = { title: title, amount: amount, months: months };
+    } else {
+        // Neue Vorlage hinzufügen
+        fixkostenTemplates.push({ title: title, amount: amount, months: months });
+    }
 
     await saveFixkostenTemplates();
-
-    titleInput.value = "";
-    amountInput.value = "";
+    cancelFixkostenEdit();
     renderFixkostenList();
 };
 
+// --- 6. VORLAGE LÖSCHEN ---
 window.deleteFixkostenTemplate = async function(index) {
     if (!Array.isArray(fixkostenTemplates) || !fixkostenTemplates[index]) return;
     
     const item = fixkostenTemplates[index];
-    const name = item.name || item.bezeichnung || "diese Vorlage";
+    const name = item.title || item.name || "diese Vorlage";
     
     const confirmed = await showDeleteModal(`Möchtest du die Fixkosten-Vorlage "${name}" wirklich löschen?`, "Vorlage löschen");
     
     if (confirmed) {
+        const saveBtn = document.getElementById("tplSaveBtn");
+        if (saveBtn && parseInt(saveBtn.dataset.editIndex || "-1", 10) === index) {
+            cancelFixkostenEdit();
+        }
         fixkostenTemplates.splice(index, 1);
         await saveFixkostenTemplates();
         renderFixkostenList();
@@ -357,6 +429,9 @@ function renderFinanceItems(items, mIdx, type) {
 
 // --- 1. ÜBERSICHT LADEN (JAHRE ODER MONATE) ---
 window.loadFinance = async function(isBackgroundSync = false) {
+    // Während man ein Jahr oder einen Monat zieht, keinen Auto-Sync dazwischenfunken lassen
+    if (isBackgroundSync && financeDragState.isDragging) return;
+
     const yearsView = document.getElementById('finance-years-view');
     const monthsView = document.getElementById('finance-months-view');
     const yearsContainer = document.getElementById('years-container');
@@ -375,9 +450,8 @@ window.loadFinance = async function(isBackgroundSync = false) {
     lastFinanceDataHash = currentHash;
 
     let list = root.months;
+    // WICHTIG: Kein zwangsweises .sort() mehr hier, damit deine eigene Drag & Drop Reihenfolge erhalten bleibt!
     let yearsList = root.years.map(String);
-
-    yearsList.sort((a, b) => parseInt(b) - parseInt(a));
 
     if (activeFinanceYear === null) {
         // --- ANSICHT 1: JAHRE ANZEIGEN ---
@@ -391,7 +465,7 @@ window.loadFinance = async function(isBackgroundSync = false) {
             return;
         }
 
-        yearsList.forEach(yearStr => {
+        yearsList.forEach((yearStr, yIdx) => {
             const monthsInYear = list.filter(m => extractYearFromMonth(m) === yearStr);
             
             let sumFixYear = 0;
@@ -401,32 +475,44 @@ window.loadFinance = async function(isBackgroundSync = false) {
                 sumVarYear += (m.spendings || []).reduce((acc, i) => acc + (parseFloat(i.amount) || 0), 0);
             });
 
-            yearsContainer.innerHTML += `
-            <div class="month-card" style="position:relative; padding: 20px; border-radius: 20px; cursor:default;">
+            const card = document.createElement('div');
+            card.className = "month-card";
+            card.style = "position:relative; padding: 20px; border-radius: 20px; cursor:grab; user-select:none; -webkit-user-select:none;";
+            card.dataset.index = yIdx;
+            card.dataset.type = 'year';
+
+            card.onclick = () => {
+                if (card.dataset.wasDragged === "true") return;
+                openFinanceYear(yearStr);
+            };
+
+            card.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <h3 onclick="openFinanceYear('${yearStr}')" style="color:var(--primary); margin: 0; font-size:1.4rem; cursor:pointer; flex:1;">
+                    <h3 style="color:var(--primary); margin: 0; font-size:1.4rem; cursor:pointer; flex:1;">
                         📅 Jahr ${yearStr}
                     </h3>
                     <div style="display:flex; align-items:center; gap:8px;">
-                        <span onclick="openFinanceYear('${yearStr}')" style="font-size:0.8rem; opacity:0.7; font-weight:bold; background:rgba(0,0,0,0.06); padding:4px 10px; border-radius:10px; cursor:pointer;">
+                        <span style="font-size:0.8rem; opacity:0.7; font-weight:bold; background:rgba(0,0,0,0.06); padding:4px 10px; border-radius:10px; cursor:pointer;">
                             ${monthsInYear.length} Monate
                         </span>
-                        <button type="button" 
+                        <button type="button" class="del-finance-btn"
                             onclick="event.stopPropagation(); event.preventDefault(); deleteFinanceYear('${yearStr}', event);" 
                             style="position:relative; z-index:50; background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; font-size:1.3rem; padding:15px 18px; margin:-8px -8px -8px 0; border-radius:10px;">
                             🗑️
                         </button>
                     </div>
                 </div>
-                <div onclick="openFinanceYear('${yearStr}')" style="font-size:0.9rem; opacity:0.85; cursor:pointer;">
+                <div style="font-size:0.9rem; opacity:0.85; cursor:pointer; pointer-events:none;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Fixkosten (Jahr):</span><b>${sumFixYear.toFixed(2)}€</b></div>
                     <div style="display:flex; justify-content:space-between;"><span>Ausgaben (Jahr):</span><b>${sumVarYear.toFixed(2)}€</b></div>
                     <hr style="border:0; border-top:1px solid rgba(0,0,0,0.1); margin:10px 0;">
                     <div class="summary-total" style="display:flex; justify-content:space-between; font-weight:bold; font-size:1.05rem; padding-top:4px;">
                         <span>Jahresgesamt:</span><span>${(sumFixYear + sumVarYear).toFixed(2)}€</span>
                     </div>
-                </div>
-            </div>`;
+                </div>`;
+
+            enableFinanceDragAndDrop(card, 'year', yIdx);
+            yearsContainer.appendChild(card);
         });
     } else {
         // --- ANSICHT 2: MONATE DES GEWÄHLTEN JAHRES ANZEIGEN ---
@@ -445,22 +531,34 @@ window.loadFinance = async function(isBackgroundSync = false) {
         if (monthsWithIndex.length === 0) {
             monthsContainer.innerHTML = `<div style="text-align:center; padding:30px; opacity:0.6; font-weight:bold; grid-column: 1 / -1;">Noch keine Monate in ${activeFinanceYear} angelegt. Klicke oben auf "➕ Monat in diesem Jahr hinzufügen".</div>`;
         } else {
-            monthsWithIndex.forEach(({ m, idx: mIdx }) => {
+            monthsWithIndex.forEach(({ m, idx: mIdx }, localIdx) => {
                 const sumFix = (m.fixum || []).reduce((acc, i) => acc + (parseFloat(i.amount) || 0), 0);
                 const sumVar = (m.spendings || []).reduce((acc, i) => acc + (parseFloat(i.amount) || 0), 0);
                 
-                monthsContainer.innerHTML += `
-                <div class="month-card" onclick="openFinanceModal(${mIdx})" style="cursor:pointer; text-align:center;">
-                    <h3 style="color:var(--primary); margin: 0 0 10px 0;">${m.month_name}</h3>
-                    <div style="font-size:0.85rem; opacity:0.8;">
+                const card = document.createElement('div');
+                card.className = "month-card";
+                card.style = "cursor:pointer; text-align:center; user-select:none; -webkit-user-select:none;";
+                card.dataset.index = localIdx;
+                card.dataset.type = 'month';
+
+                card.onclick = () => {
+                    if (card.dataset.wasDragged === "true") return;
+                    openFinanceModal(mIdx);
+                };
+
+                card.innerHTML = `
+                    <h3 style="color:var(--primary); margin: 0 0 10px 0; pointer-events:none;">${m.month_name}</h3>
+                    <div style="font-size:0.85rem; opacity:0.8; pointer-events:none;">
                         <div style="display:flex; justify-content:space-between;"><span>Fix:</span><b>${sumFix.toFixed(2)}€</b></div>
                         <div style="display:flex; justify-content:space-between;"><span>Ausg:</span><b>${sumVar.toFixed(2)}€</b></div>
                         <hr style="border:0; border-top:1px solid rgba(0,0,0,0.1); margin:8px 0;">
                         <div class="summary-total" style="display:flex; justify-content:space-between; font-weight:bold; color:var(--text);">
                             <span>Gesamt:</span><span>${(sumFix+sumVar).toFixed(2)}€</span>
                         </div>
-                    </div>
-                </div>`;
+                    </div>`;
+
+                enableFinanceDragAndDrop(card, 'month', localIdx);
+                monthsContainer.appendChild(card);
             });
         }
 
@@ -473,6 +571,169 @@ window.loadFinance = async function(isBackgroundSync = false) {
         }
     }
 };
+
+// ========================================================
+// --- DRAG & DROP LOGIK FÜR JAHRE UND MONATE ---
+// ========================================================
+let financeDragState = {
+    type: null,
+    fromIndex: null,
+    toIndex: null,
+    isDragging: false,
+    startX: 0,
+    startY: 0
+};
+
+function enableFinanceDragAndDrop(card, type, index) {
+    // --- 1. PC MAUS DRAG & DROP ---
+    card.draggable = true;
+
+    card.addEventListener('dragstart', (e) => {
+        financeDragState.type = type;
+        financeDragState.fromIndex = index;
+        financeDragState.isDragging = true;
+        card.classList.add('dragging-side-btn');
+        if (e.dataTransfer) {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', index);
+        }
+    });
+
+    card.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (financeDragState.type !== type || financeDragState.fromIndex === index) return;
+        card.classList.add('drag-over-side-btn');
+    });
+
+    card.addEventListener('dragleave', () => {
+        card.classList.remove('drag-over-side-btn');
+    });
+
+    card.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        card.classList.remove('drag-over-side-btn');
+        if (financeDragState.type !== type) return;
+        
+        const fromIdx = financeDragState.fromIndex;
+        const toIdx = index;
+        financeDragState.isDragging = false;
+
+        if (fromIdx !== null && fromIdx !== toIdx) {
+            await applyFinanceNewOrder(type, fromIdx, toIdx);
+        }
+    });
+
+    card.addEventListener('dragend', () => {
+        financeDragState.isDragging = false;
+        card.classList.remove('dragging-side-btn');
+        document.querySelectorAll('.drag-over-side-btn').forEach(el => el.classList.remove('drag-over-side-btn'));
+        financeDragState.type = null;
+        financeDragState.fromIndex = null;
+    });
+
+    // --- 2. HANDY / TABLET TOUCH (2D-GRID KOMPATIBEL) ---
+    card.addEventListener('touchstart', (e) => {
+        if (e.target.closest('.del-finance-btn') || e.target.tagName === 'BUTTON') return;
+
+        const touch = e.touches[0];
+        financeDragState.startX = touch.clientX;
+        financeDragState.startY = touch.clientY;
+        financeDragState.type = type;
+        financeDragState.fromIndex = index;
+        financeDragState.toIndex = index;
+        card.dataset.wasDragged = "false";
+    }, { passive: true });
+
+    card.addEventListener('touchmove', (e) => {
+        if (financeDragState.type !== type || financeDragState.fromIndex !== index) return;
+
+        const touch = e.touches[0];
+        const moveX = Math.abs(touch.clientX - financeDragState.startX);
+        const moveY = Math.abs(touch.clientY - financeDragState.startY);
+
+        // Startet im 2D-Grid, sobald man mind. 12px zieht (horizontal oder vertikal)
+        if (!financeDragState.isDragging && (moveX > 12 || moveY > 12)) {
+            financeDragState.isDragging = true;
+            card.classList.add('dragging-side-btn');
+            card.dataset.wasDragged = "true";
+            if (navigator.vibrate) navigator.vibrate(30);
+        }
+
+        if (financeDragState.isDragging) {
+            if (e.cancelable) e.preventDefault();
+
+            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+            const overCard = targetEl ? targetEl.closest(`.month-card[data-type="${type}"]`) : null;
+
+            document.querySelectorAll('.drag-over-side-btn').forEach(el => el.classList.remove('drag-over-side-btn'));
+
+            if (overCard && overCard !== card) {
+                overCard.classList.add('drag-over-side-btn');
+                financeDragState.toIndex = parseInt(overCard.dataset.index, 10);
+            }
+        }
+    }, { passive: false });
+
+    const endTouchDrag = async () => {
+        if (!financeDragState.isDragging) {
+            financeDragState.type = null;
+            financeDragState.fromIndex = null;
+            return;
+        }
+
+        financeDragState.isDragging = false;
+        card.classList.remove('dragging-side-btn');
+        document.querySelectorAll('.drag-over-side-btn').forEach(el => el.classList.remove('drag-over-side-btn'));
+
+        const fromIdx = financeDragState.fromIndex;
+        const toIdx = financeDragState.toIndex;
+        
+        financeDragState.type = null;
+        financeDragState.fromIndex = null;
+        financeDragState.toIndex = null;
+
+        if (fromIdx !== null && toIdx !== null && fromIdx !== toIdx) {
+            await applyFinanceNewOrder(type, fromIdx, toIdx);
+        }
+
+        setTimeout(() => { card.dataset.wasDragged = "false"; }, 150);
+    };
+
+    card.addEventListener('touchend', endTouchDrag);
+    card.addEventListener('touchcancel', endTouchDrag);
+}
+
+// Speichert die neue Reihenfolge der Jahre oder Monate in Home Assistant
+async function applyFinanceNewOrder(type, fromIndex, toIndex) {
+    const s = await fetchHA('sensor.haushalt_finance_db');
+    let root = parseFinanceRoot(s);
+
+    if (type === 'year') {
+        let yearsList = root.years.map(String);
+        const [movedYear] = yearsList.splice(fromIndex, 1);
+        yearsList.splice(toIndex, 0, movedYear);
+        root.years = yearsList;
+    } else if (type === 'month') {
+        const yearStr = String(activeFinanceYear);
+        const yearMonths = root.months.filter(m => extractYearFromMonth(m) === yearStr);
+        
+        const [movedMonth] = yearMonths.splice(fromIndex, 1);
+        yearMonths.splice(toIndex, 0, movedMonth);
+
+        // Ersetzt die Monate des aktuellen Jahres in der neuen Reihenfolge, lässt andere Jahre unberührt
+        let pointer = 0;
+        root.months = root.months.map(m => {
+            if (extractYearFromMonth(m) === yearStr) {
+                return yearMonths[pointer++];
+            }
+            return m;
+        });
+    }
+
+    await saveToHA(root);
+    lastFinanceDataHash = "";
+    loadFinance(false);
+}
 
 function updateOpenFinanceModalContent(root, mIdx) {
     const content = document.getElementById('modal-content');
@@ -494,7 +755,13 @@ function updateOpenFinanceModalContent(root, mIdx) {
             <small style="font-weight:bold; opacity:0.5;">🛒 AUSGABEN</small>
             <div style="margin-top:8px;">${renderFinanceItems(m.spendings, mIdx, 'spendings')}</div>
         </div>
-        <button onclick="deleteMonth(${mIdx})" style="margin-top:30px; background:none; border:none; color:var(--danger); font-size:0.8rem; width:100%; text-align:center; cursor:pointer;">× Gesamten Monat löschen ×</button>
+        <div style="text-align: center; margin-top: 30px;">
+            <button type="button" 
+                onclick="event.stopPropagation(); event.preventDefault(); deleteMonth(${mIdx});" 
+                style="position:relative; z-index:50; background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; font-size:1.3rem; padding:12px 20px; border-radius:10px;">
+                🗑️ Gesamten Monat löschen
+            </button>
+        </div>
     `;
 }
 
@@ -512,7 +779,7 @@ window.backToYears = function() {
     loadFinance(false);
 };
 
-// --- JAHR HINZUFÜGEN ---
+// --- JAHR HINZUFÜGEN (Sortiert automatisch absteigend ein, neuestes Jahr oben) ---
 window.addNewYear = async function() {
     openFinanceInputModal("Neues Jahr hinzufügen", "Jahr eingeben (z. B. 2026)", "", async (inputYear) => {
         const cleanYear = String(inputYear).trim();
@@ -533,6 +800,8 @@ window.addNewYear = async function() {
         }
 
         existingYears.push(cleanYear);
+        // Beim Neuanlegen einmalig sauber absteigend sortieren (z.B. 2027, 2026, 2025)
+        existingYears.sort((a, b) => parseInt(b) - parseInt(a));
         root.years = existingYears;
 
         await saveToHA(root);
@@ -545,7 +814,6 @@ window.addNewYear = async function() {
 window.deleteFinanceYear = async function(yearStr, event) {
     if (event) event.stopPropagation();
     
-    // Ruft das globale showDeleteModal auf und wartet auf das Ergebnis (true/false)
     const confirmed = await showDeleteModal(`Möchtest du das Jahr "${yearStr}" inklusive ALLER darin enthaltenen Monate wirklich löschen?`, "Jahr löschen");
     
     if (confirmed) {
@@ -574,13 +842,11 @@ window.openFinanceModal = async function(mIdx) {
 
     modal.style.display = 'flex';
 
-    // Dem Modal-Container direkt den sicheren Anker geben
     const modalContentDiv = modal.querySelector('div');
     if (modalContentDiv) {
         modalContentDiv.style.setProperty('position', 'relative', 'important');
     }
 
-    // Schließen-Button (X) oben rechts fixieren
     const closeBtn = modal.querySelector('button[onclick="closeFinanceModal()"]');
     if (closeBtn) {
         closeBtn.style.setProperty('position', 'absolute', 'important');
@@ -626,7 +892,6 @@ window.openFinanceModal = async function(mIdx) {
 
     updateOpenFinanceModalContent(root, mIdx);
 };
-
 
 window.closeFinanceModal = function() {
     currentOpenMonthIdx = null;
@@ -674,7 +939,7 @@ window.delEntry = async function(mIdx, type, iIdx) {
     }
 };
 
-// --- MONAT HINZUFÜGEN ---
+// --- MONAT HINZUFÜGEN (Sortiert die Monate des Jahres direkt chronologisch Jan -> Dez) ---
 window.addNewMonth = async function() {
     if (!activeFinanceYear) {
         alert("Bitte öffne zuerst ein Jahr, um darin einen Monat anzulegen!");
@@ -692,15 +957,30 @@ window.addNewMonth = async function() {
         const s = await fetchHA('sensor.haushalt_finance_db');
         let root = parseFinanceRoot(s);
 
-        if (!root.years.map(String).includes(String(activeFinanceYear))) {
-            root.years.push(String(activeFinanceYear));
+        const yearStr = String(activeFinanceYear);
+        if (!root.years.map(String).includes(yearStr)) {
+            root.years.push(yearStr);
+            root.years.sort((a, b) => parseInt(b) - parseInt(a));
         }
 
         root.months.push({
-            year: String(activeFinanceYear),
+            year: yearStr,
             month_name: monthTitle,
             fixum: autoFixum,
             spendings: []
+        });
+
+        // Automatisch chronologisch (Januar bis Dezember) innerhalb dieses Jahres sortieren
+        const yearMonths = root.months
+            .filter(m => extractYearFromMonth(m) === yearStr)
+            .sort((a, b) => parseMonthIndex(a.month_name) - parseMonthIndex(b.month_name));
+
+        let pointer = 0;
+        root.months = root.months.map(m => {
+            if (extractYearFromMonth(m) === yearStr) {
+                return yearMonths[pointer++];
+            }
+            return m;
         });
 
         await saveToHA(root);
@@ -728,14 +1008,12 @@ window.deleteMonth = async function(mIdx) {
 if (window.financeDedicatedSync) clearInterval(window.financeDedicatedSync);
 window.financeDedicatedSync = setInterval(async () => {
     const finSection = document.getElementById('v-finance');
-    // Prüft automatisch, ob der Finanz-Bereich gerade offen/sichtbar ist
     const isVisible = finSection && finSection.style.display !== 'none' && finSection.offsetParent !== null;
     
     if (isVisible) {
         await window.loadFinance(true);
     }
 
-    // Falls das Fixkosten-Vorlagen-Popup offen ist, auch dieses live synchronisieren
     const fixModal = document.getElementById('fixkostenModal');
     if (fixModal && fixModal.style.display === 'flex') {
         const oldTplHash = JSON.stringify(fixkostenTemplates);

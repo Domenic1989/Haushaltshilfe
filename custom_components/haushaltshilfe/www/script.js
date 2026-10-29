@@ -690,13 +690,12 @@ function toggleThemeMenu(event) {
 }
 
 async function setTheme(themeName) {
-    const themes = ["theme-light", "theme-dark", "theme-glass", "theme-blue", "theme-green", "theme-winter", "theme-xmas"];
+    const themes = ["theme-light", "theme-dark", "theme-glass", "theme-blue", "theme-green", "theme-winter", "theme-xmas", "theme-newyear"];
     document.body.classList.remove(...themes);
     window.curTheme = themeName;
     document.body.className = window.curTheme;
     localStorage.setItem("app_theme", window.curTheme);
     
-    // Schickt das Theme sofort an den Server (genau wie im Konsolen-Test!)
     try {
         const baseUrl = getBaseUrl();
         await fetch(`${baseUrl}/api/haushaltshilfe/update_zoom`, {
@@ -714,6 +713,77 @@ async function setTheme(themeName) {
     const dropdown = document.getElementById("themeDropdown");
     if (dropdown) dropdown.classList.remove("show");
 }
+
+// --- THEME MODUS (AUTO ODER MANUELL) SCHALTEN ---
+function toggleThemeMode() {
+    let currentMode = localStorage.getItem("theme_mode") || "auto";
+    
+    if (currentMode === "auto") {
+        localStorage.setItem("theme_mode", "manual");
+        showThemeModeUI("Manuell ✋");
+    } else {
+        localStorage.setItem("theme_mode", "auto");
+        showThemeModeUI("Auto 🤖");
+        checkAndSwitchSeasonalTheme();
+    }
+}
+
+// Aktualisiert nur noch den Text des Buttons
+function showThemeModeUI(text) {
+    const btn = document.getElementById("themeModeBtn");
+    if (btn) {
+        btn.innerText = text;
+        // Optional: Falls du im JS noch eine Klasse für den Zustand setzen willst (z.B. für CSS-Styling)
+        if (text.includes("Manuell")) {
+            btn.classList.add("is-manual");
+        } else {
+            btn.classList.remove("is-manual");
+        }
+    }
+}
+
+// --- AUTOMATISCHER LIVE-THEME-WECHSEL ---
+function checkAndSwitchSeasonalTheme() {
+    const mode = localStorage.getItem("theme_mode") || "auto";
+    if (mode === "manual") {
+        return; 
+    }
+
+    const now = new Date();
+    const month = now.getMonth() + 1;
+    const day = now.getDate();
+
+    let targetTheme = null;
+
+    if (month === 12 && day <= 30) {
+        targetTheme = "theme-xmas";
+    } else if ((month === 12 && day >= 31) || (month === 1 && day <= 2)) {
+        targetTheme = "theme-newyear";
+    }
+
+    if (targetTheme) {
+        if (!document.body.classList.contains(targetTheme)) {
+            if (typeof setTheme === "function") {
+                setTheme(targetTheme);
+            } else {
+                document.body.className = document.body.className.replace(/theme-\S+/g, '');
+                document.body.classList.add(targetTheme);
+                localStorage.setItem("app_theme", targetTheme);
+            }
+            console.log("Automatischer Jahreszeit-Wechsel zu: " + targetTheme);
+        }
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const savedMode = localStorage.getItem("theme_mode") || "auto";
+    showThemeModeUI(savedMode === "auto" ? "Auto 🤖" : "Manuell ✋");
+    checkAndSwitchSeasonalTheme();
+});
+
+setInterval(() => {
+    checkAndSwitchSeasonalTheme();
+}, 60000);
 
 window.addEventListener('click', function(event) {
     const dropdown = document.getElementById("themeDropdown");

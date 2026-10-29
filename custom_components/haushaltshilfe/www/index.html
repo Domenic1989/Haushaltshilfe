@@ -23,23 +23,37 @@
     <link rel="stylesheet" href="light-theme.css">
     <link rel="stylesheet" href="winter-theme.css">
     <link rel="stylesheet" href="xmas-theme.css">
+    <link rel="stylesheet" href="newyear-theme.css">
     
 </head>
 <body>
 
 <div class="theme-menu-container">
     <button type="button" class="theme-toggle-top" onclick="toggleThemeMenu(event)">🎨🔍</button>
-    <div id="themeDropdown" class="theme-dropdown">
-        <div onclick="setTheme('theme-glass')">💎 Glass</div>
-        <div onclick="setTheme('theme-dark')">🌑 Dark</div>
-        <div onclick="setTheme('theme-light')">☀️ Light</div>
-        <div onclick="setTheme('theme-green')">🟢 Green</div>
-        <div onclick="setTheme('theme-blue')">🔵 Blue</div>
-        <div onclick="setTheme('theme-winter')">❄️ Winter</div>
-        <div onclick="setTheme('theme-xmas')">🎄 Weihnachten</div>
+    <div id="themeDropdown" class="theme-dropdown" style="width: 260px;">
         
-        <!-- Zoom-Regler wieder im Menü versteckt -->
-        <div class="zoom-control-row" onclick="event.stopPropagation()" style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; cursor:default;">
+        <!-- OBEN: Theme-Modus (bleibt exakt so) -->
+        <div onclick="event.stopPropagation()" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; cursor: default; border-bottom: 1px solid rgba(255,255,255,0.15); margin-bottom: 6px;">
+            <span style="font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px;">🎨 Theme-Modus</span>
+            <div id="themeModeBtn" onclick="toggleThemeMode()" style="font-weight: 700; cursor: pointer; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,0.15); font-size: 0.85rem;">
+                Auto 🤖
+            </div>
+        </div>
+
+        <!-- MITTE: Die Themen als 2-Spalten-Grid (2 Reihen nebeneinander) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 0 6px; margin-bottom: 6px;">
+            <div onclick="setTheme('theme-glass')" style="padding: 8px 6px; text-align: center; border-radius: 6px;">💎 Glass</div>
+            <div onclick="setTheme('theme-dark')" style="padding: 8px 6px; text-align: center; border-radius: 6px;">🌑 Dark</div>
+            <div onclick="setTheme('theme-light')" style="padding: 8px 6px; text-align: center; border-radius: 6px;">☀️ Light</div>
+            <div onclick="setTheme('theme-green')" style="padding: 8px 6px; text-align: center; border-radius: 6px;">🟢 Green</div>
+            <div onclick="setTheme('theme-blue')" style="padding: 8px 6px; text-align: center; border-radius: 6px;">🔵 Blue</div>
+            <div onclick="setTheme('theme-winter')" style="padding: 8px 6px; text-align: center; border-radius: 6px;">❄️ Winter</div>
+            <div onclick="setTheme('theme-xmas')" style="padding: 8px 6px; text-align: center; border-radius: 6px; font-size: 0.85rem;">🎄 Weihnachten</div>
+            <div onclick="setTheme('theme-newyear')" style="padding: 8px 6px; text-align: center; border-radius: 6px; font-size: 0.8rem;">🎆 Neujahr</div>
+        </div>
+        
+        <!-- UNTEN: Der Zoom-Regler -->
+        <div class="zoom-control-row" onclick="event.stopPropagation()" style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; cursor:default; border-top: 1px solid rgba(255,255,255,0.15);">
             <button type="button" class="zoom-btn" onclick="adjustSystemZoom(-0.05)">−</button>
             <span class="zoom-display" id="quickZoomLabel" onclick="resetQuickZoom()" title="Auf 100% zurücksetzen">100%</span>
             <button type="button" class="zoom-btn" onclick="adjustSystemZoom(0.05)">+</button>
@@ -244,7 +258,7 @@
         <div id="fixkostenModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:10002; backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:20px;">
             <div style="background:var(--card); width:100%; max-width:550px; border-radius:30px; position:relative; max-height:90vh; display:flex; flex-direction:column; box-shadow: 0 20px 50px rgba(0,0,0,0.3); overflow:hidden; padding: 25px; box-sizing: border-box;">
                 
-                <button type="button" onclick="document.getElementById('fixkostenModal').style.display='none'" style="position:absolute; top:20px; right:20px; background:var(--bg); border:none; border-radius:50%; width:40px; height:40px; cursor:pointer; color:var(--text); font-weight:bold; z-index:100;">✕</button>
+                <button type="button" onclick="if(typeof cancelFixkostenEdit === 'function') cancelFixkostenEdit(); document.getElementById('fixkostenModal').style.display='none'" style="position:absolute; top:20px; right:20px; background:var(--bg); border:none; border-radius:50%; width:40px; height:40px; cursor:pointer; color:var(--text); font-weight:bold; z-index:100;">✕</button>
 
                 <h2 style="margin-top:0; color:var(--text); font-size:1.3rem; display:flex; align-items:center; gap:10px;">
                     ⚙️ Standard-Fixkosten
@@ -287,16 +301,28 @@
                         </div>
                     </div>
 
-                    <button type="button" onclick="addFixkostenTemplate()" style="background:var(--primary); color:white; padding:14px; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:0.95rem; margin-top:5px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                        ➕ Fixkosten-Eintrag speichern
-                    </button>
+                    <!-- BUTTON-ZEILE DIREKT IM HTML: Speichern + Stift (Bearbeiten) + Abbrechen -->
+                    <div style="display:flex; gap:10px; margin-top:5px;">
+                        <button type="button" id="tplSaveBtn" data-edit-index="-1" onclick="addFixkostenTemplate()" style="flex:1; background:var(--primary); color:white; padding:14px; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:0.95rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                            ➕ Fixkosten-Eintrag speichern
+                        </button>
+                        <button type="button" id="tplEditBtn" onclick="if(typeof toggleFixkostenEditMode === 'function') toggleFixkostenEditMode();" style="background:var(--accent); color:white; padding:14px 18px; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1.1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" title="Vorlage bearbeiten">
+                            ✏️
+                        </button>
+                        <button type="button" id="tplCancelEditBtn" onclick="cancelFixkostenEdit()" style="display:none; background:var(--danger); color:white; padding:14px 18px; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1.1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1);" title="Bearbeiten abbrechen">
+                            ✖
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Liste -->
-                <label style="font-size:0.7rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:8px;">DEINE VORLAGEN</label>
+                <label style="font-size:0.7rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:4px;">DEINE VORLAGEN</label>
+                <div style="font-size:0.9rem; font-weight:700; color:var(--gray); opacity:0.8; margin-bottom:8px; display:flex; align-items:center; gap:4px;">
+                    💡 <span>Tipp: Klicke auf einen Eintrag, um ihn zu bearbeiten.</span>
+                </div>
                 <div id="fixkostenList" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:8px; margin-bottom:15px; padding-right:5px;"></div>
 
-                <button type="button" onclick="document.getElementById('fixkostenModal').style.display='none'" style="width:100%; background:var(--bg); color:var(--text); padding:14px; border:none; border-radius:15px; font-weight:bold; cursor:pointer;">
+                <button type="button" onclick="if(typeof cancelFixkostenEdit === 'function') cancelFixkostenEdit(); document.getElementById('fixkostenModal').style.display='none'" style="width:100%; background:var(--bg); color:var(--text); padding:14px; border:none; border-radius:15px; font-weight:bold; cursor:pointer;">
                     Schließen
                 </button>
             </div>
@@ -352,7 +378,7 @@
         
         <div style="margin-top: 15px;">
             <label style="font-weight: bold; display: block; margin-bottom: 5px;">Standard-Uhrzeit:</label>
-            <input type="time" id="modalTime" value="10:00" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; font-size:2.8rem font-family: inherit;">
+            <input type="time" id="modalTime" value="10:00" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; font-size:2.8rem; font-family: inherit;">
         </div>
 
         <label style="font-size:0.7rem; color:var(--gray); display:block; text-align:left; margin-bottom:5px; text-transform: uppercase; font-weight: bold;">Option 3: Wiederholung an Wochentagen</label>
@@ -410,7 +436,7 @@
         
         <div style="margin-top: 15px;">
             <label style="font-weight: bold; display: block; margin-bottom: 5px;">Uhrzeit:</label>
-            <input type="time" id="edit-time" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; font-size:2.8rem font-family: inherit;">
+            <input type="time" id="edit-time" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; font-size:2.8rem; font-family: inherit;">
         </div>
 
         <label style="font-size:0.7rem; color:var(--gray); display:block; text-align:left; font-weight: bold; text-transform: uppercase; margin-bottom: 5px;">Option 2: Wochentage (nutzt Zahl oben)</label>
@@ -585,8 +611,8 @@
     </div>
 </div>
 <!-- SKRIPTE WITH CACHE-BUSTING -->
-<script src="config.js?v=1.0.8"></script>
-<script src="script.js?v=1.0.8"></script>
-<script src="finance.js?v=1.08"></script>
+<script src="config.js?v=1.0.9"></script>
+<script src="script.js?v=1.0.9"></script>
+<script src="finance.js?v=1.09"></script>
 </body>
 </html>

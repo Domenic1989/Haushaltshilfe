@@ -190,3 +190,144 @@ body.theme-glass #finance-modal .finance-input-row input::placeholder { color: r
 body.theme-glass #finance-modal .finance-input-row select { background: rgba(255, 255, 255, 0.15) !important; border: 2px solid #CF00FF !important; color: #CF00FF !important; font-weight: 800 !important; border-radius: 12px !important; backdrop-filter: blur(10px) !important; }
 body.theme-glass #finance-modal .finance-input-row .btn-add { background: #5856d6 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(88, 86, 214, 0.6) !important; font-weight: 800 !important; border-radius: 12px !important; }
 body.theme-glass #finance-modal .finance-input-row input:focus, body.theme-glass #finance-modal .finance-input-row select:focus { background: rgba(255, 255, 255, 0.25) !important; border-color: #CF00FF !important; box-shadow: 0 0 15px rgba(207, 0, 255, 0.4) !important; outline: none !important; }
+/* --- GLASS THEME (LILA): FIXKOSTEN MODAL & FORMULAR BUTTONS --- */
+body.theme-glass #fixkostenModal input,
+body.theme-glass #fixkostenModal select {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border: 2px solid #CF00FF !important;
+    color: #CF00FF !important;
+    font-weight: 800 !important;
+    border-radius: 12px !important;
+    outline: none !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: inset 0 0 10px rgba(207, 0, 255, 0.1) !important;
+}
+
+body.theme-glass #fixkostenModal input::placeholder {
+    color: rgba(207, 0, 255, 0.5) !important;
+    font-weight: 700 !important;
+}
+
+body.theme-glass #fixkostenModal label {
+    color: #CF00FF !important;
+    font-weight: 800 !important;
+    text-shadow: 0 0 10px rgba(207, 0, 255, 0.3) !important;
+}
+
+/* Der Speichern-Button im Lila-Glas-Look */
+body.theme-glass #tplSaveBtn {
+    background: #5856d6 !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 4px 15px rgba(88, 86, 214, 0.6) !important;
+    font-weight: 800 !important;
+    border-radius: 12px !important;
+}
+
+body.theme-glass #tplSaveBtn:active {
+    background: #CF00FF !important;
+    color: #ffffff !important;
+}
+
+/* Der Stift-Button (Bearbeiten) im Glas-Look */
+body.theme-glass #tplEditBtn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #CF00FF !important;
+    border: 2px solid #CF00FF !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+body.theme-glass #tplEditBtn:active {
+    background: #5856d6 !important;
+    color: #ffffff !important;
+}
+
+/* Der Abbrechen-Button (✖) */
+body.theme-glass #tplCancelEditBtn {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ff3b30 !important;
+    border: 2px solid #CF00FF !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+body.theme-glass #tplCancelEditBtn:active {
+    background: #ff3b30 !important;
+    color: #ffffff !important;
+}
+/* ========================================================
+   --- NEU: MODAL-BUTTONS & VARIABLEN (GLASS) ---
+   ======================================================== */
+
+body.theme-glass {
+    --todo: rgba(255, 255, 255, 0.18);
+    --primary: #cf00ff;
+    --bg: rgba(255, 255, 255, 0.12);
+    --card: rgba(30, 10, 45, 0.85);
+    --gray: #e0b0ff;
+}
+
+body.theme-glass button[onclick*="confirmInterval('m')"],
+body.theme-glass button[onclick*="confirmInterval('s')"],
+body.theme-glass button[onclick*="confirmInterval('days')"],
+body.theme-glass button[onclick*="confirmInterval('date')"],
+body.theme-glass button[onclick*="saveEdit('m')"],
+body.theme-glass button[onclick*="saveEdit('s')"],
+body.theme-glass button[onclick*="saveEdit('days')"],
+body.theme-glass button[onclick*="saveEdit('date')"] {
+    background: rgba(207, 0, 255, 0.25) !important;
+    backdrop-filter: blur(15px) !important;
+    color: #ffffff !important;
+    border: 1.5px solid rgba(207, 0, 255, 0.6) !important;
+    box-shadow: 0 4px 15px rgba(207, 0, 255, 0.25) !important;
+}
+
+body.theme-glass button[onclick*="confirmInterval('t')"],
+body.theme-glass button[onclick*="saveEdit('t')"],
+body.theme-glass button[onclick*="confirmShopAdd"] {
+    background: linear-gradient(135deg, #cf00ff 0%, #7a0099 100%) !important;
+    color: #ffffff !important;
+    border: 1.5px solid #ffffff !important;
+    box-shadow: 0 0 20px rgba(207, 0, 255, 0.6) !important;
+}
+
+@keyframes glass-running-border {
+    0% { background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px; }
+    100% { background-position: 40px 0px, -40px 100%, 0px -40px, 100% 40px; }
+}
+
+@keyframes glass-alarm-glow {
+    0%, 100% { box-shadow: 0 0 12px rgba(207, 0, 255, 0.6) !important; }
+    50% { 
+        box-shadow: 0 0 35px #cf00ff, 0 0 15px #ffffff, inset 0 0 15px rgba(207, 0, 255, 0.4) !important; 
+        transform: scale(1.01);
+    }
+}
+
+body.theme-glass .urgent-blink::after,
+body.theme-glass #list-todo li.urgent-blink::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    border-radius: inherit !important;
+    z-index: 10 !important;
+    background-image: 
+        linear-gradient(90deg, #cf00ff 50%, #ffffff 50%),
+        linear-gradient(90deg, #cf00ff 50%, #ffffff 50%),
+        linear-gradient(0deg, #cf00ff 50%, #ffffff 50%),
+        linear-gradient(0deg, #cf00ff 50%, #ffffff 50%);
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 40px 6px, 40px 6px, 6px 40px, 6px 40px;
+    background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px;
+    animation: glass-running-border 0.3s infinite linear !important;
+}
+
+body.theme-glass .urgent-blink,
+body.theme-glass #list-todo li.urgent-blink {
+    position: relative !important;
+    overflow: hidden !important;
+}

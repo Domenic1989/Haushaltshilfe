@@ -201,3 +201,152 @@ body.theme-light #finance-modal .finance-input-row input::placeholder { color: r
 body.theme-light #finance-modal .finance-input-row select { background: #ffffff !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 800 !important; border-radius: 12px !important; }
 body.theme-light #finance-modal .finance-input-row .btn-add { background: #ffcc00 !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; font-weight: 800 !important; border-radius: 12px !important; }
 body.theme-light #finance-modal .finance-input-row input:focus, body.theme-light #finance-modal .finance-input-row select:focus { background: #ffffff !important; border-color: #997a00 !important; box-shadow: 0 0 10px rgba(255, 204, 0, 0.3) !important; outline: none !important; }
+/* --- LIGHT THEME: FIXKOSTEN-MODAL & FORMULAR BUTTONS --- */
+body.theme-light #fixkostenModal input,
+body.theme-light #fixkostenModal select {
+    background: #ffffff !important;
+    color: #997a00 !important;
+    border: 1.5px solid #ffcc00 !important;
+    font-weight: 700 !important;
+}
+
+body.theme-light #fixkostenModal label {
+    color: #997a00 !important;
+    font-weight: 800 !important;
+}
+
+/* Der Speichern-Button im hellen Gelb/Gold-Ton */
+body.theme-light #tplSaveBtn {
+    background: #ffcc00 !important;
+    color: #000000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 4px 10px rgba(255, 204, 0, 0.3) !important;
+    font-weight: 800 !important;
+}
+
+body.theme-light #tplSaveBtn:active {
+    background: #997a00 !important;
+    color: #ffffff !important;
+}
+
+/* Der Stift-Button (Bearbeiten) */
+body.theme-light #tplEditBtn {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #997a00 !important;
+    border: 1.5px solid #ffcc00 !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-light #tplEditBtn:active {
+    background: #ffcc00 !important;
+    color: #000000 !important;
+}
+
+/* Der Abbrechen-Button (✖) */
+body.theme-light #tplCancelEditBtn {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #ff3b30 !important;
+    border: 1.5px solid #ffcc00 !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-light #tplCancelEditBtn:active {
+    background: #ff3b30 !important;
+    color: #ffffff !important;
+}
+
+/* Listeneinträge im Fixkosten-Modus */
+body.theme-light #fixkostenList > div {
+    background: rgba(255, 255, 255, 0.75) !important;
+    border: 1.5px solid rgba(255, 204, 0, 0.5) !important;
+}
+
+body.theme-light #fixkostenList strong {
+    color: #1c1c1e !important;
+}
+
+body.theme-light #fixkostenList span[style*="var(--primary)"] {
+    color: #997a00 !important;
+    font-weight: 800 !important;
+}
+
+body.theme-light #fixkostenList div[style*="var(--gray)"] {
+    color: #8e8e93 !important;
+    font-weight: 700 !important;
+}
+/* ========================================================
+   --- LIGHT THEME: BUTTONS & LAUFENDER ALARM-RAHMEN ---
+   ======================================================== */
+
+body.theme-light {
+    --todo: #475569;
+    --primary: #ffcc00;
+    --bg: #f1f5f9;
+    --card: #ffffff;
+    --gray: #64748b;
+}
+
+body.theme-light button[onclick*="confirmInterval('m')"],
+body.theme-light button[onclick*="confirmInterval('s')"],
+body.theme-light button[onclick*="confirmInterval('days')"],
+body.theme-light button[onclick*="confirmInterval('date')"],
+body.theme-light button[onclick*="saveEdit('m')"],
+body.theme-light button[onclick*="saveEdit('s')"],
+body.theme-light button[onclick*="saveEdit('days')"],
+body.theme-light button[onclick*="saveEdit('date')"] {
+    background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
+    color: #ffffff !important;
+    border: 1.5px solid #94a3b8 !important;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15) !important;
+}
+
+/* Shop-Hinzufügen & Tage-Button jetzt auch in Gelb! */
+body.theme-light button[onclick*="confirmInterval('t')"],
+body.theme-light button[onclick*="saveEdit('t')"],
+body.theme-light button[onclick*="confirmShopAdd"] {
+    background: linear-gradient(135deg, #ffcc00 0%, #e6b800 100%) !important;
+    color: #1e293b !important; /* Dunkle Schrift auf Gelb */
+    border: 1.5px solid #cca300 !important;
+    box-shadow: 0 4px 12px rgba(255, 204, 0, 0.35) !important;
+}
+
+@keyframes light-running-border {
+    0% { background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px; }
+    100% { background-position: 40px 0px, -40px 100%, 0px -40px, 100% 40px; }
+}
+
+@keyframes light-alarm-glow {
+    0%, 100% { box-shadow: 0 0 12px rgba(255, 204, 0, 0.6) !important; }
+    50% { 
+        box-shadow: 0 0 30px #ffcc00, 0 0 15px rgba(0, 0, 0, 0.15), inset 0 0 15px rgba(255, 204, 0, 0.4) !important; 
+        transform: scale(1.01);
+    }
+}
+
+body.theme-light .urgent-blink::after,
+body.theme-light #list-todo li.urgent-blink::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    border-radius: inherit !important;
+    z-index: 10 !important;
+    
+    /* 4 laufende Linien passend zum Light-Theme in Gelb (#ffcc00) & Weiß */
+    background-image: 
+        linear-gradient(90deg, #ffcc00 50%, #ffffff 50%),
+        linear-gradient(90deg, #ffcc00 50%, #ffffff 50%),
+        linear-gradient(0deg, #ffcc00 50%, #ffffff 50%),
+        linear-gradient(0deg, #ffcc00 50%, #ffffff 50%);
+        
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 40px 6px, 40px 6px, 6px 40px, 6px 40px;
+    background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px;
+    animation: light-running-border 0.3s infinite linear !important;
+}
+
+body.theme-light .urgent-blink,
+body.theme-light #list-todo li.urgent-blink {
+    position: relative !important;
+    overflow: hidden !important;
+}

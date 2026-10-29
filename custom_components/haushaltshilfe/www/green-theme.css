@@ -182,3 +182,138 @@ body.theme-green #finance-modal .finance-input-row input::placeholder { color: r
 body.theme-green #finance-modal .finance-input-row select { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003d33 !important; color: #003d33 !important; font-weight: 800 !important; border-radius: 12px !important; }
 body.theme-green #finance-modal .finance-input-row .btn-add { background: #00b894 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4) !important; font-weight: 800 !important; border-radius: 12px !important; }
 body.theme-green #finance-modal .finance-input-row input:focus, body.theme-green #finance-modal .finance-input-row select:focus { background: #ffffff !important; border-color: #00b894 !important; box-shadow: 0 0 10px rgba(0, 184, 148, 0.3) !important; outline: none !important; }
+/* --- GREEN THEME: FIXKOSTEN MODAL & FORMULAR BUTTONS --- */
+body.theme-green #fixkostenModal input,
+body.theme-green #fixkostenModal select {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #003d33 !important;
+    border: 2px solid #003d33 !important;
+    font-weight: 800 !important;
+    border-radius: 12px !important;
+    outline: none !important;
+}
+
+body.theme-green #fixkostenModal input::placeholder {
+    color: rgba(0, 61, 51, 0.4) !important;
+    font-weight: 700 !important;
+}
+
+body.theme-green #fixkostenModal label {
+    color: #003d33 !important;
+    font-weight: 800 !important;
+}
+
+/* Der grüne Speichern-Button */
+body.theme-green #tplSaveBtn {
+    background: #00b894 !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 4px 15px rgba(0, 184, 148, 0.4) !important;
+    font-weight: 800 !important;
+    border-radius: 12px !important;
+}
+
+body.theme-green #tplSaveBtn:active {
+    background: #003d33 !important;
+    color: #ffffff !important;
+}
+
+/* Der Stift-Button (Bearbeiten) im Glas-Look */
+body.theme-green #tplEditBtn {
+    background: rgba(255, 255, 255, 0.7) !important;
+    color: #003d33 !important;
+    border: 2px solid #003d33 !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 12px !important;
+}
+
+body.theme-green #tplEditBtn:active {
+    background: #00b894 !important;
+    color: #ffffff !important;
+}
+
+/* Der Abbrechen-Button (✖) */
+body.theme-green #tplCancelEditBtn {
+    background: rgba(255, 255, 255, 0.7) !important;
+    color: #ff3b30 !important;
+    border: 2px solid #003d33 !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 12px !important;
+}
+
+body.theme-green #tplCancelEditBtn:active {
+    background: #ff3b30 !important;
+    color: #ffffff !important;
+}
+/* ========================================================
+   --- NEU: MODAL-BUTTONS & VARIABLEN (GREEN) ---
+   ======================================================== */
+
+body.theme-green {
+    --todo: #1b4332;
+    --primary: #2d6a4f;
+    --bg: rgba(255, 255, 255, 0.95);
+    --card: rgba(242, 250, 245, 0.96);
+    --gray: #1b4332;
+}
+
+body.theme-green button[onclick*="confirmInterval('m')"],
+body.theme-green button[onclick*="confirmInterval('s')"],
+body.theme-green button[onclick*="confirmInterval('days')"],
+body.theme-green button[onclick*="confirmInterval('date')"],
+body.theme-green button[onclick*="saveEdit('m')"],
+body.theme-green button[onclick*="saveEdit('s')"],
+body.theme-green button[onclick*="saveEdit('days')"],
+body.theme-green button[onclick*="saveEdit('date')"] {
+    background: linear-gradient(135deg, #2d6a4f 0%, #1b4332 100%) !important;
+    color: #ffffff !important;
+    border: 1.5px solid #74c69d !important;
+    box-shadow: 0 4px 12px rgba(27, 67, 50, 0.3) !important;
+}
+
+body.theme-green button[onclick*="confirmInterval('t')"],
+body.theme-green button[onclick*="saveEdit('t')"],
+body.theme-green button[onclick*="confirmShopAdd"] {
+    background: linear-gradient(135deg, #40916c 0%, #2d6a4f 100%) !important;
+    color: #ffffff !important;
+    border: 1.5px solid #95d5b2 !important;
+    box-shadow: 0 4px 15px rgba(64, 145, 108, 0.45) !important;
+}
+
+@keyframes green-running-border {
+    0% { background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px; }
+    100% { background-position: 40px 0px, -40px 100%, 0px -40px, 100% 40px; }
+}
+
+@keyframes green-alarm-glow {
+    0%, 100% { box-shadow: 0 0 12px rgba(45, 106, 79, 0.6) !important; }
+    50% { 
+        box-shadow: 0 0 30px #2d6a4f, 0 0 15px #74c69d, inset 0 0 15px rgba(45, 106, 79, 0.4) !important; 
+        transform: scale(1.01);
+    }
+}
+
+body.theme-green .urgent-blink::after,
+body.theme-green #list-todo li.urgent-blink::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    border-radius: inherit !important;
+    z-index: 10 !important;
+    background-image: 
+        linear-gradient(90deg, #2d6a4f 50%, #74c69d 50%),
+        linear-gradient(90deg, #2d6a4f 50%, #74c69d 50%),
+        linear-gradient(0deg, #2d6a4f 50%, #74c69d 50%),
+        linear-gradient(0deg, #2d6a4f 50%, #74c69d 50%);
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 40px 6px, 40px 6px, 6px 40px, 6px 40px;
+    background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px;
+    animation: green-running-border 0.3s infinite linear !important;
+}
+
+body.theme-green .urgent-blink,
+body.theme-green #list-todo li.urgent-blink {
+    position: relative !important;
+    overflow: hidden !important;
+}

@@ -1,0 +1,589 @@
+/* ========================================================
+   --- NEUJAHR / SILVESTER THEME (MITTERNACHTSBLAU, GOLD & DIAMANTEN - body.theme-newyear) ---
+   ======================================================== */
+
+/* --- GOLD- & GLITTER-ANIMATION --- */
+@keyframes newyearSparkle {
+    0% {
+        background-position: 0px 0px, 0px 0px, 0px 0px;
+    }
+    100% {
+        background-position: 500px 1000px, -400px 600px, 300px 500px;
+    }
+}
+
+/* --- NEUJAHR BASIS & HINTERGRUND (EDLES MITTERNACHTSBLAU / SCHWARZ) --- */
+body.theme-newyear { 
+    background: linear-gradient(135deg, #050b14 0%, #0c1b33 50%, #02050a 100%) !important; 
+    background-attachment: fixed !important; 
+    background-size: cover !important; 
+    --text: #f5f6fa; 
+    position: relative;
+}
+
+body.theme-newyear #loginOverlay { 
+    background: linear-gradient(135deg, #050b14 0%, #0c1b33 50%, #02050a 100%) !important; 
+}
+
+/* Glitzernder Sternen- & Diamantenregen im Hintergrund (blockiert keine Klicks!) */
+body.theme-newyear::before,
+body.theme-newyear #loginOverlay::before {
+    content: "✨";
+    position: fixed;
+    inset: 0;
+    pointer-events: none !important;
+    z-index: 9999;
+    font-size: 0;
+    background-image: 
+        radial-gradient(4px 4px at 90px 50px, rgba(255, 255, 255, 0.9) 50%, transparent 100%),
+        radial-gradient(6px 6px at 250px 160px, rgba(212, 175, 55, 0.85) 50%, transparent 100%),
+        radial-gradient(3px 3px at 320px 280px, rgba(255, 255, 255, 0.75) 50%, transparent 100%),
+        radial-gradient(5px 5px at 150px 350px, rgba(255, 215, 0, 0.7) 50%, transparent 100%),
+        radial-gradient(4px 4px at 390px 90px, rgba(255, 255, 255, 0.85) 50%, transparent 100%),
+        radial-gradient(5px 5px at 60px 240px, rgba(255, 255, 255, 0.8) 50%, transparent 100%);
+    background-size: 450px 450px, 350px 350px, 280px 280px;
+    animation: newyearSparkle 22s linear infinite;
+}
+
+/* --- GLAS-EFFEKT (DUNKLES GLAS & GOLD-KANTE) --- */
+body.theme-newyear .login-card, 
+body.theme-newyear .input-card, 
+body.theme-newyear li, 
+body.theme-newyear .day-card, 
+body.theme-newyear #trash-content, 
+body.theme-newyear .cat-btn, 
+body.theme-newyear .fav-chip, 
+body.theme-newyear .tab-bar, 
+body.theme-newyear .theme-toggle-top, 
+body.theme-newyear .admin-btn, 
+body.theme-newyear .cook-select, 
+body.theme-newyear .user-btn, 
+body.theme-newyear .month-card { 
+    background: rgba(15, 23, 42, 0.82) !important; 
+    backdrop-filter: blur(20px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important; 
+    border: 1.5px solid rgba(212, 175, 55, 0.6) !important; 
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 0 12px rgba(255, 215, 0, 0.12) !important; 
+    color: #f5f6fa !important; 
+}
+
+/* Kleine Silvester-Deko oben rechts auf den Monats- und Tageskarten */
+body.theme-newyear .month-card,
+body.theme-newyear .day-card {
+    position: relative !important;
+}
+body.theme-newyear .month-card::after {
+    content: "🥂";
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 1.1rem;
+    opacity: 0.85;
+    pointer-events: none;
+}
+body.theme-newyear .day-card::after {
+    content: "🎇";
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 0.9rem;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* --- SIDEBAR BUTTONS --- */
+body.theme-newyear .side-btn { 
+    background: rgba(15, 23, 42, 0.82) !important; 
+    backdrop-filter: blur(20px) saturate(180%) !important; 
+    border: 1.5px solid rgba(212, 175, 55, 0.6) !important; 
+    color: #f5f6fa !important; 
+    display: flex !important; 
+    flex-direction: row !important; 
+    justify-content: flex-start !important; 
+    align-items: center !important; 
+    gap: 10px !important; 
+    padding: 8px 12px !important; 
+    min-height: 50px !important; 
+    border-radius: 12px !important; 
+}
+
+/* --- TEXTE SCHICKES GOLD & WEISS --- */
+body.theme-newyear h1 { 
+    color: #ffd700 !important; 
+    text-shadow: 0 2px 12px rgba(212, 175, 55, 0.4) !important;
+    font-weight: 800 !important; 
+}
+body.theme-newyear .status-bar {
+    color: #f5f6fa !important;
+    font-weight: 700 !important;
+}
+body.theme-newyear .main-input, 
+body.theme-newyear .day-input, 
+body.theme-newyear .cat-btn, 
+body.theme-newyear .admin-btn, 
+body.theme-newyear .fav-chip, 
+body.theme-newyear .trash-name, 
+body.theme-newyear .day-label span, 
+body.theme-newyear .tab-item, 
+body.theme-newyear .user-label, 
+body.theme-newyear #list-todo li div { 
+    color: #f5f6fa !important; 
+    font-weight: 700 !important; 
+}
+
+/* --- AKTIVE ELEMENTE (GOLD-SCHIMMER & CHAMPAGNER) --- */
+body.theme-newyear .side-btn.active-shop, 
+body.theme-newyear .side-btn.active-todo, 
+body.theme-newyear .cat-btn.active-shop, 
+body.theme-newyear .cat-btn.active-food, 
+body.theme-newyear .cat-btn.active-todo, 
+body.theme-newyear .user-btn.selected { 
+    background: linear-gradient(135deg, #d4af37 0%, #aa7c11 100%) !important; 
+    color: #050b14 !important; 
+    border: 1.5px solid #ffffff !important; 
+    box-shadow: 0 5px 20px rgba(212, 175, 55, 0.5) !important; 
+    font-weight: 900 !important;
+}
+
+/* --- TAB-BAR MIT GOLDENER KANTE --- */
+body.theme-newyear .tab-bar { 
+    padding: 0 !important; 
+    margin: 0 !important; 
+    height: 80px !important; 
+    display: flex !important; 
+    align-items: stretch !important; 
+    justify-content: space-around !important; 
+    border-top: 2px solid #ffd700 !important; 
+    background: rgba(15, 23, 42, 0.95) !important;
+}
+body.theme-newyear .tab-item { 
+    flex: 1 !important; 
+    height: 100% !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    background: transparent !important; 
+}
+body.theme-newyear .tab-item.active-shop, 
+body.theme-newyear .tab-item.active-food, 
+body.theme-newyear .tab-item.active-todo, 
+body.theme-newyear .tab-item.active-finance, 
+body.theme-newyear .tab-item.active-trash { 
+    background: linear-gradient(180deg, #d4af37 0%, #99740b 100%) !important; 
+    color: #050b14 !important; 
+    border-radius: 0 !important; 
+    height: 100% !important; 
+    width: 100% !important; 
+    transform: none !important; 
+    box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.4) !important; 
+    font-weight: 900 !important;
+}
+body.theme-newyear .tab-item.active-shop .icon, 
+body.theme-newyear .tab-item.active-food .icon, 
+body.theme-newyear .tab-item.active-todo .icon, 
+body.theme-newyear .tab-item.active-trash .icon, 
+body.theme-newyear .tab-item.active-finance .icon, 
+body.theme-newyear .tab-item.active-shop span, 
+body.theme-newyear .tab-item.active-food span, 
+body.theme-newyear .tab-item.active-finance span, 
+body.theme-newyear .tab-item.active-todo span,
+body.theme-newyear .tab-item.active-trash span { 
+    color: #050b14 !important; 
+}
+
+/* --- DAY-DOTS FIX (TAGES-AUSWAHL) --- */
+body.theme-newyear .day-dot { 
+    background: rgba(255, 255, 255, 0.1) !important; 
+    color: #f5f6fa !important; 
+    border: 1px solid rgba(212, 175, 55, 0.5) !important; 
+    cursor: pointer !important; 
+    display: flex !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+}
+body.theme-newyear .day-dot.active { 
+    background: linear-gradient(135deg, #d4af37 0%, #aa7c11 100%) !important; 
+    color: #050b14 !important; 
+    border: 2px solid #ffffff !important; 
+    transform: scale(1.05) !important; 
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4) !important; 
+    font-weight: 900 !important;
+}
+
+/* --- MODALS & FINANCE --- */
+body.theme-newyear #intervalModal > div, 
+body.theme-newyear #editModal > div, 
+body.theme-newyear #shopQtyModal > div, 
+body.theme-newyear #finance-modal > div,
+body.theme-newyear #fixkostenModal > div,
+body.theme-newyear #userModal > div,
+body.theme-newyear #roomModal > div, 
+body.theme-newyear #deleteModal > div,
+body.theme-newyear #customConfirmModal .modal-card,
+body.theme-newyear #customDeleteModal .modal-card,
+body.theme-newyear #customInputModal .modal-card,
+body.theme-newyear #customFoodModal .modal-card,
+body.theme-newyear #passwordModal > div { 
+    background: rgba(15, 23, 42, 0.96) !important; 
+    backdrop-filter: blur(25px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important; 
+    border: 2px solid #d4af37 !important; 
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important; 
+    color: #f5f6fa !important; 
+    border-radius: 20px !important; 
+}
+
+body.theme-newyear .finance-input-row input, 
+body.theme-newyear .finance-input-row select,
+body.theme-newyear #fixkostenModal input, 
+body.theme-newyear #fixkostenModal select,
+body.theme-newyear #set_token,
+body.theme-newyear #set_master_pw, 
+body.theme-newyear #set_admin_pw,
+body.theme-newyear #userModal input[type="text"], 
+body.theme-newyear #userModal input[type="password"],
+body.theme-newyear #newRoomInput,
+body.theme-newyear #customInputField,
+body.theme-newyear #customFoodField,
+body.theme-newyear #passwordModal input[type="password"],
+body.theme-newyear #edit-assignee,
+body.theme-newyear #modalAssignee, 
+body.theme-newyear #edit-name, 
+body.theme-newyear #modalName, 
+body.theme-newyear #modalTitle,
+body.theme-newyear #modalDate, 
+body.theme-newyear #edit-date-val,
+body.theme-newyear #modalTime, 
+body.theme-newyear #edit-time { 
+    background: rgba(30, 41, 59, 0.9) !important; 
+    border: 2px solid rgba(212, 175, 55, 0.5) !important; 
+    color: #f5f6fa !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important; 
+    outline: none !important; 
+}
+
+body.theme-newyear .finance-input-row input::placeholder,
+body.theme-newyear #fixkostenModal input::placeholder,
+body.theme-newyear #newRoomInput::placeholder,
+body.theme-newyear #userModal input::placeholder { 
+    color: rgba(245, 246, 250, 0.4) !important; 
+}
+
+body.theme-newyear .summary-total { 
+    color: #ffd700 !important; 
+    border-top: 2px solid rgba(212, 175, 55, 0.5) !important; 
+}
+
+body.theme-newyear .month-card h3, 
+body.theme-newyear #modal-content h2,
+body.theme-newyear #fixkostenModal h2,
+body.theme-newyear #userModal h3,
+body.theme-newyear #roomModal h3, 
+body.theme-newyear #deleteModal h3,
+body.theme-newyear #customConfirmTitle,
+body.theme-newyear #customDeleteTitle,
+body.theme-newyear #customInputTitle,
+body.theme-newyear #customFoodTitle,
+body.theme-newyear #passwordModal h3,
+body.theme-newyear #editModal h2, 
+body.theme-newyear #editModal h3 { 
+    color: #ffd700 !important; 
+    font-weight: 800 !important; 
+}
+
+body.theme-newyear #fixkostenModal label, 
+body.theme-newyear #fixkostenModal p,
+body.theme-newyear #userModal label,
+body.theme-newyear #deleteModal p,
+body.theme-newyear #customConfirmMessage,
+body.theme-newyear #customDeleteMessage,
+body.theme-newyear #customInputMessage,
+body.theme-newyear #customFoodMessage,
+body.theme-newyear #settingsOverlay label,
+body.theme-newyear .modal-content label { 
+    color: #f5f6fa !important; 
+    font-weight: 700 !important; 
+}
+
+/* --- ABBRECHEN BUTTON --- */
+body.theme-newyear .modal-content button[onclick*="closeEdit"], 
+body.theme-newyear .modal-content button[onclick*="intervalModal"], 
+body.theme-newyear .modal-content button[onclick*="shopQtyModal"] { 
+    color: #ffd700 !important; 
+    font-weight: 800 !important; 
+    opacity: 1 !important; 
+    background: none; 
+    border: none; 
+    transition: all 0.2s ease; 
+    cursor: pointer; 
+}
+body.theme-newyear .modal-content button[onclick*="closeEdit"]:hover, 
+body.theme-newyear .modal-content button[onclick*="intervalModal"]:hover, 
+body.theme-newyear .modal-content button[onclick*="shopQtyModal"]:hover { 
+    color: #ffffff !important; 
+    transform: scale(1.1); 
+    background: rgba(212, 175, 55, 0.15) !important; 
+    border-radius: 8px; 
+}
+
+/* --- ZAHLEN / INTERVALL --- */
+body.theme-newyear #modalValue, 
+body.theme-newyear #edit-interval-val, 
+body.theme-newyear #shopQtyValue { 
+    color: #ffd700 !important; 
+    font-weight: 900 !important; 
+    border: 2px solid #d4af37 !important; 
+    background: rgba(30, 41, 59, 0.9) !important; 
+    border-radius: 15px !important; 
+    padding: 15px; 
+    text-align: center; 
+    font-size: 1.8rem !important; 
+}
+
+/* --- BUTTONS (SPEICHERN, ADD, ETC.) --- */
+body.theme-newyear #tplSaveBtn,
+body.theme-newyear #fixkostenModal button[onclick*="addFixkostenTemplate"],
+body.theme-newyear .finance-controls button[onclick*="addNewYear"],
+body.theme-newyear .finance-controls button[onclick*="addNewMonth"],
+body.theme-newyear #settingsOverlay button[onclick*="saveSystemSettings"],
+body.theme-newyear #userModal button[onclick*="saveUserModal"],
+body.theme-newyear #roomModal button[onclick*="confirmAddRoom"], 
+body.theme-newyear #deleteModal button[onclick*="confirmDelete"],
+body.theme-newyear #customFoodModal button[onclick*="resolveFoodPrompt(true)"],
+body.theme-newyear #finance-modal .finance-input-row .btn-add,
+body.theme-newyear .btn-add,
+body.theme-newyear #passwordModal button[onclick*="closePasswordModal(true)"] { 
+    background: linear-gradient(135deg, #d4af37 0%, #aa7c11 100%) !important; 
+    color: #050b14 !important; 
+    border: 1px solid #ffffff !important; 
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4) !important; 
+    font-weight: 900 !important; 
+    border-radius: 12px !important; 
+}
+
+/* Der Stift-Button (Bearbeiten) */
+body.theme-newyear #tplEditBtn {
+    background: rgba(30, 41, 59, 0.9) !important;
+    color: #ffd700 !important;
+    border: 1.5px solid #d4af37 !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Der Abbrechen-Button (✖) im Formular */
+body.theme-newyear #tplCancelEditBtn {
+    background: rgba(30, 41, 59, 0.9) !important;
+    color: #ff453a !important;
+    border: 1.5px solid #d4af37 !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Sekundäre / Schließen-Buttons in Modals */
+body.theme-newyear #fixkostenModal button[onclick*="fixkostenModal"],
+body.theme-newyear .finance-controls button[onclick*="fixkostenModal"],
+body.theme-newyear #settingsOverlay button[onclick*="settingsOverlay']"],
+body.theme-newyear #userModal button[onclick*="closeUserModal"],
+body.theme-newyear #roomModal button[onclick*="closeRoomModal"], 
+body.theme-newyear #deleteModal button[onclick*="closeDeleteModal"],
+body.theme-newyear #customConfirmNo,
+body.theme-newyear #customDeleteModal button[onclick*="resolveDelete(false)"],
+body.theme-newyear #customFoodModal button[onclick*="resolveFoodPrompt(false)"],
+body.theme-newyear #passwordModal button[onclick*="closePasswordModal(false)"] { 
+    background: rgba(30, 41, 59, 0.8) !important; 
+    color: #f5f6fa !important; 
+    border: 1.5px solid #d4af37 !important; 
+    font-weight: 800 !important; 
+    backdrop-filter: blur(10px); 
+    border-radius: 12px !important; 
+}
+
+/* Lösch-Buttons */
+body.theme-newyear #customConfirmYes,
+body.theme-newyear #customDeleteModal button[onclick*="resolveDelete(true)"],
+body.theme-newyear .admin-close-btn { 
+    background: #ff453a !important; 
+    color: #ffffff !important; 
+    border: 1px solid #ffd700 !important; 
+    box-shadow: 0 4px 15px rgba(255, 69, 58, 0.4) !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important; 
+}
+
+/* Fixkosten-Liste Details */
+body.theme-newyear #fixkostenList > div { 
+    background: rgba(30, 41, 59, 0.75) !important; 
+    border: 1.5px solid rgba(212, 175, 55, 0.5) !important; 
+}
+body.theme-newyear #fixkostenList strong { color: #f5f6fa !important; }
+body.theme-newyear #fixkostenList span[style*="var(--primary)"] { color: #ffd700 !important; font-weight: 800 !important; }
+body.theme-newyear #fixkostenList div[style*="var(--gray)"] { color: #f5f6fa !important; opacity: 0.75 !important; font-weight: 700 !important; }
+
+/* --- TABLET & PC OPTIMIERUNGEN --- */
+@media screen and (min-width: 768px) {
+    body.theme-newyear .tab-bar { height: 120px !important; }
+    body.theme-newyear .tab-item .icon { font-size: 2rem !important; }
+    body.theme-newyear .tab-item span { font-size: 1.2rem !important; }
+    body.theme-newyear .modal-content { 
+        width: 550px !important; 
+        padding: 45px !important; 
+        border-radius: 20px !important; 
+        background: rgba(15, 23, 42, 0.96) !important; 
+        border: 2px solid #d4af37 !important; 
+    }
+    body.theme-newyear .modal-content input:not([type="password"]):not([type="text"]) { 
+        height: 90px !important; 
+        font-size: 3.5rem !important; 
+        color: #ffd700 !important; 
+        -webkit-text-fill-color: #ffd700 !important; 
+        border: 2px solid #d4af37 !important; 
+        text-align: center !important; 
+    }
+    body.theme-newyear .day-dot { height: 80px !important; font-size: 1.8rem !important; }
+}
+
+/* --- SHOP BADGE & SONSTIGES --- */
+body.theme-newyear .shop-badge { 
+    display: flex !important; 
+    background: rgba(212, 175, 55, 0.2) !important; 
+    color: #ffd700 !important; 
+    width: 24px !important; 
+    height: 24px !important; 
+    border-radius: 50% !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    border: 1px solid rgba(212, 175, 55, 0.4) !important; 
+}
+body.theme-newyear .side-btn.active-shop .shop-badge,
+body.theme-newyear .side-btn.active-todo .shop-badge { 
+    background: #ffffff !important; 
+    color: #050b14 !important; 
+    font-weight: 900 !important;
+}
+body.theme-newyear .login-card input[type="password"]::placeholder { 
+    color: #d4af37 !important; 
+    font-weight: 700 !important; 
+}
+
+/* --- THEME DROPDOWN NEUJAHR --- */
+body.theme-newyear .theme-dropdown { 
+    background: rgba(5, 11, 20, 0.95) !important; 
+    backdrop-filter: blur(25px) !important; 
+    border: 1.5px solid #d4af37 !important; 
+}
+body.theme-newyear .theme-dropdown div { 
+    color: #f5f6fa !important; 
+    border-bottom: 1px solid rgba(212, 175, 55, 0.2) !important; 
+}
+body.theme-newyear .theme-dropdown div:hover { 
+    background: rgba(212, 175, 55, 0.3) !important; 
+}
+
+/* --- SKRIPT-FREUNDLICH (AUFGABENLISTE) --- */
+body.theme-newyear #list-todo li div { color: #f5f6fa !important; }
+body.theme-newyear #list-todo li strong { color: #f5f6fa !important; }
+body.theme-newyear #list-token,
+body.theme-newyear #list-todo li span[style*="color:var(--gray)"],
+body.theme-newyear #list-todo li .user-label { 
+    color: #ffd700 !important; 
+    font-weight: 800 !important; 
+}
+
+/* --- ZOOM REGLER STYLING --- */
+body.theme-newyear .zoom-control-row { background: rgba(255, 255, 255, 0.08) !important; border: 1.5px solid #d4af37 !important; }
+body.theme-newyear .theme-dropdown .zoom-control-row { background: rgba(0, 0, 0, 0.3) !important; border: none !important; border-top: 1px solid rgba(212, 175, 55, 0.3) !important; }
+body.theme-newyear .zoom-btn { background: rgba(30, 41, 59, 0.9) !important; color: #ffd700 !important; border: 1px solid #d4af37 !important; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important; }
+body.theme-newyear .zoom-btn:active { background: #ffd700 !important; color: #050b14 !important; }
+body.theme-newyear .zoom-display { color: #f5f6fa !important; font-weight: 800 !important; }
+body.theme-newyear .theme-dropdown .zoom-display { color: #ffd700 !important; }
+body.theme-newyear #systemZoomRange,
+body.theme-newyear #settingsOverlay .tab-toggle,
+body.theme-newyear #userModal input[type="checkbox"] { accent-color: #d4af37 !important; }
+/* ========================================================
+   --- NEU: MODAL-BUTTONS & VARIABLEN (NEWYEAR) ---
+   ======================================================== */
+
+body.theme-newyear {
+    --todo: #1e2952;       /* Edles Mitternachtsblau */
+    --primary: #d4af37;    /* Champagner-Gold */
+    --bg: rgba(15, 22, 48, 0.9);
+    --card: rgba(10, 15, 35, 0.96);
+    --gray: #b0b8d1;
+}
+
+body.theme-newyear button[onclick*="confirmInterval('m')"],
+body.theme-newyear button[onclick*="confirmInterval('s')"],
+body.theme-newyear button[onclick*="confirmInterval('days')"],
+body.theme-newyear button[onclick*="confirmInterval('date')"],
+body.theme-newyear button[onclick*="saveEdit('m')"],
+body.theme-newyear button[onclick*="saveEdit('s')"],
+body.theme-newyear button[onclick*="saveEdit('days')"],
+body.theme-newyear button[onclick*="saveEdit('date')"] {
+    background: linear-gradient(135deg, #1e2952 0%, #0f1630 100%) !important;
+    color: #ffd700 !important;
+    border: 1.5px solid #d4af37 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.theme-newyear button[onclick*="confirmInterval('t')"],
+body.theme-newyear button[onclick*="saveEdit('t')"],
+body.theme-newyear button[onclick*="confirmShopAdd"] {
+    background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%) !important;
+    color: #0a0f23 !important;
+    font-weight: 900 !important;
+    border: 1.5px solid #ffffff !important;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.45) !important;
+}
+
+/* ========================================================
+   --- LAUFENDER ALARM-RAHMEN (NEWYEAR - GOLD & WEISS) ---
+   ======================================================== */
+
+@keyframes newyear-running-border {
+    0% {
+        background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px;
+    }
+    100% {
+        background-position: 40px 0px, -40px 100%, 0px -40px, 100% 40px;
+    }
+}
+
+@keyframes newyear-alarm-glow {
+    0%, 100% { 
+        box-shadow: 0 0 12px rgba(255, 215, 0, 0.6) !important; 
+    }
+    50% { 
+        box-shadow: 0 0 35px #ffd700, 0 0 15px #ffffff, inset 0 0 15px rgba(255, 215, 0, 0.4) !important; 
+        transform: scale(1.01);
+    }
+}
+
+body.theme-newyear .urgent-blink::after,
+body.theme-newyear #list-todo li.urgent-blink::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    border-radius: inherit !important;
+    z-index: 10 !important;
+    
+    /* 4 laufende Linien im Silvester-Look: Champagner-Gold (#ffd700) & strahlendes Weiß (#ffffff) */
+    background-image: 
+        linear-gradient(90deg, #ffd700 50%, #ffffff 50%),
+        linear-gradient(90deg, #ffd700 50%, #ffffff 50%),
+        linear-gradient(0deg, #ffd700 50%, #ffffff 50%),
+        linear-gradient(0deg, #ffd700 50%, #ffffff 50%);
+    
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 40px 6px, 40px 6px, 6px 40px, 6px 40px;
+    background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px;
+    
+    /* 0.3s für den schnellen, flüssigen Lauf-Effekt */
+    animation: newyear-running-border 0.3s infinite linear !important;
+}
+
+body.theme-newyear .urgent-blink,
+body.theme-newyear #list-todo li.urgent-blink {
+    position: relative !important;
+    overflow: hidden !important;
+}

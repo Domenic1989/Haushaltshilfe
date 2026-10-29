@@ -75,8 +75,8 @@ body.theme-xmas .day-card {
 body.theme-xmas .month-card::after {
     content: "🎄";
     position: absolute;
-    top: 10px;
-    right: 12px;
+    top: 1px;
+    right: 1px;
     font-size: 1.15rem;
     opacity: 0.7;
     pointer-events: none;
@@ -580,3 +580,165 @@ body.theme-xmas .theme-dropdown .zoom-display { color: #ffd700 !important; }
 body.theme-xmas #systemZoomRange,
 body.theme-xmas #settingsOverlay .tab-toggle,
 body.theme-xmas #userModal input[type="checkbox"] { accent-color: #c62828 !important; }
+
+/* --- XMAS THEME: FIXKOSTEN MODAL & FORMULAR BUTTONS --- */
+body.theme-xmas #fixkostenModal input,
+body.theme-xmas #fixkostenModal select {
+    background: rgba(255, 250, 240, 0.9) !important;
+    color: #1b2e22 !important;
+    border: 1.5px solid #d4af37 !important;
+    font-weight: 600 !important;
+}
+
+body.theme-xmas #fixkostenModal label {
+    color: #1b2e22 !important;
+    font-weight: 800 !important;
+}
+
+/* Der Speichern-Button im weihnachtlichen Rot */
+body.theme-xmas #tplSaveBtn {
+    background: #c62828 !important;
+    color: #ffffff !important;
+    border: 1px solid #d4af37 !important;
+    box-shadow: 0 4px 10px rgba(198, 40, 40, 0.3) !important;
+}
+
+body.theme-xmas #tplSaveBtn:active {
+    background: #1b2e22 !important;
+}
+
+/* Der Stift-Button (Bearbeiten) im Gold-Look */
+body.theme-xmas #tplEditBtn {
+    background: #fffaf0 !important;
+    color: #d4af37 !important;
+    border: 1.5px solid #d4af37 !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+}
+
+body.theme-xmas #tplEditBtn:active {
+    background: #d4af37 !important;
+    color: #ffffff !important;
+}
+
+/* Der Abbrechen-Button (✖) */
+body.theme-xmas #tplCancelEditBtn {
+    background: #fffaf0 !important;
+    color: #b71c1c !important;
+    border: 1.5px solid #d4af37 !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+}
+
+body.theme-xmas #tplCancelEditBtn:active {
+    background: #b71c1c !important;
+    color: #ffffff !important;
+}
+
+/* Listeneinträge im Weihnachts-Modal */
+body.theme-xmas #fixkostenList > div {
+    background: rgba(255, 250, 240, 0.85) !important;
+    border: 1.5px solid #d4af37 !important;
+}
+
+body.theme-xmas #fixkostenList strong {
+    color: #1b2e22 !important;
+}
+
+body.theme-xmas #fixkostenList span[style*="var(--primary)"] {
+    color: #c62828 !important;
+    font-weight: 800 !important;
+}
+
+body.theme-xmas #fixkostenList div[style*="var(--gray)"] {
+    color: #1b2e22 !important;
+    opacity: 0.8 !important;
+    font-weight: 700 !important;
+}
+/* ========================================================
+   --- NEU: MODAL-BUTTONS & VARIABLEN (XMAS) ---
+   ======================================================== */
+
+body.theme-xmas {
+    --todo: #1a5235;       /* Tannengrün für Minuten, Stunden, Wochentage, Datum */
+    --primary: #c62828;    /* Weihnachtsrot für Haupt-Buttons (Tage & Shop Hinzufügen) */
+    --bg: rgba(255, 255, 255, 0.95);
+    --card: rgba(255, 250, 240, 0.96);
+    --gray: #1b2e22;
+}
+
+/* Minuten, Stunden, Tage Speichern & Datum nutzen (Tannengrün mit Goldrand) */
+body.theme-xmas button[onclick*="confirmInterval('m')"],
+body.theme-xmas button[onclick*="confirmInterval('s')"],
+body.theme-xmas button[onclick*="confirmInterval('days')"],
+body.theme-xmas button[onclick*="confirmInterval('date')"],
+body.theme-xmas button[onclick*="saveEdit('m')"],
+body.theme-xmas button[onclick*="saveEdit('s')"],
+body.theme-xmas button[onclick*="saveEdit('days')"],
+body.theme-xmas button[onclick*="saveEdit('date')"] {
+    background: linear-gradient(135deg, #1a5235 0%, #0f3822 100%) !important;
+    color: #ffffff !important;
+    border: 1.5px solid #d4af37 !important;
+    box-shadow: 0 4px 12px rgba(15, 56, 34, 0.35) !important;
+}
+
+/* "Tage" & Shop "Hinzufügen" (Festliches Weihnachtsrot mit leuchtendem Goldrand) */
+body.theme-xmas button[onclick*="confirmInterval('t')"],
+body.theme-xmas button[onclick*="saveEdit('t')"],
+body.theme-xmas button[onclick*="confirmShopAdd"] {
+    background: linear-gradient(135deg, #c62828 0%, #8e0000 100%) !important;
+    color: #ffffff !important;
+    border: 1.5px solid #ffd700 !important;
+    box-shadow: 0 4px 15px rgba(198, 40, 40, 0.45) !important;
+}
+
+/* ========================================================
+   --- LAUFENDER ALARM-RAHMEN (XMAS - ROT & GOLD) ---
+   ======================================================== */
+
+@keyframes xmas-running-border {
+    0% {
+        background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px;
+    }
+    100% {
+        background-position: 40px 0px, -40px 100%, 0px -40px, 100% 40px;
+    }
+}
+
+@keyframes xmas-alarm-glow {
+    0%, 100% { 
+        box-shadow: 0 0 12px rgba(212, 36, 38, 0.6) !important; 
+    }
+    50% { 
+        box-shadow: 0 0 30px #d42426, 0 0 15px #ffd700, inset 0 0 15px rgba(212, 36, 38, 0.4) !important; 
+        transform: scale(1.01);
+    }
+}
+
+body.theme-xmas .urgent-blink::after,
+body.theme-xmas #list-todo li.urgent-blink::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    border-radius: inherit !important;
+    z-index: 10 !important;
+    
+    /* 4 laufende Linien im Weihnachts-Look: Festliches Rot (#d42426) & edles Gold (#ffd700) */
+    background-image: 
+        linear-gradient(90deg, #d42426 50%, #ffd700 50%),
+        linear-gradient(90deg, #d42426 50%, #ffd700 50%),
+        linear-gradient(0deg, #d42426 50%, #ffd700 50%),
+        linear-gradient(0deg, #d42426 50%, #ffd700 50%);
+    
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 40px 6px, 40px 6px, 6px 40px, 6px 40px;
+    background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px;
+    
+    /* 0.3s macht es schön schnell und flüssig */
+    animation: xmas-running-border 0.3s infinite linear !important;
+}
+
+body.theme-xmas .urgent-blink,
+body.theme-xmas #list-todo li.urgent-blink {
+    position: relative !important;
+    overflow: hidden !important;
+}
