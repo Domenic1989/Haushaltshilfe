@@ -21,19 +21,28 @@ CONF_ADMIN_PW = "admin_pw"
 CONF_MASTER_PW = "master_pw"
 CONF_VISIBLE_TABS = "visible_tabs"
 
-HELPER_ENTITIES = {
-    "helper_shop_stores": {"name": "helper shop stores", "initial": json.dumps(["Aldi", "Lidl", "Rewe"])},
-    "helper_room_list": {"name": "helper room list", "initial": json.dumps(["Küche", "Schlafzimmer", "Bad OG", "Bad EG"])},
-    "helper_shop_favs": {"name": "helper shop favs", "initial": json.dumps({"cats": ["Alle", "Gemüse", "Fleisch", "Vorrat", "Haus"], "favs": []})},
-    "helper_food_favs": {"name": "helper food favs", "initial": json.dumps({"cats": ["Alle", "Schnell", "Italienisch", "Leicht"], "favs": []})},
-    "helper_todo_favs": {"name": "helper todo favs", "initial": json.dumps({"cats": ["Alle", "Haus", "Bad", "Wohnen", "Küche", "Garten"], "favs": []})},
-    "helper_tasks": {"name": "helper tasks", "initial": json.dumps([])},
-    "helper_shopping": {"name": "helper shopping", "initial": json.dumps([])},
-    "essen_montag": {"name": "essen montag", "initial": ""},
-    "essen_dienstag": {"name": "essen dienstag", "initial": ""},
-    "essen_mittwoch": {"name": "essen mittwoch", "initial": ""},
-    "essen_donnerstag": {"name": "essen donnerstag", "initial": ""},
-    "essen_freitag": {"name": "essen freitag", "initial": ""},
-    "essen_samstag": {"name": "essen samstag", "initial": ""},
-    "essen_sonntag": {"name": "essen sonntag", "initial": ""},
+# Definition für die echten Text-Entitäten (Plattform: text.py)
+TEXT_ENTITIES = {
+    "helper_visible_tabs": {
+        "name": "Sichtbare Tabs",
+        "initial": json.dumps(["shop", "todo", "food", "trash", "finance"]),
+        "icon": "mdi:tab",
+    },
+    "helper_shop_stores": {
+        "name": "Geschäfte",
+        "initial": json.dumps(["Aldi", "Lidl", "Rewe"]),
+        "icon": "mdi:store",
+    },
+    "helper_room_list": {
+        "name": "Räume",
+        "initial": json.dumps(["Küche", "Schlafzimmer", "Bad OG", "Bad EG"]),
+        "icon": "mdi:door",
+    },
+    "essen_montag": {"name": "Essen Montag", "initial": "", "icon": "mdi:silverware-fork-knife"},
+    "essen_dienstag": {"name": "Essen Dienstag", "initial": "", "icon": "mdi:silverware-fork-knife"},
+    "essen_mittwoch": {"name": "Essen Mittwoch", "initial": "", "icon": "mdi:silverware-fork-knife"},
+    "essen_donnerstag": {"name": "Essen Donnerstag", "initial": "", "icon": "mdi:silverware-fork-knife"},
+    "essen_freitag": {"name": "Essen Freitag", "initial": "", "icon": "mdi:silverware-fork-knife"},
+    "essen_samstag": {"name": "Essen Samstag", "initial": "", "icon": "mdi:silverware-fork-knife"},
+    "essen_sonntag": {"name": "Essen Sonntag", "initial": "", "icon": "mdi:silverware-fork-knife"},
 }
