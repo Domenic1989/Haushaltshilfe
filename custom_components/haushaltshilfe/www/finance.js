@@ -136,13 +136,26 @@ window.openFixkostenModal = async function() {
 };
 
 // --- 2. LISTE ZEICHNEN (Jetzt nur noch mit Mülleimer, Bearbeiten passiert über den Stift oben im HTML) ---
+// Hilfsfunktion gegen XSS (Punkt 4 aus dem Review)
+function escapeHtml(str) {
+    return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 function renderFixkostenList() {
     const listEl = document.getElementById("fixkostenList");
     if (!listEl) return;
-    listEl.innerHTML = "";
+    listEl.replaceChildren();
 
     if (!fixkostenTemplates || fixkostenTemplates.length === 0) {
-        listEl.innerHTML = "<div style='font-size:0.85rem; color:var(--gray); text-align:center; padding:15px; background:var(--bg); border-radius:12px;'>Noch keine Fixkosten-Vorlagen hinterlegt.</div>";
+        const emptyDiv = document.createElement("div");
+        emptyDiv.style.cssText = "font-size:0.85rem; color:var(--gray); text-align:center; padding:15px; background:var(--bg); border-radius:12px;";
+        emptyDiv.textContent = "Noch keine Fixkosten-Vorlagen hinterlegt.";
+        listEl.appendChild(emptyDiv);
         return;
     }
 
@@ -157,26 +170,53 @@ function renderFixkostenList() {
 
     fixkostenTemplates.forEach((tpl, index) => {
         const div = document.createElement("div");
-        div.style = "display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:12px 15px; border-radius:12px; cursor:pointer;";
-        // Klickt man auf den Eintrag selbst oder den Stift, wird er zum Bearbeiten geladen
-        div.onclick = () => editFixkostenTemplate(index);
+        div.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:12px 15px; border-radius:12px; cursor:pointer;";
+        div.addEventListener("click", () => editFixkostenTemplate(index));
 
-        div.innerHTML = `
-            <div>
-                <strong style="color:var(--text); font-size:0.95rem;">${tpl.title}</strong> — <span style="font-weight:bold; color:var(--primary);">${parseFloat(tpl.amount).toFixed(2)} €</span>
-                <div style="font-size:0.75rem; color:var(--gray); margin-top:2px;">${monthLabels[tpl.months] || tpl.months}</div>
-            </div>
-            <div style="display:flex; align-items:center; gap:4px;">
-                <button type="button" 
-                    onclick="event.stopPropagation(); event.preventDefault(); deleteFixkostenTemplate(${index});" 
-                    style="position:relative; z-index:50; background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; font-size:1.3rem; padding:12px 10px; margin:-8px -8px -8px 0; border-radius:10px;" title="Löschen">
-                    🗑️
-                </button>
-            </div>
-        `;
+        const infoDiv = document.createElement("div");
+
+        const strongEl = document.createElement("strong");
+        strongEl.style.cssText = "color:var(--text); font-size:0.95rem;";
+        strongEl.textContent = tpl.title;
+
+        const sepSpan = document.createElement("span");
+        sepSpan.textContent = " — ";
+
+        const amountSpan = document.createElement("span");
+        amountSpan.style.cssText = "font-weight:bold; color:var(--primary);";
+        amountSpan.textContent = `${parseFloat(tpl.amount).toFixed(2)} €`;
+
+        const subDiv = document.createElement("div");
+        subDiv.style.cssText = "font-size:0.75rem; color:var(--gray); margin-top:2px;";
+        subDiv.textContent = monthLabels[tpl.months] || tpl.months;
+
+        infoDiv.appendChild(strongEl);
+        infoDiv.appendChild(sepSpan);
+        infoDiv.appendChild(amountSpan);
+        infoDiv.appendChild(subDiv);
+
+        const actionsDiv = document.createElement("div");
+        actionsDiv.style.cssText = "display:flex; align-items:center; gap:4px;";
+
+        const btnDel = document.createElement("button");
+        btnDel.type = "button";
+        btnDel.title = "Löschen";
+        btnDel.style.cssText = "position:relative; z-index:50; background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; font-size:1.3rem; padding:12px 10px; margin:-8px -8px -8px 0; border-radius:10px;";
+        btnDel.textContent = "🗑️";
+        btnDel.addEventListener("click", (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            deleteFixkostenTemplate(index);
+        });
+
+        actionsDiv.appendChild(btnDel);
+
+        div.appendChild(infoDiv);
+        div.appendChild(actionsDiv);
         listEl.appendChild(div);
     });
 }
+
 
 // --- 3. VORLAGE IN DIE FORMULAR-FELDER LADEN (BEARBEITEN) ---
 window.editFixkostenTemplate = function(index) {

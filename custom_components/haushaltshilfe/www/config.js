@@ -154,8 +154,8 @@ const ADMIN_PW_ENTITY = "";
 let ADMIN_PW = "";
 
 // ---- ENTITÄTEN-ÜBERSICHT ----
-const STORES_ENTITY = "input_text.helper_shop_stores";
-const ROOMS_ENTITY = "input_text.helper_room_list";
+const STORES_ENTITY = "text.helper_shop_stores";
+const ROOMS_ENTITY = "text.helper_room_list";
 
 // ---- SPEICHER-ENTITÄTEN ----
 const TODO_DATA_ENTITY = "sensor.haushalt_tasks_storage";
@@ -185,13 +185,13 @@ const SYNC_CONFIG = {
 };
 
 const FOOD_ENTITIES = [
-    "input_text.essen_montag",
-    "input_text.essen_dienstag",
-    "input_text.essen_mittwoch",
-    "input_text.essen_donnerstag",
-    "input_text.essen_freitag",
-    "input_text.essen_samstag",
-    "input_text.essen_sonntag"
+    "text.essen_montag",
+    "text.essen_dienstag",
+    "text.essen_mittwoch",
+    "text.essen_donnerstag",
+    "text.essen_freitag",
+    "text.essen_samstag",
+    "text.essen_sonntag"
 ];
 
 // ---- MÜLL-KONFIGURATION ----

@@ -1010,10 +1010,9 @@ async function renderSidebars() {
     // --- SHOP SIDEBAR ---
     const shopSide = document.getElementById("shopSidebar");
     if(shopSide) {
-        shopSide.innerHTML = "";
+        shopSide.replaceChildren();
         stores.forEach((s, index) => {
             const count = allOptions.filter(opt => opt.endsWith(` @${s}`)).length;
-            const badge = count > 0 ? `<span class="shop-badge">${count}</span>` : '';
             
             const btn = document.createElement('button');
             btn.className = `side-btn ${activeStore === s ? 'active-shop' : ''}`;
@@ -1035,7 +1034,7 @@ async function renderSidebars() {
 
             // 1. Mülleimer zuerst (links)
             const del = document.createElement('span');
-            del.innerHTML = "🗑️ ";
+            del.textContent = "🗑️ ";
             del.className = "del-sidebar";
             del.style.marginRight = "6px";
             del.style.cursor = "pointer";
@@ -1045,13 +1044,24 @@ async function renderSidebars() {
             };
             btn.appendChild(del);
 
-            // 2. Danach Name + Badge (rechts daneben)
+            // 2. Danach Name + Badge (sicher ohne innerHTML!)
             const txt = document.createElement('span');
             txt.style.display = "flex";
             txt.style.alignItems = "center";
             txt.style.gap = "8px";
-            txt.style.pointerEvents = "none"; // Verhindert Probleme beim Ziehen
-            txt.innerHTML = `${s} ${badge}`;
+            txt.style.pointerEvents = "none";
+
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = s;
+            txt.appendChild(nameSpan);
+
+            if (count > 0) {
+                const badgeEl = document.createElement('span');
+                badgeEl.className = "shop-badge";
+                badgeEl.textContent = String(count);
+                txt.appendChild(badgeEl);
+            }
+
             btn.appendChild(txt);
 
             // Drag & Drop (Maus + Touch) aktivieren
@@ -1062,7 +1072,7 @@ async function renderSidebars() {
 
         const addBtn = document.createElement('button');
         addBtn.className = "side-btn side-btn-add";
-        addBtn.innerText = "+ Ort";
+        addBtn.textContent = "+ Ort";
         addBtn.onclick = () => addSidebarItem('shop');
         shopSide.appendChild(addBtn);
     }
@@ -1070,7 +1080,7 @@ async function renderSidebars() {
     // --- TODO SIDEBAR (RÄUME) ---
     const todoSide = document.getElementById("todoSidebar");
     if(todoSide) {
-        todoSide.innerHTML = "";
+        todoSide.replaceChildren();
         const now = new Date();
         const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 
@@ -1080,14 +1090,6 @@ async function renderSidebars() {
             const hasUrgent = roomTasks.some(t => new Date(t.nextDate) <= todayEnd);
             
             const isActive = activeRoom === r;
-
-            let badgeStyle = "";
-            if (!isActive) {
-                badgeStyle = hasUrgent ? "background: var(--danger);" : "background: #8e8e93;";
-            }
-
-            const badgeClass = hasUrgent ? 'shop-badge badge-blink' : 'shop-badge';
-            const badge = totalCount > 0 ? `<span class="${badgeClass}" style="${badgeStyle}">${totalCount}</span>` : '';
 
             const btn = document.createElement('button');
             btn.className = `side-btn ${isActive ? 'active-todo' : ''}`;
@@ -1109,7 +1111,7 @@ async function renderSidebars() {
 
             // 1. Mülleimer zuerst (links)
             const del = document.createElement('span');
-            del.innerHTML = "🗑️ ";
+            del.textContent = "🗑️ ";
             del.className = "del-sidebar";
             del.style.marginRight = "6px";
             del.style.cursor = "pointer";
@@ -1119,13 +1121,27 @@ async function renderSidebars() {
             };
             btn.appendChild(del);
 
-            // 2. Danach Raumname + Badge (rechts daneben)
+            // 2. Danach Raumname + Badge (sicher ohne innerHTML!)
             const txt = document.createElement('span');
             txt.style.display = "flex";
             txt.style.alignItems = "center";
             txt.style.gap = "8px";
             txt.style.pointerEvents = "none";
-            txt.innerHTML = `${r} ${badge}`;
+
+            const roomSpan = document.createElement('span');
+            roomSpan.textContent = r;
+            txt.appendChild(roomSpan);
+
+            if (totalCount > 0) {
+                const badgeEl = document.createElement('span');
+                badgeEl.className = hasUrgent ? 'shop-badge badge-blink' : 'shop-badge';
+                if (!isActive) {
+                    badgeEl.style.background = hasUrgent ? "var(--danger)" : "#8e8e93";
+                }
+                badgeEl.textContent = String(totalCount);
+                txt.appendChild(badgeEl);
+            }
+
             btn.appendChild(txt);
 
             // Drag & Drop (Maus + Touch) aktivieren
@@ -1136,11 +1152,12 @@ async function renderSidebars() {
 
         const addBtnTodo = document.createElement('button');
         addBtnTodo.className = "side-btn side-btn-add";
-        addBtnTodo.innerText = "+ Raum";
+        addBtnTodo.textContent = "+ Raum";
         addBtnTodo.onclick = () => addSidebarItem('todo');
         todoSide.appendChild(addBtnTodo);
     }
 }
+
 
 // ========================================================
 // --- OPTIMIERTE DRAG & DROP LOGIK FÜR SIDEBAR ---
@@ -1814,6 +1831,7 @@ async function saveEdit(modus) {
     renderTodoList();
 }    
 
+
 function renderTodoList() {
     if (typeof renderSidebars === "function") {
         renderSidebars();
@@ -1877,33 +1895,63 @@ function renderTodoList() {
         const li = document.createElement("li");
         if (diffHours <= 6 || isOverdue) li.classList.add("urgent-blink");
 
+        const safeName = escapeHtml(t.name);
+        const safeAssigned = t.assignedTo ? escapeHtml(t.assignedTo) : "";
+
         li.innerHTML = `
             <div style="margin-bottom: 10px;">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
                     <div style="display:flex; flex-direction:column; gap:4px;">
-                        <strong style="font-size:1.1rem;">${t.name}</strong>
-                        ${t.assignedTo ? `<span style="font-size:0.75rem; color:var(--gray); font-weight:bold;">👤 ${t.assignedTo}</span>` : ''}
+                        <strong style="font-size:1.1rem;">${safeName}</strong>
+                        ${safeAssigned ? `<span style="font-size:0.75rem; color:var(--gray); font-weight:bold;">👤 ${safeAssigned}</span>` : ''}
                     </div>
-                    <span style="color:${statusColor}; font-weight:800; font-size:0.7rem; background:${statusColor}15; padding:4px 8px; border-radius:8px; border: 1px solid ${statusColor}30; white-space:nowrap;">${timeText}</span>
+                    <span style="color:${statusColor}; font-weight:800; font-size:0.7rem; background:${statusColor}15; padding:4px 8px; border-radius:8px; border: 1px solid ${statusColor}30; white-space:nowrap;">${escapeHtml(timeText)}</span>
                 </div>
                 <div style="font-size:0.75rem; color:var(--gray); margin-top:12px; display:flex; flex-direction:column; gap:4px;">
-                    <span>📅 Fällig: ${formatDT(t.nextDate)} Uhr</span>
-                    <span>✅ Zuletzt: ${t.lastDone ? formatDT(t.lastDone) : 'Neu'}</span>
+                    <span>📅 Fällig: ${escapeHtml(formatDT(t.nextDate))} Uhr</span>
+                    <span>✅ Zuletzt: ${t.lastDone ? escapeHtml(formatDT(t.lastDone)) : 'Neu'}</span>
                 </div>
             </div>
-            <div style="display:flex; gap:10px; margin-top: auto;">
-                <button onclick="completeTodo('${t.id}')" style="flex:3; color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer; background: ${statusColor}; transition: background 0.3s;">
-                    ${btnLabel}
-                </button>
-                <button onclick="openEdit('${t.id}')" style="flex:1; background:#f2f2f7; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1.2rem;">✏️</button>
-                <button onclick="deleteTodo('${t.id}')" style="flex:1; background:#f2f2f7; border:none; border-radius:12px; font-weight:bold; cursor:pointer;">🗑️</button>
-            </div>`;
+            <div class="todo-actions-row" style="display:flex; gap:10px; margin-top: auto;"></div>`;
+
+        const actionsRow = li.querySelector(".todo-actions-row");
+
+        const btnComplete = document.createElement("button");
+        btnComplete.style.cssText = `flex:3; color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer; background: ${statusColor}; transition: background 0.3s;`;
+        btnComplete.textContent = btnLabel;
+        btnComplete.addEventListener("click", () => completeTodo(t.id));
+
+        const btnEdit = document.createElement("button");
+        btnEdit.style.cssText = "flex:1; background:#f2f2f7; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1.2rem;";
+        btnEdit.textContent = "✏️";
+        btnEdit.addEventListener("click", () => openEdit(t.id));
+
+        const btnDel = document.createElement("button");
+        btnDel.style.cssText = "flex:1; background:#f2f2f7; border:none; border-radius:12px; font-weight:bold; cursor:pointer;";
+        btnDel.textContent = "🗑️";
+        btnDel.addEventListener("click", () => deleteTodo(t.id));
+
+        actionsRow.appendChild(btnComplete);
+        actionsRow.appendChild(btnEdit);
+        actionsRow.appendChild(btnDel);
+
         ul.appendChild(li);
     });
     
     if (typeof updateAppBadges === "function") {
         updateAppBadges();
     }
+}
+
+
+// Hilfsfunktion gegen XSS (Punkt 4 aus dem Review)
+function escapeHtml(str) {
+    return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
 }
 
 async function syncDown() {
@@ -1967,6 +2015,7 @@ async function syncUp() {
         console.error(`❌ Fehler beim Speichern der Favoriten für ${curTab}:`, e);
     } 
 }
+
 async function load() {
     if (typeof renderSidebars === "function") await renderSidebars();
     if (curTab === 'trash' || isUpdatingFood) return;
@@ -1985,7 +2034,7 @@ async function load() {
                         const uName = uStr.split(':')[0];
                         const opt = document.createElement("option");
                         opt.value = uName;
-                        opt.innerText = uName;
+                        opt.textContent = uName;
                         sel.appendChild(opt);
                     });
                 }
@@ -2013,6 +2062,8 @@ async function load() {
     }
 
     if (curTab === 'shop') {
+        const listEl = document.getElementById("list-shop");
+        if (!listEl) return;
         try {
             const cfg = SYNC_CONFIG.shopping;
             const d = await haGetState(cfg.entity); 
@@ -2023,15 +2074,37 @@ async function load() {
                 fullList = (typeof rawData === 'string') ? JSON.parse(rawData) : rawData;
             }
 
-            let filtered = fullList.filter(o => o.endsWith(` @${activeStore}`));
-            document.getElementById("list-shop").innerHTML = filtered.reverse().map(t => 
-                `<li style="flex-direction:row; align-items:center;">
-                    <span>${t.split(' @')[0]}</span>
-                    <button class="btn-del-item" onclick="delItem('${t}')">🗑️</button>
-                </li>`
-            ).join('') || "<li>Leer! ✨</li>";
+            let filtered = fullList.filter(o => o.endsWith(` @${activeStore}`)).reverse();
+            listEl.replaceChildren();
+
+            if (filtered.length === 0) {
+                const emptyLi = document.createElement("li");
+                emptyLi.textContent = "Leer! ✨";
+                listEl.appendChild(emptyLi);
+            } else {
+                filtered.forEach(t => {
+                    const li = document.createElement("li");
+                    li.style.flexDirection = "row";
+                    li.style.alignItems = "center";
+
+                    const span = document.createElement("span");
+                    span.textContent = t.split(' @')[0];
+
+                    const btn = document.createElement("button");
+                    btn.className = "btn-del-item";
+                    btn.textContent = "🗑️";
+                    btn.addEventListener("click", () => delItem(t));
+
+                    li.appendChild(span);
+                    li.appendChild(btn);
+                    listEl.appendChild(li);
+                });
+            }
         } catch(e) {
-            document.getElementById("list-shop").innerHTML = "<li>Fehler beim Laden ⚠️</li>";
+            listEl.replaceChildren();
+            const errLi = document.createElement("li");
+            errLi.textContent = "Fehler beim Laden ⚠️";
+            listEl.appendChild(errLi);
         }
     }
 
