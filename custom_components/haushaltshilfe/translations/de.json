@@ -14,7 +14,21 @@
     "step": {
       "init": {
         "title": "Haushaltshilfe Pro Optionen",
-        "description": "Hier kannst du die Einstellungen für die Haushaltshilfe anpassen."
+        "description": "Hier kannst du die allgemeinen Einstellungen für die Haushaltshilfe anpassen.",
+        "data": {
+          "admin_pw": "Admin-Passwort",
+          "master_pw": "Master-Passwort",
+          "visible_tabs": "Sichtbare Tabs im Dashboard",
+          "trash_yellow_days": "🗑️ Gelber Sack: Sensor für Tage",
+          "trash_yellow_date": "🗑️ Gelber Sack: Sensor für Datum",
+          "trash_paper_days": "🗑️ Papiertonne: Sensor für Tage",
+          "trash_paper_date": "🗑️ Papiertonne: Sensor für Datum",
+          "trash_rest_days": "🗑️ Restmüll: Sensor für Tage",
+          "trash_rest_date": "🗑️ Restmüll: Sensor für Datum"
+        },
+        "data_description": {
+          "trash_yellow_days": "Wähle hier und in den folgenden Feldern deine Sensoren für die Müllabfuhr aus."
+        }
       }
     }
   }

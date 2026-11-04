@@ -2,8 +2,8 @@
   "config": {
     "step": {
       "user": {
-        "title": "Configure Haushaltshilfe Pro",
-        "description": "Would you like to set up the Haushaltshilfe Pro integration and automatically create all required helper entities in Home Assistant?"
+        "title": "Set up Haushaltshilfe Pro",
+        "description": "Do you want to automatically create the Haushaltshilfe Pro integration and all required helper entities in Home Assistant?"
       }
     },
     "abort": {
@@ -14,7 +14,21 @@
     "step": {
       "init": {
         "title": "Haushaltshilfe Pro Options",
-        "description": "Here you can adjust the settings for Haushaltshilfe."
+        "description": "Here you can adjust the general settings for Haushaltshilfe.",
+        "data": {
+          "admin_pw": "Admin Password",
+          "master_pw": "Master Password",
+          "visible_tabs": "Visible Tabs in Dashboard",
+          "trash_yellow_days": "🗑️ Yellow Sack: Days Sensor",
+          "trash_yellow_date": "🗑️ Yellow Sack: Date Sensor",
+          "trash_paper_days": "🗑️ Paper Bin: Days Sensor",
+          "trash_paper_date": "🗑️ Paper Bin: Date Sensor",
+          "trash_rest_days": "🗑️ Residual Waste: Days Sensor",
+          "trash_rest_date": "🗑️ Residual Waste: Date Sensor"
+        },
+        "data_description": {
+          "trash_yellow_days": "Select your sensors for waste collection here and in the fields below."
+        }
       }
     }
   }
