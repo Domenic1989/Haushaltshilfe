@@ -849,7 +849,6 @@ async function applyFinanceNewOrder(type, fromIndex, toIndex) {
     loadFinance(false);
 }
 
-// --- XSS-SICHERE MODAL-AKTUALISIERUNG ---
 function updateOpenFinanceModalContent(root, mIdx) {
     const content = document.getElementById('modal-content');
     const modal = document.getElementById('finance-modal');
@@ -861,37 +860,57 @@ function updateOpenFinanceModalContent(root, mIdx) {
         return;
     }
 
-    content.innerHTML = `
-        <div style="margin-bottom:20px; margin-top:20px;">
-            <small style="font-weight:bold; opacity:0.5;">📌 FIXKOSTEN</small>
-            <div id="modal-fixum-box" style="margin-top:8px;"></div>
-        </div>
-        <div>
-            <small style="font-weight:bold; opacity:0.5;">🛒 AUSGABEN</small>
-            <div id="modal-spendings-box" style="margin-top:8px;"></div>
-        </div>
-        <div style="text-align: center; margin-top: 30px;">
-            <button type="button" id="modal-delete-month-btn"
-                style="position:relative; z-index:50; background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; font-size:1.3rem; padding:12px 20px; border-radius:10px;">
-                🗑️ Gesamten Monat löschen
-            </button>
-        </div>
-    `;
+    // Grundstruktur des Modals aufbauen
+    content.replaceChildren();
 
-    const fixBox = content.querySelector("#modal-fixum-box");
-    if (fixBox) fixBox.replaceChildren(renderFinanceItems(m.fixum, mIdx, 'fixum'));
+    // 1. Fixkosten Sektion
+    const fixSection = document.createElement('div');
+    fixSection.style.cssText = "margin-bottom:20px; margin-top:20px;";
 
-    const spendBox = content.querySelector("#modal-spendings-box");
-    if (spendBox) spendBox.replaceChildren(renderFinanceItems(m.spendings, mIdx, 'spendings'));
+    const fixTitle = document.createElement('small');
+    fixTitle.style.cssText = "font-weight:bold; opacity:0.5; display:block;";
+    fixTitle.textContent = "📌 FIXKOSTEN";
+    fixSection.appendChild(fixTitle);
 
-    const delMonthBtn = content.querySelector("#modal-delete-month-btn");
-    if (delMonthBtn) {
-        delMonthBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            deleteMonth(mIdx);
-        });
-    }
+    const fixBox = document.createElement('div');
+    fixBox.style.cssText = "margin-top:8px; display:flex; flex-direction:column; gap:8px;";
+    const renderedFix = renderFinanceItems(m.fixum, mIdx, 'fixum');
+    if (renderedFix) fixBox.appendChild(renderedFix);
+    fixSection.appendChild(fixBox);
+    content.appendChild(fixSection);
+
+    // 2. Ausgaben Sektion
+    const spendSection = document.createElement('div');
+    spendSection.style.cssText = "margin-bottom:20px;";
+
+    const spendTitle = document.createElement('small');
+    spendTitle.style.cssText = "font-weight:bold; opacity:0.5; display:block;";
+    spendTitle.textContent = "🛒 AUSGABEN";
+    spendSection.appendChild(spendTitle);
+
+    const spendBox = document.createElement('div');
+    spendBox.style.cssText = "margin-top:8px; display:flex; flex-direction:column; gap:8px;";
+    const renderedSpend = renderFinanceItems(m.spendings, mIdx, 'spendings');
+    if (renderedSpend) spendBox.appendChild(renderedSpend);
+    spendSection.appendChild(spendBox);
+    content.appendChild(spendSection);
+
+    // 3. Löschen-Button
+    const deleteWrapper = document.createElement('div');
+    deleteWrapper.style.cssText = "text-align: center; margin-top: 30px;";
+
+    const delMonthBtn = document.createElement('button');
+    delMonthBtn.type = "button";
+    delMonthBtn.style.cssText = "position:relative; z-index:50; background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; font-size:1.3rem; padding:12px 20px; border-radius:10px;";
+    delMonthBtn.textContent = "🗑️ Gesamten Monat löschen";
+    delMonthBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        deleteMonth(mIdx);
+    });
+
+    deleteWrapper.appendChild(delMonthBtn);
+    content.appendChild(deleteWrapper);
 }
 
 // --- JAHR ÖFFNEN & ZURÜCK ---
