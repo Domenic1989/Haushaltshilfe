@@ -2640,21 +2640,38 @@ function updateStatus() {
     if (!user) return;  
     const timeStr = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });  
     const statusElem = document.getElementById("statusInfo");  
+    if (!statusElem) return;
     
+    // Alten Inhalt sicher entfernen
+    statusElem.replaceChildren();
+
     const isPersistent = (user === "Tablet" || (typeof isPersistentUser === 'function' && isPersistentUser(user)));
     let firstLineContent = isPersistent ? `📺 ${user} • ${timeStr}` : `${user} • ${timeStr}`;
-    const coloredLine = `<span class="user-name-gradient">${firstLineContent}</span>`;
+
+    // Hauptzeile mit Benutzernamen sicher als Text einfügen
+    const span = document.createElement('span');
+    span.className = 'user-name-gradient';
+    span.textContent = firstLineContent;
+    statusElem.appendChild(span);
 
     if (!isPersistent) {  
         const diff = Date.now() - lastActivity; 
         const timeLeft = 600000 - diff;  
-        if (timeLeft <= 0) logout();  
+        if (timeLeft <= 0) {
+            logout();
+            return;
+        }
         const min = Math.floor(timeLeft / 60000); 
         const sec = Math.floor((timeLeft % 60000) / 1000);  
-        statusElem.innerHTML = `${coloredLine}<br><span style="font-size:0.8rem; color:var(--danger); font-weight:bold;">Logout: ${min}:${sec < 10 ? '0' : ''}${sec}</span>`;  
-    } else { 
-        statusElem.innerHTML = coloredLine; 
-    }  
+
+        // Zeilenumbruch und Logout-Timer sicher anhängen
+        statusElem.appendChild(document.createElement('br'));
+
+        const logoutSpan = document.createElement('span');
+        logoutSpan.style.cssText = "font-size:0.8rem; color:var(--danger); font-weight:bold;";
+        logoutSpan.textContent = `Logout: ${min}:${sec < 10 ? '0' : ''}${sec}`;
+        statusElem.appendChild(logoutSpan);
+    }
 }
 
 async function updateAppBadges() {
