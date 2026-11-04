@@ -194,9 +194,5 @@ const FOOD_ENTITIES = [
     "text.essen_sonntag"
 ];
 
-// ---- MÜLL-KONFIGURATION ----
-const TRASH_CONFIG = [
-    { id: "sensor.gelber_sack", dateId: "sensor.gelber_sack_datum", name: "Gelber Sack", icon: "🟡" },
-    { id: "sensor.papier", dateId: "sensor.papier_datum", name: "Altpapier", icon: "📦" },
-    { id: "sensor.restmull", dateId: "sensor.restmull_datum", name: "Restmüll", icon: "🗑️" }
-];
+// ---- MÜLL-KONFIGURATION (wird dynamisch über die Integrations-Optionen geladen) ----
+let TRASH_CONFIG = [];

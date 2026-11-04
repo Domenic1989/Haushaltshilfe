@@ -139,13 +139,19 @@ async function applyVisibleTabs() {
         });
         if (res.ok) {
             const data = await res.json();
-            if (data && Array.isArray(data.visible_tabs)) {
-                visibleTabs = data.visible_tabs;
-                localStorage.setItem("ha_visible_tabs", JSON.stringify(visibleTabs));
+            if (data) {
+                // NEU: Müll-Konfiguration direkt dynamisch vom Server übernehmen
+                if (Array.isArray(data.trash_config)) {
+                    TRASH_CONFIG = data.trash_config;
+                }
+                if (Array.isArray(data.visible_tabs)) {
+                    visibleTabs = data.visible_tabs;
+                    localStorage.setItem("ha_visible_tabs", JSON.stringify(visibleTabs));
+                }
             }
         }
     } catch (e) {
-        console.warn("Konnte Tabs nicht über credentials laden:", e);
+        console.warn("Konnte Credentials nicht laden:", e);
     }
 
     if (!visibleTabs || !Array.isArray(visibleTabs)) {
@@ -162,6 +168,7 @@ async function applyVisibleTabs() {
     applyTabsToDOM(visibleTabs);
     return visibleTabs;
 }
+
 
 function applyTabsToDOM(visibleTabs) {
     // 1. Tab-Buttons in der Navigationsleiste ein-/ausblenden
@@ -867,40 +874,76 @@ async function loadUsers() {
 
 // saveUsers() entfernt: Die komplette Liste (mit Passwörtern) wird nicht mehr
 // hochgeladen. Änderungen laufen einzeln über userAction() mit Admin-Passwort.
-
 function renderUserGrid() {
     const grid = document.getElementById("userGrid");
-    if(!grid) return;
+    if (!grid) return;
+    grid.replaceChildren();
 
     if (!users || users.length === 0) {
-        grid.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--text-muted, #888); font-size: 0.95rem;">
-                Bitte einen Benutzer erstellen
-            </div>`;
+        const emptyDiv = document.createElement("div");
+        emptyDiv.style.cssText = "grid-column: 1 / -1; text-align: center; padding: 20px; color: var(--text-muted, #888); font-size: 0.95rem;";
+        emptyDiv.textContent = "Bitte einen Benutzer erstellen";
+        grid.appendChild(emptyDiv);
         return;
     }
 
     const colors = ['#FF5733', '#34C759', '#007AFF', '#FF9500', '#5856D6', '#FF2D55'];
-    grid.innerHTML = users.map((uStr, i) => {
+    users.forEach((uStr, i) => {
         const [uName, uPw] = uStr.split(':');
-        const initial = uName.charAt(0).toUpperCase();
+        const initial = uName ? uName.charAt(0).toUpperCase() : "";
         const color = colors[i % colors.length];
-        return `
-            <button class="user-btn ${user === uName ? 'selected' : ''}" onclick="selUser('${uName}', this)" style="position:relative;">
-                <div style="display:flex; align-items:center; gap:10px; padding-left:5px;">
-                    <div style="width:30px; height:30px; background:${color}; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.8rem; flex-shrink:0;">${initial}</div>
-                    <span style="flex:1; text-align:left;">${uName}</span>
-                </div>
-                <div class="user-edit-pen" style="position:absolute; top:-8px; left:-8px; background:var(--accent); color:white; width:26px; height:26px; border-radius:50%; font-size:12px; display:none; align-items:center; justify-content:center; border:2.5px solid white; z-index:10;" onclick="event.stopPropagation(); changeUserPassword('${uStr}')">✏️</div>
-                <div class="user-del-x" onclick="event.stopPropagation(); deleteUser('${uStr}')">×</div>
-            </button>`;
-    }).join('');
+
+        // 1. Haupt-Button für den Benutzer
+        const btn = document.createElement("button");
+        btn.className = `user-btn ${user === uName ? 'selected' : ''}`;
+        btn.style.position = "relative";
+        btn.addEventListener("click", () => selUser(uName, btn));
+
+        // 2. Innerer Flex-Container (Avatar + Name)
+        const innerFlex = document.createElement("div");
+        innerFlex.style.cssText = "display:flex; align-items:center; gap:10px; padding-left:5px;";
+
+        const avatar = document.createElement("div");
+        avatar.style.cssText = `width:30px; height:30px; background:${color}; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:0.8rem; flex-shrink:0;`;
+        avatar.textContent = initial;
+
+        const nameSpan = document.createElement("span");
+        nameSpan.style.cssText = "flex:1; text-align:left;";
+        nameSpan.textContent = uName; // Hier absolut sicher dank textContent!
+
+        innerFlex.appendChild(avatar);
+        innerFlex.appendChild(nameSpan);
+
+        // 3. Stift-Button zum Ändern des Passworts
+        const editPen = document.createElement("div");
+        editPen.className = "user-edit-pen";
+        editPen.style.cssText = "position:absolute; top:-8px; left:-8px; background:var(--accent); color:white; width:26px; height:26px; border-radius:50%; font-size:12px; display:none; align-items:center; justify-content:center; border:2.5px solid white; z-index:10; cursor:pointer;";
+        editPen.textContent = "✏️";
+        editPen.addEventListener("click", (e) => {
+            e.stopPropagation();
+            changeUserPassword(uStr);
+        });
+
+        // 4. X-Button zum Löschen des Benutzers
+        const delX = document.createElement("div");
+        delX.className = "user-del-x";
+        delX.style.cursor = "pointer";
+        delX.textContent = "×";
+        delX.addEventListener("click", (e) => {
+            e.stopPropagation();
+            deleteUser(uStr);
+        });
+
+        btn.appendChild(innerFlex);
+        btn.appendChild(editPen);
+        btn.appendChild(delX);
+        grid.appendChild(btn);
+    });
 }
 
 async function deleteUser(uStr) {  
     const uName = uStr.split(':')[0];
     
-    // Nutzt jetzt das komplett eigene Lösch-Modal
     const confirmed = await showDeleteModal(`Möchtest du den Benutzer "${uName}" wirklich löschen?`, "Benutzer löschen");
     
     if (confirmed) {  
@@ -944,7 +987,13 @@ async function changeUserPassword(uStr) {
         const isPersistent = parts[2] === 'persistent';
 
         isEditingUser = true;
-        document.getElementById("userModalTitle").innerText = `Benutzer "${uName}" bearbeiten`;
+        
+        // Sicherer Text ohne rohes Template-HTML
+        const modalTitle = document.getElementById("userModalTitle");
+        if (modalTitle) {
+            modalTitle.textContent = `Benutzer "${uName}" bearbeiten`;
+        }
+
         document.getElementById("userModalOldStr").value = uStr;
         document.getElementById("userModalName").value = uName;
         document.getElementById("userModalPw").value = "";
@@ -2288,29 +2337,35 @@ function resolveFoodPrompt(confirmed) {
 function createFavChip(f, isCustom, idx) {
     const chip = document.createElement('div'); 
     chip.className = 'fav-chip'; 
-    chip.innerHTML = `<span>${f.n}</span>`;
 
-    if(isCustom) { 
+    const span = document.createElement('span');
+    span.textContent = f.n; // XSS-sicher dank textContent!
+    chip.appendChild(span);
+
+    if (isCustom) { 
         const del = document.createElement('span'); 
-        del.innerHTML = " 🗑️"; 
+        del.textContent = " 🗑️"; 
         del.className = "del-fav"; 
-        del.onclick = (e) => { e.stopPropagation(); deleteFav(idx); }; 
+        del.addEventListener('click', (e) => { 
+            e.stopPropagation(); 
+            deleteFav(idx); 
+        });
         chip.appendChild(del); 
     }
 
-    chip.onclick = async () => { 
-        if(curTab === 'shop') {
+    chip.addEventListener('click', async () => { 
+        if (curTab === 'shop') {
             addShop(f.n); 
-        } else if(curTab === 'food') {
-            // Nutzt jetzt das neue, eigene Wochentag-Modal
+        } else if (curTab === 'food') {
+            // Nutzt das eigene Wochentag-Modal
             const d = await showFoodDayPrompt(
                 `Für welchen Tag?\n(0 = Mo, 1 = Di, 2 = Mi, 3 = Do, 4 = Fr, 5 = Sa, 6 = So)`, 
                 `Essen planen: ${f.n}`
             );
             
-            if(d !== null && d !== "") {
-                 const dayIdx = parseInt(d);
-                if(dayIdx >= 0 && dayIdx <= 6) {
+            if (d !== null && d !== "") {
+                const dayIdx = parseInt(d);
+                if (dayIdx >= 0 && dayIdx <= 6) {
                     document.getElementById('plan-' + dayIdx).value = f.n;
                     saveFood(dayIdx); 
                 } else {
@@ -2320,7 +2375,8 @@ function createFavChip(f, isCustom, idx) {
         } else { 
             addTodo(f.n); 
         }
-    };
+    });
+
     return chip;
 }
 
@@ -2433,24 +2489,37 @@ async function clearWeek() {
 }
 
 async function loadTrash() {
-    let h = ""; 
-    try { 
-        for (const s of TRASH_CONFIG) { 
-            const [dDays, dDate] = await Promise.all([ 
-                haGetState(s.id), 
-                haGetState(s.dateId) 
+    const container = document.getElementById("trash-content");
+    if (!container) return;
+    container.textContent = "";
+
+    try {
+        if (!Array.isArray(TRASH_CONFIG) || TRASH_CONFIG.length === 0) {
+            const emptyMsg = document.createElement("div");
+            emptyMsg.className = "trash-row";
+            emptyMsg.textContent = "Keine Müll-Sensoren in den Integrations-Optionen konfiguriert.";
+            container.appendChild(emptyMsg);
+            return;
+        }
+
+        for (const s of TRASH_CONFIG) {
+            if (!s.id || !s.dateId) continue;
+
+            const [dDays, dDate] = await Promise.all([
+                haGetState(s.id),
+                haGetState(s.dateId)
             ]);
-            
-            let tage = dDays.state; 
-            let rohDatum = dDate.state;
+
+            let tage = (dDays && dDays.state !== undefined) ? String(dDays.state) : "?";
+            let rohDatum = (dDate && dDate.state !== undefined) ? String(dDate.state) : "";
             let dF = "Unbekannt";
             let dateObj = null;
-            
+
             if (rohDatum && rohDatum !== "unknown" && rohDatum !== "unavailable") {
                 if (rohDatum.includes('.')) {
-                    dF = rohDatum; 
+                    dF = rohDatum;
                     const p = rohDatum.split('.');
-                    dateObj = new Date(p[2], p[1]-1, p[0]);
+                    dateObj = new Date(p[2], p[1] - 1, p[0]);
                 } else {
                     dateObj = new Date(rohDatum);
                     if (!isNaN(dateObj.getTime())) {
@@ -2480,28 +2549,51 @@ async function loadTrash() {
                         nextDate: reminderDate.toISOString()
                     };
                     todoDb.push(newTrashTodo);
-                    saveTodoDb(taskName, "automatisch geplant 🤖"); 
+                    saveTodoDb(taskName, "automatisch geplant 🤖");
                 }
             }
 
-            let dV = parseInt(tage);
+            let dV = parseInt(tage, 10);
             let col = isNaN(dV) ? "var(--text)" : (dV <= 1 ? "var(--danger)" : (dV <= 3 ? "var(--accent)" : "var(--text)"));
-            
-            h += `<div class="trash-row">
-                    <div class="trash-header">
-                        <span class="trash-name">${s.icon} ${s.name}</span>
-                        <span class="trash-days" style="color: ${col}">${tage} Tage</span>
-                    </div>
-                    <div class="trash-date">📅 Termin: <strong>${dF}</strong></div>
-                  </div>`;
-        } 
-        document.getElementById("trash-content").innerHTML = h; 
-        if(curTab === 'todo') renderTodoList();
-    } catch (e) { 
+
+            // Sicherer DOM-Aufbau ohne innerHTML
+            const row = document.createElement("div");
+            row.className = "trash-row";
+
+            const header = document.createElement("div");
+            header.className = "trash-header";
+
+            const nameSpan = document.createElement("span");
+            nameSpan.className = "trash-name";
+            nameSpan.textContent = `${s.icon || "🗑️"} ${s.name || ""}`;
+
+            const daysSpan = document.createElement("span");
+            daysSpan.className = "trash-days";
+            daysSpan.style.color = col;
+            daysSpan.textContent = `${tage} Tage`;
+
+            header.appendChild(nameSpan);
+            header.appendChild(daysSpan);
+
+            const dateDiv = document.createElement("div");
+            dateDiv.className = "trash-date";
+            dateDiv.appendChild(document.createTextNode("📅 Termin: "));
+            const strongDate = document.createElement("strong");
+            strongDate.textContent = dF;
+            dateDiv.appendChild(strongDate);
+
+            row.appendChild(header);
+            row.appendChild(dateDiv);
+            container.appendChild(row);
+        }
+
+        if (curTab === 'todo') renderTodoList();
+    } catch (e) {
         console.error("Fehler beim Laden des Müll-Syncs:", e);
-        document.getElementById("trash-content").innerHTML = "Fehler beim Laden!"; 
+        container.textContent = "Fehler beim Laden!";
     }
 }
+
     
 async function syncTrashToTodos() {
     for (const s of TRASH_CONFIG) {

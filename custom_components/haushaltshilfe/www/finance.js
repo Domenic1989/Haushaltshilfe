@@ -1,7 +1,6 @@
 // --- HA BASIS FUNKTIONEN (ÜBER TOKEN-FREIEN PROXY MIT CACHE-BUSTER) ---
 async function fetchHA(entity) {
     try {
-        // Nutzt haGetState mit, falls vom Hauptskript vorhanden, sonst direkt den Proxy ohne Cache
         if (typeof haGetState === "function") {
             const res = await haGetState(entity);
             if (res) return res;
@@ -23,17 +22,14 @@ function parseFinanceRoot(s) {
     if (!s) return { years: [], months: [] };
     let root = null;
 
-    // 1. Prüfe, ob in s.state ein aktueller JSON-String liegt
     if (s.state && typeof s.state === "string" && s.state.trim().startsWith("{")) {
         try { root = JSON.parse(s.state); } catch(e) {}
     }
 
-    // 2. Prüfe s.attributes.data
     if (!root && s.attributes && s.attributes.data) {
         root = typeof s.attributes.data === "string" ? JSON.parse(s.attributes.data) : s.attributes.data;
     }
 
-    // 3. Fallback direkt auf s.attributes
     if (!root && s.attributes && (Array.isArray(s.attributes.years) || Array.isArray(s.attributes.months))) {
         root = s.attributes;
     }
@@ -68,7 +64,6 @@ async function saveToHA(dataObj) {
 
 let fixkostenTemplates = [];
 
-// --- 1. FIXKOSTEN-VORLAGEN LADEN ---
 async function loadFixkostenTemplates() {
     try {
         const baseUrl = (typeof getBaseUrl === "function") ? getBaseUrl() : window.location.origin;
@@ -126,7 +121,7 @@ window.openFixkostenModal = async function() {
     } catch(e) {
         console.warn("Vorlagen-Laden fehlgeschlagen, öffne Modal dennoch:", e);
     }
-    cancelFixkostenEdit(); // Setzt das Formular sauber zurück
+    cancelFixkostenEdit();
     renderFixkostenList();
     
     const modal = document.getElementById('fixkostenModal');
@@ -135,8 +130,6 @@ window.openFixkostenModal = async function() {
     }
 };
 
-// --- 2. LISTE ZEICHNEN (Jetzt nur noch mit Mülleimer, Bearbeiten passiert über den Stift oben im HTML) ---
-// Hilfsfunktion gegen XSS (Punkt 4 aus dem Review)
 function escapeHtml(str) {
     return String(str ?? "")
         .replace(/&/g, "&amp;")
@@ -217,8 +210,6 @@ function renderFixkostenList() {
     });
 }
 
-
-// --- 3. VORLAGE IN DIE FORMULAR-FELDER LADEN (BEARBEITEN) ---
 window.editFixkostenTemplate = function(index) {
     const tpl = fixkostenTemplates[index];
     if (!tpl) return;
@@ -235,12 +226,10 @@ window.editFixkostenTemplate = function(index) {
         amountInput.value = tpl.amount;
         monthsSelect.value = tpl.months;
 
-        // Merkt sich den Index im HTML-Button
         saveBtn.dataset.editIndex = index;
         saveBtn.innerHTML = "💾 Änderung speichern";
         saveBtn.style.background = "var(--accent)";
 
-        // Zeigt den Abbrechen-Button an und versteckt den Extra-Stift
         if (editBtn) editBtn.style.display = "none";
         if (cancelBtn) cancelBtn.style.display = "block";
 
@@ -248,7 +237,6 @@ window.editFixkostenTemplate = function(index) {
     }
 };
 
-// --- 4. BEARBEITEN ABBRECHEN ---
 window.cancelFixkostenEdit = function() {
     const titleInput = document.getElementById("tpl_title");
     const amountInput = document.getElementById("tpl_amount");
@@ -271,7 +259,6 @@ window.cancelFixkostenEdit = function() {
     }
 };
 
-// --- 5. SPEICHERN (ENTWEDER NEU ODER ALS UPDATE) ---
 window.addFixkostenTemplate = async function() {
     const titleInput = document.getElementById("tpl_title");
     const amountInput = document.getElementById("tpl_amount");
@@ -286,7 +273,6 @@ window.addFixkostenTemplate = async function() {
     const editIndex = saveBtn ? parseInt(saveBtn.dataset.editIndex || "-1", 10) : -1;
 
     if (!title || isNaN(amount)) {
-        // Schickes eigenes Modal statt alert(...)
         const modal = document.getElementById("customConfirmModal");
         const titleEl = document.getElementById("customConfirmTitle");
         const msgEl = document.getElementById("customConfirmMessage");
@@ -296,7 +282,6 @@ window.addFixkostenTemplate = async function() {
             msgEl.innerText = "Bitte eine Bezeichnung und einen gültigen Betrag eingeben!";
             modal.style.display = "flex";
             
-            // Definiert die Schließen-Funktion für den OK-Button
             window.resolveConfirm = function() {
                 modal.style.display = "none";
             };
@@ -309,10 +294,8 @@ window.addFixkostenTemplate = async function() {
     if (!Array.isArray(fixkostenTemplates)) fixkostenTemplates = [];
 
     if (editIndex >= 0 && editIndex < fixkostenTemplates.length) {
-        // Bestehende Vorlage aktualisieren
         fixkostenTemplates[editIndex] = { title: title, amount: amount, months: months };
     } else {
-        // Neue Vorlage hinzufügen
         fixkostenTemplates.push({ title: title, amount: amount, months: months });
     }
 
@@ -321,7 +304,6 @@ window.addFixkostenTemplate = async function() {
     renderFixkostenList();
 };
 
-// --- 6. VORLAGE LÖSCHEN ---
 window.deleteFixkostenTemplate = async function(index) {
     if (!Array.isArray(fixkostenTemplates) || !fixkostenTemplates[index]) return;
     
@@ -458,18 +440,42 @@ function openFinanceDeleteModal(questionText, callback) {
     }
 }
 
+// --- XSS-SICHERE RENDERING-FUNKTION FÜR FINANZ-EINTRÄGE ---
 function renderFinanceItems(items, mIdx, type) {
-    if (!items || items.length === 0) return '<div style="opacity:0.2; font-size:0.7rem; padding:5px;">Leer</div>';
-    return items.map((i, iIdx) => `
-        <div class="finance-item" style="display:flex; justify-content:space-between; background:rgba(0,0,0,0.03); margin:3px 0; padding:6px 10px; border-radius:8px; font-size:0.85rem;">
-            <span>${i.name}</span>
-            <b onclick="delEntry(${mIdx}, '${type}', ${iIdx})" style="cursor:pointer; color:var(--danger);">${parseFloat(i.amount).toFixed(2)}€ ✕</b>
-        </div>`).join('');
+    const container = document.createElement("div");
+
+    if (!items || items.length === 0) {
+        container.style.cssText = "opacity:0.2; font-size:0.7rem; padding:5px;";
+        container.textContent = "Leer";
+        return container;
+    }
+
+    items.forEach((i, iIdx) => {
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "finance-item";
+        itemDiv.style.cssText = "display:flex; justify-content:space-between; background:rgba(0,0,0,0.03); margin:3px 0; padding:6px 10px; border-radius:8px; font-size:0.85rem;";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = i.name;
+
+        const deleteBtn = document.createElement("b");
+        deleteBtn.style.cssText = "cursor:pointer; color:var(--danger);";
+        deleteBtn.textContent = `${parseFloat(i.amount).toFixed(2)}€ ✕`;
+        
+        deleteBtn.addEventListener("click", () => {
+            delEntry(mIdx, type, iIdx);
+        });
+
+        itemDiv.appendChild(nameSpan);
+        itemDiv.appendChild(deleteBtn);
+        container.appendChild(itemDiv);
+    });
+
+    return container;
 }
 
 // --- 1. ÜBERSICHT LADEN (JAHRE ODER MONATE) ---
 window.loadFinance = async function(isBackgroundSync = false) {
-    // Während man ein Jahr oder einen Monat zieht, keinen Auto-Sync dazwischenfunken lassen
     if (isBackgroundSync && financeDragState.isDragging) return;
 
     const yearsView = document.getElementById('finance-years-view');
@@ -482,7 +488,6 @@ window.loadFinance = async function(isBackgroundSync = false) {
     const s = await fetchHA('sensor.haushalt_finance_db');
     let root = parseFinanceRoot(s);
     
-    // Prüft beim Auto-Sync im Hintergrund, ob sich überhaupt etwas geändert hat
     const currentHash = JSON.stringify(root);
     if (isBackgroundSync && currentHash === lastFinanceDataHash) {
         return;
@@ -490,7 +495,6 @@ window.loadFinance = async function(isBackgroundSync = false) {
     lastFinanceDataHash = currentHash;
 
     let list = root.months;
-    // WICHTIG: Kein zwangsweises .sort() mehr hier, damit deine eigene Drag & Drop Reihenfolge erhalten bleibt!
     let yearsList = root.years.map(String);
 
     if (activeFinanceYear === null) {
@@ -498,10 +502,13 @@ window.loadFinance = async function(isBackgroundSync = false) {
         if (yearsView) yearsView.style.display = 'block';
         if (monthsView) monthsView.style.display = 'none';
 
-        yearsContainer.innerHTML = "";
+        yearsContainer.replaceChildren();
 
         if (yearsList.length === 0) {
-            yearsContainer.innerHTML = `<div style="text-align:center; padding:30px; opacity:0.6; font-weight:bold; grid-column: 1 / -1;">Noch kein Jahr angelegt. Klicke oben auf "➕ Jahr hinzufügen".</div>`;
+            const emptyYearDiv = document.createElement("div");
+            emptyYearDiv.style.cssText = "text-align:center; padding:30px; opacity:0.6; font-weight:bold; grid-column: 1 / -1;";
+            emptyYearDiv.textContent = 'Noch kein Jahr angelegt. Klicke oben auf "➕ Jahr hinzufügen".';
+            yearsContainer.appendChild(emptyYearDiv);
             return;
         }
 
@@ -517,39 +524,87 @@ window.loadFinance = async function(isBackgroundSync = false) {
 
             const card = document.createElement('div');
             card.className = "month-card";
-            card.style = "position:relative; padding: 20px; border-radius: 20px; cursor:grab; user-select:none; -webkit-user-select:none;";
+            card.style.cssText = "position:relative; padding: 20px; border-radius: 20px; cursor:grab; user-select:none; -webkit-user-select:none;";
             card.dataset.index = yIdx;
             card.dataset.type = 'year';
 
-            card.onclick = () => {
+            card.addEventListener("click", () => {
                 if (card.dataset.wasDragged === "true") return;
                 openFinanceYear(yearStr);
-            };
+            });
 
-            card.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <h3 style="color:var(--primary); margin: 0; font-size:1.4rem; cursor:pointer; flex:1;">
-                        📅 Jahr ${yearStr}
-                    </h3>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="font-size:0.8rem; opacity:0.7; font-weight:bold; background:rgba(0,0,0,0.06); padding:4px 10px; border-radius:10px; cursor:pointer;">
-                            ${monthsInYear.length} Monate
-                        </span>
-                        <button type="button" class="del-finance-btn"
-                            onclick="event.stopPropagation(); event.preventDefault(); deleteFinanceYear('${yearStr}', event);" 
-                            style="position:relative; z-index:50; background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; font-size:1.3rem; padding:15px 18px; margin:-8px -8px -8px 0; border-radius:10px;">
-                            🗑️
-                        </button>
-                    </div>
-                </div>
-                <div style="font-size:0.9rem; opacity:0.85; cursor:pointer; pointer-events:none;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Fixkosten (Jahr):</span><b>${sumFixYear.toFixed(2)}€</b></div>
-                    <div style="display:flex; justify-content:space-between;"><span>Ausgaben (Jahr):</span><b>${sumVarYear.toFixed(2)}€</b></div>
-                    <hr style="border:0; border-top:1px solid rgba(0,0,0,0.1); margin:10px 0;">
-                    <div class="summary-total" style="display:flex; justify-content:space-between; font-weight:bold; font-size:1.05rem; padding-top:4px;">
-                        <span>Jahresgesamt:</span><span>${(sumFixYear + sumVarYear).toFixed(2)}€</span>
-                    </div>
-                </div>`;
+            // Sicherer DOM-Aufbau der Jahreskarte gegen XSS (inkl. 4-Digits-Prüfung)
+            const topRow = document.createElement("div");
+            topRow.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;";
+
+            const h3 = document.createElement("h3");
+            h3.style.cssText = "color:var(--primary); margin: 0; font-size:1.4rem; cursor:pointer; flex:1;";
+            h3.textContent = `📅 Jahr ${yearStr}`;
+
+            const badgeWrapper = document.createElement("div");
+            badgeWrapper.style.cssText = "display:flex; align-items:center; gap:8px;";
+
+            const countBadge = document.createElement("span");
+            countBadge.style.cssText = "font-size:0.8rem; opacity:0.7; font-weight:bold; background:rgba(0,0,0,0.06); padding:4px 10px; border-radius:10px; cursor:pointer;";
+            countBadge.textContent = `${monthsInYear.length} Monate`;
+
+            const delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "del-finance-btn";
+            delBtn.style.cssText = "position:relative; z-index:50; background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; font-size:1.3rem; padding:15px 18px; margin:-8px -8px -8px 0; border-radius:10px;";
+            delBtn.textContent = "🗑️";
+            delBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                deleteFinanceYear(yearStr, e);
+            });
+
+            badgeWrapper.appendChild(countBadge);
+            badgeWrapper.appendChild(delBtn);
+            topRow.appendChild(h3);
+            topRow.appendChild(badgeWrapper);
+
+            const infoBox = document.createElement("div");
+            infoBox.style.cssText = "font-size:0.9rem; opacity:0.85; cursor:pointer; pointer-events:none;";
+
+            const fixRow = document.createElement("div");
+            fixRow.style.cssText = "display:flex; justify-content:space-between; margin-bottom:4px;";
+            const fixLabel = document.createElement("span");
+            fixLabel.textContent = "Fixkosten (Jahr):";
+            const fixVal = document.createElement("b");
+            fixVal.textContent = `${sumFixYear.toFixed(2)}€`;
+            fixRow.appendChild(fixLabel);
+            fixRow.appendChild(fixVal);
+
+            const varRow = document.createElement("div");
+            varRow.style.cssText = "display:flex; justify-content:space-between;";
+            const varLabel = document.createElement("span");
+            varLabel.textContent = "Ausgaben (Jahr):";
+            const varVal = document.createElement("b");
+            varVal.textContent = `${sumVarYear.toFixed(2)}€`;
+            varRow.appendChild(varLabel);
+            varRow.appendChild(varVal);
+
+            const hr = document.createElement("hr");
+            hr.style.cssText = "border:0; border-top:1px solid rgba(0,0,0,0.1); margin:10px 0;";
+
+            const totalRow = document.createElement("div");
+            totalRow.className = "summary-total";
+            totalRow.style.cssText = "display:flex; justify-content:space-between; font-weight:bold; font-size:1.05rem; padding-top:4px;";
+            const totalLabel = document.createElement("span");
+            totalLabel.textContent = "Jahresgesamt:";
+            const totalVal = document.createElement("span");
+            totalVal.textContent = `${(sumFixYear + sumVarYear).toFixed(2)}€`;
+            totalRow.appendChild(totalLabel);
+            totalRow.appendChild(totalVal);
+
+            infoBox.appendChild(fixRow);
+            infoBox.appendChild(varRow);
+            infoBox.appendChild(hr);
+            infoBox.appendChild(totalRow);
+
+            card.appendChild(topRow);
+            card.appendChild(infoBox);
 
             enableFinanceDragAndDrop(card, 'year', yIdx);
             yearsContainer.appendChild(card);
@@ -560,16 +615,19 @@ window.loadFinance = async function(isBackgroundSync = false) {
         if (monthsView) monthsView.style.display = 'block';
 
         const titleEl = document.getElementById('finance-year-title');
-        if (titleEl) titleEl.innerText = `Finanzen ${activeFinanceYear} 📅`;
+        if (titleEl) titleEl.textContent = `Finanzen ${activeFinanceYear} 📅`;
 
-        monthsContainer.innerHTML = "";
+        monthsContainer.replaceChildren();
         
         const monthsWithIndex = list
             .map((m, idx) => ({ m, idx }))
             .filter(item => extractYearFromMonth(item.m) === String(activeFinanceYear));
 
         if (monthsWithIndex.length === 0) {
-            monthsContainer.innerHTML = `<div style="text-align:center; padding:30px; opacity:0.6; font-weight:bold; grid-column: 1 / -1;">Noch keine Monate in ${activeFinanceYear} angelegt. Klicke oben auf "➕ Monat in diesem Jahr hinzufügen".</div>`;
+            const emptyMonthDiv = document.createElement("div");
+            emptyMonthDiv.style.cssText = "text-align:center; padding:30px; opacity:0.6; font-weight:bold; grid-column: 1 / -1;";
+            emptyMonthDiv.textContent = `Noch keine Monate in ${activeFinanceYear} angelegt. Klicke oben auf "➕ Monat in diesem Jahr hinzufügen".`;
+            monthsContainer.appendChild(emptyMonthDiv);
         } else {
             monthsWithIndex.forEach(({ m, idx: mIdx }, localIdx) => {
                 const sumFix = (m.fixum || []).reduce((acc, i) => acc + (parseFloat(i.amount) || 0), 0);
@@ -577,25 +635,46 @@ window.loadFinance = async function(isBackgroundSync = false) {
                 
                 const card = document.createElement('div');
                 card.className = "month-card";
-                card.style = "cursor:pointer; text-align:center; user-select:none; -webkit-user-select:none;";
+                card.style.cssText = "cursor:pointer; text-align:center; user-select:none; -webkit-user-select:none;";
                 card.dataset.index = localIdx;
                 card.dataset.type = 'month';
 
-                card.onclick = () => {
+                card.addEventListener("click", () => {
                     if (card.dataset.wasDragged === "true") return;
                     openFinanceModal(mIdx);
-                };
+                });
 
-                card.innerHTML = `
-                    <h3 style="color:var(--primary); margin: 0 0 10px 0; pointer-events:none;">${m.month_name}</h3>
-                    <div style="font-size:0.85rem; opacity:0.8; pointer-events:none;">
-                        <div style="display:flex; justify-content:space-between;"><span>Fix:</span><b>${sumFix.toFixed(2)}€</b></div>
-                        <div style="display:flex; justify-content:space-between;"><span>Ausg:</span><b>${sumVar.toFixed(2)}€</b></div>
-                        <hr style="border:0; border-top:1px solid rgba(0,0,0,0.1); margin:8px 0;">
-                        <div class="summary-total" style="display:flex; justify-content:space-between; font-weight:bold; color:var(--text);">
-                            <span>Gesamt:</span><span>${(sumFix+sumVar).toFixed(2)}€</span>
-                        </div>
-                    </div>`;
+                // Sicherer DOM-Aufbau für Monatskarten (Freitext ${m.month_name} geschützt)
+                const monthTitle = document.createElement("h3");
+                monthTitle.style.cssText = "color:var(--primary); margin: 0 0 10px 0; pointer-events:none;";
+                monthTitle.textContent = m.month_name;
+
+                const infoBox = document.createElement("div");
+                infoBox.style.cssText = "font-size:0.85rem; opacity:0.8; pointer-events:none;";
+
+                const fixRow = document.createElement("div");
+                fixRow.style.cssText = "display:flex; justify-content:space-between;";
+                fixRow.innerHTML = `<span>Fix:</span><b>${sumFix.toFixed(2)}€</b>`;
+
+                const varRow = document.createElement("div");
+                varRow.style.cssText = "display:flex; justify-content:space-between;";
+                varRow.innerHTML = `<span>Ausg:</span><b>${sumVar.toFixed(2)}€</b>`;
+
+                const hr = document.createElement("hr");
+                hr.style.cssText = "border:0; border-top:1px solid rgba(0,0,0,0.1); margin:8px 0;";
+
+                const totalRow = document.createElement("div");
+                totalRow.className = "summary-total";
+                totalRow.style.cssText = "display:flex; justify-content:space-between; font-weight:bold; color:var(--text);";
+                totalRow.innerHTML = `<span>Gesamt:</span><span>${(sumFix+sumVar).toFixed(2)}€</span>`;
+
+                infoBox.appendChild(fixRow);
+                infoBox.appendChild(varRow);
+                infoBox.appendChild(hr);
+                infoBox.appendChild(totalRow);
+
+                card.appendChild(monthTitle);
+                card.appendChild(infoBox);
 
                 enableFinanceDragAndDrop(card, 'month', localIdx);
                 monthsContainer.appendChild(card);
@@ -625,7 +704,6 @@ let financeDragState = {
 };
 
 function enableFinanceDragAndDrop(card, type, index) {
-    // --- 1. PC MAUS DRAG & DROP ---
     card.draggable = true;
 
     card.addEventListener('dragstart', (e) => {
@@ -671,7 +749,6 @@ function enableFinanceDragAndDrop(card, type, index) {
         financeDragState.fromIndex = null;
     });
 
-    // --- 2. HANDY / TABLET TOUCH (2D-GRID KOMPATIBEL) ---
     card.addEventListener('touchstart', (e) => {
         if (e.target.closest('.del-finance-btn') || e.target.tagName === 'BUTTON') return;
 
@@ -691,7 +768,6 @@ function enableFinanceDragAndDrop(card, type, index) {
         const moveX = Math.abs(touch.clientX - financeDragState.startX);
         const moveY = Math.abs(touch.clientY - financeDragState.startY);
 
-        // Startet im 2D-Grid, sobald man mind. 12px zieht (horizontal oder vertikal)
         if (!financeDragState.isDragging && (moveX > 12 || moveY > 12)) {
             financeDragState.isDragging = true;
             card.classList.add('dragging-side-btn');
@@ -743,7 +819,6 @@ function enableFinanceDragAndDrop(card, type, index) {
     card.addEventListener('touchcancel', endTouchDrag);
 }
 
-// Speichert die neue Reihenfolge der Jahre oder Monate in Home Assistant
 async function applyFinanceNewOrder(type, fromIndex, toIndex) {
     const s = await fetchHA('sensor.haushalt_finance_db');
     let root = parseFinanceRoot(s);
@@ -760,7 +835,6 @@ async function applyFinanceNewOrder(type, fromIndex, toIndex) {
         const [movedMonth] = yearMonths.splice(fromIndex, 1);
         yearMonths.splice(toIndex, 0, movedMonth);
 
-        // Ersetzt die Monate des aktuellen Jahres in der neuen Reihenfolge, lässt andere Jahre unberührt
         let pointer = 0;
         root.months = root.months.map(m => {
             if (extractYearFromMonth(m) === yearStr) {
@@ -775,6 +849,7 @@ async function applyFinanceNewOrder(type, fromIndex, toIndex) {
     loadFinance(false);
 }
 
+// --- XSS-SICHERE MODAL-AKTUALISIERUNG ---
 function updateOpenFinanceModalContent(root, mIdx) {
     const content = document.getElementById('modal-content');
     const modal = document.getElementById('finance-modal');
@@ -789,20 +864,34 @@ function updateOpenFinanceModalContent(root, mIdx) {
     content.innerHTML = `
         <div style="margin-bottom:20px; margin-top:20px;">
             <small style="font-weight:bold; opacity:0.5;">📌 FIXKOSTEN</small>
-            <div style="margin-top:8px;">${renderFinanceItems(m.fixum, mIdx, 'fixum')}</div>
+            <div id="modal-fixum-box" style="margin-top:8px;"></div>
         </div>
         <div>
             <small style="font-weight:bold; opacity:0.5;">🛒 AUSGABEN</small>
-            <div style="margin-top:8px;">${renderFinanceItems(m.spendings, mIdx, 'spendings')}</div>
+            <div id="modal-spendings-box" style="margin-top:8px;"></div>
         </div>
         <div style="text-align: center; margin-top: 30px;">
-            <button type="button" 
-                onclick="event.stopPropagation(); event.preventDefault(); deleteMonth(${mIdx});" 
+            <button type="button" id="modal-delete-month-btn"
                 style="position:relative; z-index:50; background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; font-size:1.3rem; padding:12px 20px; border-radius:10px;">
                 🗑️ Gesamten Monat löschen
             </button>
         </div>
     `;
+
+    const fixBox = content.querySelector("#modal-fixum-box");
+    if (fixBox) fixBox.replaceChildren(renderFinanceItems(m.fixum, mIdx, 'fixum'));
+
+    const spendBox = content.querySelector("#modal-spendings-box");
+    if (spendBox) spendBox.replaceChildren(renderFinanceItems(m.spendings, mIdx, 'spendings'));
+
+    const delMonthBtn = content.querySelector("#modal-delete-month-btn");
+    if (delMonthBtn) {
+        delMonthBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            deleteMonth(mIdx);
+        });
+    }
 }
 
 // --- JAHR ÖFFNEN & ZURÜCK ---
@@ -819,7 +908,7 @@ window.backToYears = function() {
     loadFinance(false);
 };
 
-// --- JAHR HINZUFÜGEN (Sortiert automatisch absteigend ein, neuestes Jahr oben) ---
+// --- JAHR HINZUFÜGEN (Inklusive strenger 4-stelliger Validierung) ---
 window.addNewYear = async function() {
     openFinanceInputModal("Neues Jahr hinzufügen", "Jahr eingeben (z. B. 2026)", "", async (inputYear) => {
         const cleanYear = String(inputYear).trim();
@@ -840,7 +929,6 @@ window.addNewYear = async function() {
         }
 
         existingYears.push(cleanYear);
-        // Beim Neuanlegen einmalig sauber absteigend sortieren (z.B. 2027, 2026, 2025)
         existingYears.sort((a, b) => parseInt(b) - parseInt(a));
         root.years = existingYears;
 
@@ -869,7 +957,7 @@ window.deleteFinanceYear = async function(yearStr, event) {
     }
 };
 
-// --- 2. POPUP FÜR MONAT ÖFFNEN ---
+// --- 2. POPUP FÜR MONAT ÖFFNEN (XSS-sicher für ${m.month_name}) ---
 window.openFinanceModal = async function(mIdx) {
     currentOpenMonthIdx = mIdx;
     const modal = document.getElementById('finance-modal');
@@ -907,28 +995,59 @@ window.openFinanceModal = async function(mIdx) {
     }
 
     headerFixed.style.padding = "10px 5px 15px 5px";
-    headerFixed.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-right:3.5rem; min-height:2.6rem;">
-            <h2 style="margin:0; font-size:1.5rem; font-weight: 800; text-transform: uppercase;">
-                ${m.month_name}
-            </h2>
-        </div>
-        
-        <div class="finance-input-row" style="display:flex; gap:8px; align-items:center; width:100%;">
-            <input type="number" step="0.01" id="amt-${mIdx}" placeholder="€">
-            
-            <input type="text" id="name-${mIdx}" placeholder="Was?">
-            
-            <select id="type-${mIdx}">
-                <option value="spendings">🛒</option>
-                <option value="fixum">📌</option>
-            </select>
-            
-            <button class="btn-add" onclick="addEntry(${mIdx})">
-                OK
-            </button>
-        </div>
-    `;
+    
+    // Header-Bereich sauber mit createElement aufbauen
+    headerFixed.replaceChildren();
+
+    const topHeaderRow = document.createElement("div");
+    topHeaderRow.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-right:3.5rem; min-height:2.6rem;";
+    
+    const h2Title = document.createElement("h2");
+    h2Title.style.cssText = "margin:0; font-size:1.5rem; font-weight: 800; text-transform: uppercase;";
+    h2Title.textContent = m.month_name;
+    topHeaderRow.appendChild(h2Title);
+
+    const inputRow = document.createElement("div");
+    inputRow.className = "finance-input-row";
+    inputRow.style.cssText = "display:flex; gap:8px; align-items:center; width:100%;";
+
+    const amtInput = document.createElement("input");
+    amtInput.type = "number";
+    amtInput.step = "0.01";
+    amtInput.id = `amt-${mIdx}`;
+    amtInput.placeholder = "€";
+
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.id = `name-${mIdx}`;
+    nameInput.placeholder = "Was?";
+
+    const selectType = document.createElement("select");
+    selectType.id = `type-${mIdx}`;
+    
+    const optSpendings = document.createElement("option");
+    optSpendings.value = "spendings";
+    optSpendings.textContent = "🛒";
+    
+    const optFixum = document.createElement("option");
+    optFixum.value = "fixum";
+    optFixum.textContent = "📌";
+
+    selectType.appendChild(optSpendings);
+    selectType.appendChild(optFixum);
+
+    const okBtn = document.createElement("button");
+    okBtn.className = "btn-add";
+    okBtn.textContent = "OK";
+    okBtn.addEventListener("click", () => addEntry(mIdx));
+
+    inputRow.appendChild(amtInput);
+    inputRow.appendChild(nameInput);
+    inputRow.appendChild(selectType);
+    inputRow.appendChild(okBtn);
+
+    headerFixed.appendChild(topHeaderRow);
+    headerFixed.appendChild(inputRow);
 
     updateOpenFinanceModalContent(root, mIdx);
 };
@@ -979,7 +1098,7 @@ window.delEntry = async function(mIdx, type, iIdx) {
     }
 };
 
-// --- MONAT HINZUFÜGEN (Sortiert die Monate des Jahres direkt chronologisch Jan -> Dez) ---
+// --- MONAT HINZUFÜGEN ---
 window.addNewMonth = async function() {
     if (!activeFinanceYear) {
         alert("Bitte öffne zuerst ein Jahr, um darin einen Monat anzulegen!");
@@ -1010,7 +1129,6 @@ window.addNewMonth = async function() {
             spendings: []
         });
 
-        // Automatisch chronologisch (Januar bis Dezember) innerhalb dieses Jahres sortieren
         const yearMonths = root.months
             .filter(m => extractYearFromMonth(m) === yearStr)
             .sort((a, b) => parseMonthIndex(a.month_name) - parseMonthIndex(b.month_name));
