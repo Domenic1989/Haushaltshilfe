@@ -46,3 +46,10 @@ TEXT_ENTITIES = {
     "essen_samstag": {"name": "Essen Samstag", "initial": "", "icon": "mdi:silverware-fork-knife"},
     "essen_sonntag": {"name": "Essen Sonntag", "initial": "", "icon": "mdi:silverware-fork-knife"},
 }
+# Müll-Sensoren (Options Flow)
+CONF_TRASH_YELLOW_DAYS = "trash_yellow_days"
+CONF_TRASH_YELLOW_DATE = "trash_yellow_date"
+CONF_TRASH_PAPER_DAYS = "trash_paper_days"
+CONF_TRASH_PAPER_DATE = "trash_paper_date"
+CONF_TRASH_REST_DAYS = "trash_rest_days"
+CONF_TRASH_REST_DATE = "trash_rest_date"

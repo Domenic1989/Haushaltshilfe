@@ -4,12 +4,25 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers.selector import (
+    EntitySelector,
+    EntitySelectorConfig,
     TextSelector,
     TextSelectorConfig,
     TextSelectorType,
 )
 
-from .const import DOMAIN, CONF_ADMIN_PW, CONF_MASTER_PW, CONF_VISIBLE_TABS
+from .const import (
+    DOMAIN,
+    CONF_ADMIN_PW,
+    CONF_MASTER_PW,
+    CONF_VISIBLE_TABS,
+    CONF_TRASH_YELLOW_DAYS,
+    CONF_TRASH_YELLOW_DATE,
+    CONF_TRASH_PAPER_DAYS,
+    CONF_TRASH_PAPER_DATE,
+    CONF_TRASH_REST_DAYS,
+    CONF_TRASH_REST_DATE,
+)
 
 # Verfügbare Tabs für das Formular
 AVAILABLE_TABS = {
@@ -24,6 +37,20 @@ AVAILABLE_TABS = {
 PASSWORD_SELECTOR = TextSelector(
     TextSelectorConfig(type=TextSelectorType.PASSWORD)
 )
+
+# Entity-Selector für Müll-Sensoren
+SENSOR_SELECTOR = EntitySelector(
+    EntitySelectorConfig(domain="sensor")
+)
+
+TRASH_DEFAULTS = {
+    CONF_TRASH_YELLOW_DAYS: "sensor.gelber_sack",
+    CONF_TRASH_YELLOW_DATE: "sensor.gelber_sack_datum",
+    CONF_TRASH_PAPER_DAYS: "sensor.papier",
+    CONF_TRASH_PAPER_DATE: "sensor.papier_datum",
+    CONF_TRASH_REST_DAYS: "sensor.restmull",
+    CONF_TRASH_REST_DATE: "sensor.restmull_datum",
+}
 
 
 class HaushaltshilfeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -51,9 +78,15 @@ class HaushaltshilfeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required(CONF_ADMIN_PW): PASSWORD_SELECTOR,
             vol.Required(CONF_MASTER_PW): PASSWORD_SELECTOR,
             vol.Optional(
-                CONF_VISIBLE_TABS, 
-                default=list(AVAILABLE_TABS.keys())
+                CONF_VISIBLE_TABS,
+                default=list(AVAILABLE_TABS.keys()),
             ): cv.multi_select(AVAILABLE_TABS),
+            vol.Optional(CONF_TRASH_YELLOW_DAYS, default=TRASH_DEFAULTS[CONF_TRASH_YELLOW_DAYS]): SENSOR_SELECTOR,
+            vol.Optional(CONF_TRASH_YELLOW_DATE, default=TRASH_DEFAULTS[CONF_TRASH_YELLOW_DATE]): SENSOR_SELECTOR,
+            vol.Optional(CONF_TRASH_PAPER_DAYS, default=TRASH_DEFAULTS[CONF_TRASH_PAPER_DAYS]): SENSOR_SELECTOR,
+            vol.Optional(CONF_TRASH_PAPER_DATE, default=TRASH_DEFAULTS[CONF_TRASH_PAPER_DATE]): SENSOR_SELECTOR,
+            vol.Optional(CONF_TRASH_REST_DAYS, default=TRASH_DEFAULTS[CONF_TRASH_REST_DAYS]): SENSOR_SELECTOR,
+            vol.Optional(CONF_TRASH_REST_DATE, default=TRASH_DEFAULTS[CONF_TRASH_REST_DATE]): SENSOR_SELECTOR,
         })
 
         return self.async_show_form(
@@ -72,45 +105,69 @@ class HaushaltshilfeOptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
-        # self.config_entry wird von HA automatisch in OptionsFlow bereitgestellt
         entry = self.config_entry
 
         if user_input is not None:
-            # Starte immer mit einer Kombination aus Data und den bisherigen Options als Basis
             updated_options = {**entry.data, **entry.options}
 
-            # Master-Passwort: Nur überschreiben, wenn tatsächlich etwas eingegeben wurde
             master_pw = user_input.get(CONF_MASTER_PW)
             if master_pw and str(master_pw).strip():
                 updated_options[CONF_MASTER_PW] = str(master_pw).strip()
 
-            # Admin-Passwort: Nur überschreiben, wenn tatsächlich etwas eingegeben wurde
             admin_pw = user_input.get(CONF_ADMIN_PW)
             if admin_pw and str(admin_pw).strip():
                 updated_options[CONF_ADMIN_PW] = str(admin_pw).strip()
 
-            # Sichtbare Tabs direkt aus dem Multi-Select übernehmen
             if CONF_VISIBLE_TABS in user_input:
                 updated_options[CONF_VISIBLE_TABS] = user_input[CONF_VISIBLE_TABS]
 
+            for trash_key in TRASH_DEFAULTS:
+                updated_options[trash_key] = user_input.get(trash_key, "")
+
             return self.async_create_entry(title="", data=updated_options)
 
-        # Aktuell gewählte Tabs auslesen
         current_tabs = entry.options.get(
-            CONF_VISIBLE_TABS, 
-            entry.data.get(CONF_VISIBLE_TABS, list(AVAILABLE_TABS.keys()))
+            CONF_VISIBLE_TABS,
+            entry.data.get(CONF_VISIBLE_TABS, list(AVAILABLE_TABS.keys())),
         )
+
+        def _get_trash_opt(key):
+            return entry.options.get(key, entry.data.get(key, TRASH_DEFAULTS[key]))
 
         options_schema = vol.Schema({
             vol.Optional(CONF_ADMIN_PW): PASSWORD_SELECTOR,
             vol.Optional(CONF_MASTER_PW): PASSWORD_SELECTOR,
             vol.Optional(
-                CONF_VISIBLE_TABS, 
-                default=current_tabs
+                CONF_VISIBLE_TABS,
+                default=current_tabs,
             ): cv.multi_select(AVAILABLE_TABS),
+            vol.Optional(
+                CONF_TRASH_YELLOW_DAYS,
+                description={"suggested_value": _get_trash_opt(CONF_TRASH_YELLOW_DAYS)},
+            ): SENSOR_SELECTOR,
+            vol.Optional(
+                CONF_TRASH_YELLOW_DATE,
+                description={"suggested_value": _get_trash_opt(CONF_TRASH_YELLOW_DATE)},
+            ): SENSOR_SELECTOR,
+            vol.Optional(
+                CONF_TRASH_PAPER_DAYS,
+                description={"suggested_value": _get_trash_opt(CONF_TRASH_PAPER_DAYS)},
+            ): SENSOR_SELECTOR,
+            vol.Optional(
+                CONF_TRASH_PAPER_DATE,
+                description={"suggested_value": _get_trash_opt(CONF_TRASH_PAPER_DATE)},
+            ): SENSOR_SELECTOR,
+            vol.Optional(
+                CONF_TRASH_REST_DAYS,
+                description={"suggested_value": _get_trash_opt(CONF_TRASH_REST_DAYS)},
+            ): SENSOR_SELECTOR,
+            vol.Optional(
+                CONF_TRASH_REST_DATE,
+                description={"suggested_value": _get_trash_opt(CONF_TRASH_REST_DATE)},
+            ): SENSOR_SELECTOR,
         })
 
         return self.async_show_form(
             step_id="init",
-            data_schema=options_schema
+            data_schema=options_schema,
         )

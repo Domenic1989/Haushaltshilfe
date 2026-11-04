@@ -9,7 +9,19 @@ from homeassistant.components import frontend
 from homeassistant.components.http import HomeAssistantView, StaticPathConfig
 from homeassistant.helpers.storage import Store
 
-from .const import DOMAIN, CONF_ADMIN_PW, CONF_MASTER_PW, CONF_VISIBLE_TABS, TEXT_ENTITIES
+from .const import (
+    DOMAIN,
+    CONF_ADMIN_PW,
+    CONF_MASTER_PW,
+    CONF_VISIBLE_TABS,
+    TEXT_ENTITIES,
+    CONF_TRASH_YELLOW_DAYS,
+    CONF_TRASH_YELLOW_DATE,
+    CONF_TRASH_PAPER_DAYS,
+    CONF_TRASH_PAPER_DATE,
+    CONF_TRASH_REST_DAYS,
+    CONF_TRASH_REST_DATE,
+)
 from .security import (
     hash_password,
     is_hashed,
@@ -126,7 +138,7 @@ async def async_migrate_secrets(hass, entry: ConfigEntry, store_data: dict) -> b
 
 
 class HaushaltshilfeCredentialsView(HomeAssistantView):
-    """Liefert die sichtbaren Tabs. Passwörter werden NICHT mehr ausgeliefert."""
+    """Liefert die sichtbaren Tabs und die Müll-Sensoren. Passwörter werden NICHT ausgeliefert."""
     url = "/api/haushaltshilfe/credentials"
     name = "api:haushaltshilfe:credentials"
     requires_auth = True
@@ -154,8 +166,47 @@ class HaushaltshilfeCredentialsView(HomeAssistantView):
         else:
             visible_tabs = ["shop", "todo", "food", "trash", "finance"]
 
+        def _get_opt(key, default):
+            if key in entry.options:
+                return entry.options.get(key) or ""
+            if key in entry.data:
+                return entry.data.get(key) or ""
+            return default
+
+        trash_config = []
+        yellow_days = _get_opt(CONF_TRASH_YELLOW_DAYS, "sensor.gelber_sack")
+        yellow_date = _get_opt(CONF_TRASH_YELLOW_DATE, "sensor.gelber_sack_datum")
+        if yellow_days and yellow_date:
+            trash_config.append({
+                "id": yellow_days,
+                "dateId": yellow_date,
+                "name": "Gelber Sack",
+                "icon": "🟡",
+            })
+
+        paper_days = _get_opt(CONF_TRASH_PAPER_DAYS, "sensor.papier")
+        paper_date = _get_opt(CONF_TRASH_PAPER_DATE, "sensor.papier_datum")
+        if paper_days and paper_date:
+            trash_config.append({
+                "id": paper_days,
+                "dateId": paper_date,
+                "name": "Altpapier",
+                "icon": "📦",
+            })
+
+        rest_days = _get_opt(CONF_TRASH_REST_DAYS, "sensor.restmull")
+        rest_date = _get_opt(CONF_TRASH_REST_DATE, "sensor.restmull_datum")
+        if rest_days and rest_date:
+            trash_config.append({
+                "id": rest_days,
+                "dateId": rest_date,
+                "name": "Restmüll",
+                "icon": "🗑️",
+            })
+
         return self.json({
             "visible_tabs": visible_tabs,
+            "trash_config": trash_config,
             "has_master_pw": bool(_stored_pw(hass, CONF_MASTER_PW, "helper_master_pw")),
             "has_admin_pw": bool(_stored_pw(hass, CONF_ADMIN_PW, "helper_admin_pw")),
         })
@@ -396,8 +447,6 @@ class HaushaltshilfeStateProxyView(HomeAssistantView):
         entity_id = request.query.get("entity_id")
 
         if entity_id:
-            # Automatische Brücke: Falls das Frontend noch nach input_text.essen_* fragt,
-            # liefern wir automatisch die neue echte text.essen_* Entität aus!
             if entity_id.startswith("input_text."):
                 short_key = entity_id.replace("input_text.", "")
                 if short_key in TEXT_ENTITIES:
@@ -449,12 +498,10 @@ class HaushaltshilfeStateProxyView(HomeAssistantView):
 
             val_str = str(value)
 
-            # 1. Wenn es eine unserer echten Text-Entitäten ist -> über die Entität updaten (Punkt 2 & 3 von Frenck)
             if helper_key in text_entities:
                 await text_entities[helper_key].async_set_value(val_str)
                 return self.json({"success": True})
 
-            # 2. Falls es ein Sensor-Event ist (z.B. finance_templates oder finance_db)
             if "finance_templates" in entity_id:
                 try:
                     parsed_tpl = json.loads(val_str) if isinstance(value, str) else value
@@ -475,7 +522,6 @@ class HaushaltshilfeStateProxyView(HomeAssistantView):
                     await store.async_save(store_data)
                 return self.json({"success": True})
 
-            # 3. Fallback: Nur im Store speichern (NIEMALS hass.states.async_set aufrufen!)
             store_data[helper_key] = val_str
             if store is not None:
                 await store.async_save(store_data)
@@ -575,7 +621,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     opt_tabs = entry.options.get(CONF_VISIBLE_TABS, entry.data.get(CONF_VISIBLE_TABS))
 
-    # Einmalige Migration für Fixkosten-Vorlagen
     if "helper_finance_templates" in store_data:
         if "finance_templates" not in store_data or store_data["finance_templates"] == "[]":
             store_data["finance_templates"] = store_data["helper_finance_templates"]
@@ -584,7 +629,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if "finance_templates" not in store_data:
         store_data["finance_templates"] = "[]"
 
-    # Initialwerte für unsere Text-Entitäten im Store sicherstellen (OHNE hass.states.async_set!)
     for helper_id, config in TEXT_ENTITIES.items():
         if helper_id == "helper_visible_tabs" and opt_tabs is not None:
             val_to_set = json.dumps(opt_tabs) if isinstance(opt_tabs, list) else str(opt_tabs)
@@ -626,7 +670,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             hass.bus.async_listen(ev_name, handle_custom_events)
         )
 
-    # Statischen Pfad direkt aus dem Integrationsordner bereitstellen (Punkt 1)
     www_dir = hass.config.path("custom_components", DOMAIN, "www")
     if os.path.exists(www_dir) and not hass.data[DOMAIN].get("static_registered"):
         await hass.http.async_register_static_paths([
@@ -664,7 +707,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a config entry (Punkt 5)."""
+    """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         frontend.async_remove_panel(hass, "haushaltshilfe")
