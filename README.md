@@ -90,9 +90,8 @@ Du kannst das Panel der Haushaltshilfe Pro auf zwei Arten aufrufen:
 
 1. **Über die Seitenleiste:** Klicke einfach auf den Menüeintrag **Haushaltshilfe** in deinem Home Assistant.
 2. **Direkt per Browser-URL:** Rufe die Adresse direkt auf, z. B. auf einem Wand-Tablet oder im Kiosk-Browser:
-   - `http://<DEINE-HOME-ASSISTANT-IP>:8123/local/haushaltshilfe/index.html`
-   - `http://<DEINE-HOME-ASSISTANT-IP>/local/haushaltshilfe/index.html`
-
+   - `http://<DEINE-HOME-ASSISTANT-IP>:8123/haushaltshilfe_static/index.html`
+   - `http://<DEINE-HOME-ASSISTANT-IP>/haushaltshilfe_static/index.html`
 ### Token-Einrichtung für den Direktaufruf
 
 Beim Direktaufruf über die Browser-URL gibt es im Hintergrund keine aktive Home-Assistant-Sitzung. Deshalb braucht das Gerät einmalig ein eigenes Token:
@@ -106,14 +105,12 @@ Das Token wird nur im Browser dieses Geräts gespeichert und nie an andere Gerä
  
  ## 🗑️ Müllabfuhr konfigurieren (Optional)
 
-Solltest du bereits die HACS-Integration *Waste Collection Schedule* nutzen, passt du in der Datei `www/haushaltshilfe/config.js` einfach die Entitäten-IDs deiner Müll-Sensoren an:
+Solltest du bereits eine Müllkalender-Integration (wie z. B. *Waste Collection Schedule* über HACS) nutzen, kannst du deine Sensoren ganz bequem und **update-sicher** direkt in der Home Assistant Oberfläche hinterlegen – ganz ohne Dateien bearbeiten zu müssen[cite: 1]:
 
-
-  const TRASH_CONFIG = [
-    { id: "sensor.gelber_sack", dateId: "sensor.gelber_sack_datum", name: "Gelber Sack", icon: "🟡" },
-    { id: "sensor.papier", dateId: "sensor.papier_datum", name: "Altpapier", icon: "📦" },
-    { id: "sensor.restmull", dateId: "sensor.restmull_datum", name: "Restmüll", icon: "🗑️" }
-  ];
+1. Gehe in Home Assistant auf **Einstellungen** ⚙️ -> **Geräte & Dienste**.
+2. Suche die Integration **Haushaltshilfe Pro** und klicke auf **Konfigurieren**.
+3. Wähle im unteren Bereich einfach deine bestehenden Sensoren für **Gelber Sack**, **Papiertonne** und **Restmüll** (jeweils den Sensor für die *verbleibenden Tage* und das *Abholdatum*) aus der Liste aus.
+4. Klicke auf **OK** – das Dashboard übernimmt deine Auswahl sofort automatisch und behält sie auch bei zukünftigen HACS-Updates dauerhaft bei!
 
 # 📖 Bedienungsanleitung – Haushaltshilfe Pro 🏠
 
