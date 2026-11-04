@@ -105,7 +105,7 @@ Das Token wird nur im Browser dieses Geräts gespeichert und nie an andere Gerä
  
  ## 🗑️ Müllabfuhr konfigurieren (Optional)
 
-Solltest du bereits eine Müllkalender-Integration (wie z. B. *Waste Collection Schedule* über HACS) nutzen, kannst du deine Sensoren ganz bequem und **update-sicher** direkt in der Home Assistant Oberfläche hinterlegen – ganz ohne Dateien bearbeiten zu müssen[cite: 1]:
+Solltest du bereits eine Müllkalender-Integration (wie z. B. *Waste Collection Schedule* über HACS) nutzen, kannst du deine Sensoren ganz bequem und **update-sicher** direkt in der Home Assistant Oberfläche hinterlegen – ganz ohne Dateien bearbeiten zu müssen
 
 1. Gehe in Home Assistant auf **Einstellungen** ⚙️ -> **Geräte & Dienste**.
 2. Suche die Integration **Haushaltshilfe Pro** und klicke auf **Konfigurieren**.
