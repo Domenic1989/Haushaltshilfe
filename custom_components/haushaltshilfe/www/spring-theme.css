@@ -1,0 +1,462 @@
+/* ========================================================
+   --- SPRING THEME (FRÜHLINGSGRÜN, KIRSCHBLÜTE & ROSÉ - body.theme-spring) ---
+   ======================================================== */
+
+/* --- FALLENDE BLÜTENBLÄTTER ANIMATION --- */
+@keyframes springPetals {
+    0% {
+        background-position: 0px 0px, 0px 0px, 0px 0px;
+    }
+    100% {
+        background-position: 350px 800px, -280px 550px, 220px 450px;
+    }
+}
+
+/* --- SPRING BASIS & HINTERGRUND (FRISCHES WIESEN- & WALDMEISTERGRÜN) --- */
+body.theme-spring { 
+    background: linear-gradient(135deg, #134e5e 0%, #2e7d32 50%, #71b280 100%) !important; 
+    background-attachment: fixed !important; 
+    background-size: cover !important; 
+    --text: #1b3b2b; 
+    --todo: #2e7d32;       /* Sattes Blattgrün für Sekundär-Buttons */
+    --primary: #d81b60;    /* Kräftiges Kirschblüten-Pink für Haupt-Buttons */
+    --bg: rgba(255, 255, 255, 0.95);
+    --card: rgba(255, 250, 252, 0.95);
+    --gray: #1b3b2b;
+    position: relative;
+}
+
+body.theme-spring #loginOverlay { 
+    background: linear-gradient(135deg, #134e5e 0%, #2e7d32 50%, #71b280 100%) !important; 
+}
+
+/* Schwebende rosa & weiße Blütenblätter im Hintergrund */
+body.theme-spring::before,
+body.theme-spring #loginOverlay::before {
+    content: "🌸";
+    position: fixed;
+    inset: 0;
+    pointer-events: none !important;
+    z-index: 9999;
+    font-size: 0;
+    background-image: 
+        radial-gradient(6px 4px at 80px 40px, rgba(255, 183, 197, 0.9) 50%, transparent 100%),
+        radial-gradient(5px 5px at 220px 140px, rgba(255, 255, 255, 0.85) 50%, transparent 100%),
+        radial-gradient(4px 6px at 340px 260px, rgba(244, 143, 177, 0.8) 50%, transparent 100%),
+        radial-gradient(6px 5px at 140px 320px, rgba(255, 245, 157, 0.75) 50%, transparent 100%),
+        radial-gradient(5px 4px at 380px 80px, rgba(255, 183, 197, 0.9) 50%, transparent 100%),
+        radial-gradient(4px 4px at 50px 220px, rgba(255, 255, 255, 0.8) 50%, transparent 100%);
+    background-size: 420px 420px, 320px 320px, 260px 260px;
+    animation: springPetals 22s linear infinite;
+}
+
+/* --- WARMER BLÜTEN-GLAS-EFFEKT (ZART-ROSA WEISS & ROSÉ-RAND) --- */
+body.theme-spring .login-card, 
+body.theme-spring .input-card, 
+body.theme-spring li, 
+body.theme-spring .day-card, 
+body.theme-spring #trash-content, 
+body.theme-spring .cat-btn, 
+body.theme-spring .fav-chip, 
+body.theme-spring .tab-bar, 
+body.theme-spring .theme-toggle-top, 
+body.theme-spring .admin-btn, 
+body.theme-spring .cook-select, 
+body.theme-spring .user-btn, 
+body.theme-spring .month-card { 
+    background: rgba(255, 250, 252, 0.85) !important; 
+    backdrop-filter: blur(20px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important; 
+    border: 1.5px solid rgba(236, 64, 122, 0.45) !important; 
+    box-shadow: 0 8px 32px rgba(19, 78, 94, 0.2), inset 0 0 10px rgba(255, 183, 197, 0.25) !important; 
+    color: #1b3b2b !important; 
+}
+
+/* Kleine Frühlings-Deko oben rechts auf den Monats- und Tageskarten */
+body.theme-spring .month-card,
+body.theme-spring .day-card {
+    position: relative !important;
+}
+body.theme-spring .month-card::after {
+    content: "🌷";
+    position: absolute;
+    top: 2px;
+    right: 3px;
+    font-size: 1.15rem;
+    opacity: 0.75;
+    pointer-events: none;
+}
+body.theme-spring .day-card::after {
+    content: "🌸";
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 0.95rem;
+    opacity: 0.65;
+    pointer-events: none;
+}
+
+/* --- SIDEBAR BUTTONS --- */
+body.theme-spring .side-btn { 
+    background: rgba(255, 250, 252, 0.85) !important; 
+    backdrop-filter: blur(20px) saturate(180%) !important; 
+    border: 1.5px solid rgba(236, 64, 122, 0.45) !important; 
+    color: #1b3b2b !important; 
+    display: flex !important; 
+    flex-direction: row !important; 
+    justify-content: flex-start !important; 
+    align-items: center !important; 
+    gap: 10px !important; 
+    padding: 8px 12px !important; 
+    min-height: 50px !important; 
+    border-radius: 12px !important; 
+}
+
+/* --- TEXTE DUNKELGRÜN AUF BLÜTEN-GLAS --- */
+body.theme-spring h1 { 
+    color: #fff9c4 !important; 
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+    font-weight: 800 !important; 
+}
+body.theme-spring .status-bar {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+}
+body.theme-spring .main-input, 
+body.theme-spring .day-input, 
+body.theme-spring .cat-btn, 
+body.theme-spring .admin-btn, 
+body.theme-spring .fav-chip, 
+body.theme-spring .trash-name, 
+body.theme-spring .day-label span, 
+body.theme-spring .tab-item, 
+body.theme-spring .user-label, 
+body.theme-spring #list-todo li div { 
+    color: #1b3b2b !important; 
+    font-weight: 700 !important; 
+}
+
+/* --- AKTIVE ELEMENTE (FRÜHLINGS-PINK/BEERE & SONNENGELBER RAND) --- */
+body.theme-spring .side-btn.active-shop, 
+body.theme-spring .side-btn.active-todo, 
+body.theme-spring .cat-btn.active-shop, 
+body.theme-spring .cat-btn.active-food, 
+body.theme-spring .cat-btn.active-todo, 
+body.theme-spring .user-btn.selected { 
+    background: linear-gradient(135deg, #ec407a 0%, #ad1457 100%) !important; 
+    color: #ffffff !important; 
+    border: 1.5px solid #fff59d !important; 
+    box-shadow: 0 5px 15px rgba(216, 27, 96, 0.4) !important; 
+}
+
+/* --- TAB-BAR MIT BLÜTEN-KANTE --- */
+body.theme-spring .tab-bar { 
+    padding: 0 !important; 
+    margin: 0 !important; 
+    height: 80px !important; 
+    display: flex !important; 
+    align-items: stretch !important; 
+    justify-content: space-around !important; 
+    border-top: 2px solid #f48fb1 !important; 
+    background: rgba(255, 250, 252, 0.92) !important;
+}
+body.theme-spring .tab-item { 
+    flex: 1 !important; 
+    height: 100% !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    background: transparent !important; 
+}
+body.theme-spring .tab-item.active-shop, 
+body.theme-spring .tab-item.active-food, 
+body.theme-spring .tab-item.active-todo, 
+body.theme-spring .tab-item.active-finance, 
+body.theme-spring .tab-item.active-trash { 
+    background: linear-gradient(180deg, #ec407a 0%, #ad1457 100%) !important; 
+    color: #ffffff !important; 
+    border-radius: 0 !important; 
+    height: 100% !important; 
+    width: 100% !important; 
+    transform: none !important; 
+    box-shadow: inset 0 2px 8px rgba(255, 245, 157, 0.35) !important; 
+}
+body.theme-spring .tab-item.active-shop .icon, 
+body.theme-spring .tab-item.active-food .icon, 
+body.theme-spring .tab-item.active-todo .icon, 
+body.theme-spring .tab-item.active-trash .icon, 
+body.theme-spring .tab-item.active-finance .icon, 
+body.theme-spring .tab-item.active-shop span, 
+body.theme-spring .tab-item.active-food span, 
+body.theme-spring .tab-item.active-finance span, 
+body.theme-spring .tab-item.active-todo span,
+body.theme-spring .tab-item.active-trash span { 
+    color: #ffffff !important; 
+}
+
+/* --- DAY-DOTS FIX --- */
+body.theme-spring .day-dot { 
+    background: #ffffff !important; 
+    color: #1b3b2b !important; 
+    border: 1px solid rgba(236, 64, 122, 0.4) !important; 
+    cursor: pointer !important; 
+    display: flex !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+}
+body.theme-spring .day-dot.active { 
+    background: linear-gradient(135deg, #ec407a 0%, #ad1457 100%) !important; 
+    color: #ffffff !important; 
+    border: 2px solid #fff59d !important; 
+    transform: scale(1.05) !important; 
+    box-shadow: 0 4px 12px rgba(216, 27, 96, 0.4) !important; 
+}
+
+/* --- MODALS & FINANCE --- */
+body.theme-spring #intervalModal > div, 
+body.theme-spring #editModal > div, 
+body.theme-spring #shopQtyModal > div, 
+body.theme-spring #finance-modal > div,
+body.theme-spring #passwordModal > div,
+body.theme-spring #fixkostenModal > div,
+body.theme-spring #userModal > div,
+body.theme-spring #roomModal > div, 
+body.theme-spring #deleteModal > div,
+body.theme-spring #customConfirmModal .modal-card,
+body.theme-spring #customDeleteModal .modal-card,
+body.theme-spring #customInputModal .modal-card,
+body.theme-spring #customFoodModal .modal-card { 
+    background: rgba(255, 250, 252, 0.96) !important; 
+    backdrop-filter: blur(25px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important; 
+    border: 2px solid #ec407a !important; 
+    box-shadow: 0 20px 60px rgba(19, 78, 94, 0.35) !important; 
+    color: #1b3b2b !important; 
+    border-radius: 20px !important; 
+}
+
+body.theme-spring .summary-total { 
+    color: #c2185b !important; 
+    border-top: 2px solid rgba(236, 64, 122, 0.4) !important; 
+}
+body.theme-spring .month-card h3, 
+body.theme-spring #modal-content h2,
+body.theme-spring #modal-header-fixed h2,
+body.theme-spring #editModal h2, 
+body.theme-spring #editModal h3, 
+body.theme-spring #editModal label,
+body.theme-spring #passwordModal h3,
+body.theme-spring #fixkostenModal h2,
+body.theme-spring #userModal h3,
+body.theme-spring #roomModal h3, 
+body.theme-spring #deleteModal h3,
+body.theme-spring #customConfirmTitle,
+body.theme-spring #customDeleteTitle,
+body.theme-spring #customInputTitle,
+body.theme-spring #customFoodTitle { 
+    color: #c2185b !important; 
+    font-weight: 800 !important; 
+}
+
+body.theme-spring .modal-content h1, 
+body.theme-spring .modal-content h2, 
+body.theme-spring .modal-content h3, 
+body.theme-spring .modal-content label,
+body.theme-spring #fixkostenModal label, 
+body.theme-spring #fixkostenModal p,
+body.theme-spring #userModal label,
+body.theme-spring #deleteModal p,
+body.theme-spring #customConfirmMessage,
+body.theme-spring #customDeleteMessage,
+body.theme-spring #customInputMessage,
+body.theme-spring #customFoodMessage,
+body.theme-spring #settingsOverlay label,
+body.theme-spring #modal-content small { 
+    color: #1b3b2b !important; 
+    font-weight: 700 !important; 
+}
+
+/* Abbrechen Buttons in Modals */
+body.theme-spring .modal-content button[onclick*="closeEdit"], 
+body.theme-spring .modal-content button[onclick*="intervalModal"], 
+body.theme-spring .modal-content button[onclick*="shopQtyModal"] { 
+    color: #c2185b !important; 
+    font-weight: 800 !important; 
+    opacity: 1 !important; 
+    background: none; 
+    border: none; 
+    cursor: pointer; 
+}
+
+/* Eingabefelder in Modals */
+body.theme-spring #edit-assignee,
+body.theme-spring #modalAssignee, 
+body.theme-spring #edit-name, 
+body.theme-spring #modalName, 
+body.theme-spring #modalTitle,
+body.theme-spring #modalDate, 
+body.theme-spring #edit-date-val,
+body.theme-spring #modalTime, 
+body.theme-spring #edit-time,
+body.theme-spring #fixkostenModal input, 
+body.theme-spring #fixkostenModal select,
+body.theme-spring #set_token,
+body.theme-spring #set_master_pw, 
+body.theme-spring #set_admin_pw,
+body.theme-spring #userModal input[type="text"], 
+body.theme-spring #userModal input[type="password"],
+body.theme-spring #passwordModal input[type="password"],
+body.theme-spring #newRoomInput,
+body.theme-spring #customInputField,
+body.theme-spring #customFoodField,
+body.theme-spring .finance-input-row input, 
+body.theme-spring .finance-input-row select { 
+    color: #1b3b2b !important; 
+    font-weight: 800 !important; 
+    border: 2px solid #2e7d32 !important; 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border-radius: 12px !important; 
+    outline: none !important; 
+}
+
+body.theme-spring #modalValue, 
+body.theme-spring #edit-interval-val, 
+body.theme-spring #shopQtyValue { 
+    color: #c2185b !important; 
+    font-weight: 900 !important; 
+    border: 2px solid #ec407a !important; 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border-radius: 15px !important; 
+    padding: 15px; 
+    text-align: center; 
+    font-size: 1.8rem !important; 
+}
+
+/* Primäre Buttons (Kirschblüten-Pink) */
+body.theme-spring .btn-add,
+body.theme-spring #tplSaveBtn,
+body.theme-spring #passwordModal button[onclick*="closePasswordModal(true)"],
+body.theme-spring #fixkostenModal button[onclick*="addFixkostenTemplate"],
+body.theme-spring .finance-controls button[onclick*="addNewYear"],
+body.theme-spring .finance-controls button[onclick*="addNewMonth"],
+body.theme-spring #settingsOverlay button[onclick*="saveSystemSettings"],
+body.theme-spring #userModal button[onclick*="saveUserModal"],
+body.theme-spring #roomModal button[onclick*="confirmAddRoom"], 
+body.theme-spring #deleteModal button[onclick*="confirmDelete"],
+body.theme-spring #customFoodModal button[onclick*="resolveFoodPrompt(true)"],
+body.theme-spring button[onclick*="confirmInterval('t')"],
+body.theme-spring button[onclick*="saveEdit('t')"],
+body.theme-spring button[onclick*="confirmShopAdd"] { 
+    background: linear-gradient(135deg, #ec407a 0%, #ad1457 100%) !important; 
+    color: #ffffff !important; 
+    border: 1.5px solid #fff59d !important; 
+    box-shadow: 0 4px 15px rgba(216, 27, 96, 0.35) !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important;
+}
+
+/* Sekundäre Intervall-Buttons (Frisches Frühlingsgrün) */
+body.theme-spring button[onclick*="confirmInterval('m')"],
+body.theme-spring button[onclick*="confirmInterval('s')"],
+body.theme-spring button[onclick*="confirmInterval('days')"],
+body.theme-spring button[onclick*="confirmInterval('date')"],
+body.theme-spring button[onclick*="saveEdit('m')"],
+body.theme-spring button[onclick*="saveEdit('s')"],
+body.theme-spring button[onclick*="saveEdit('days')"],
+body.theme-spring button[onclick*="saveEdit('date')"] {
+    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%) !important;
+    color: #ffffff !important;
+    border: 1.5px solid #a5d6a7 !important;
+    box-shadow: 0 4px 12px rgba(27, 94, 32, 0.3) !important;
+}
+
+/* Schließen / Sekundäre Modal-Buttons */
+body.theme-spring #finance-modal button[onclick*="closeFinanceModal"],
+body.theme-spring #passwordModal button[onclick*="closePasswordModal(false)"],
+body.theme-spring #fixkostenModal button[onclick*="fixkostenModal"],
+body.theme-spring .finance-controls button[onclick*="fixkostenModal"],
+body.theme-spring #settingsOverlay button[onclick*="settingsOverlay']"],
+body.theme-spring #userModal button[onclick*="closeUserModal"],
+body.theme-spring #roomModal button[onclick*="closeRoomModal"], 
+body.theme-spring #deleteModal button[onclick*="closeDeleteModal"],
+body.theme-spring #customConfirmNo,
+body.theme-spring #customDeleteModal button[onclick*="resolveDelete(false)"],
+body.theme-spring #customFoodModal button[onclick*="resolveFoodPrompt(false)"],
+body.theme-spring #tplEditBtn,
+body.theme-spring #tplCancelEditBtn { 
+    background: rgba(255, 255, 255, 0.85) !important; 
+    color: #1b3b2b !important; 
+    border: 1.5px solid #ec407a !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important;
+}
+
+/* Badges & Listen */
+body.theme-spring .shop-badge { 
+    display: flex !important; 
+    background: rgba(236, 64, 122, 0.15) !important; 
+    color: #c2185b !important; 
+    width: 24px !important; 
+    height: 24px !important; 
+    border-radius: 50% !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    border: 1px solid rgba(236, 64, 122, 0.3) !important; 
+}
+body.theme-spring .side-btn.active-shop .shop-badge,
+body.theme-spring .side-btn.active-todo .shop-badge { 
+    background: #fff59d !important; 
+    color: #ad1457 !important; 
+    font-weight: 900 !important;
+}
+
+body.theme-spring #fixkostenList > div { background: rgba(255, 255, 255, 0.85) !important; border: 1.5px solid rgba(236, 64, 122, 0.45) !important; }
+body.theme-spring #fixkostenList strong { color: #1b3b2b !important; }
+body.theme-spring #fixkostenList span[style*="var(--primary)"],
+body.theme-spring #list-todo li span[style*="color:var(--gray)"],
+body.theme-spring #list-todo li .user-label { color: #c2185b !important; font-weight: 800 !important; }
+
+/* Theme Dropdown & Zoom */
+body.theme-spring .theme-dropdown { background: rgba(19, 78, 94, 0.94) !important; backdrop-filter: blur(25px) !important; border: 1.5px solid #f48fb1 !important; }
+body.theme-spring .theme-dropdown div { color: #ffffff !important; border-bottom: 1px solid rgba(244, 143, 177, 0.25) !important; }
+body.theme-spring .theme-dropdown div:hover { background: rgba(236, 64, 122, 0.65) !important; }
+body.theme-spring .zoom-btn { background: #ffffff !important; color: #c2185b !important; border: 1px solid #ec407a !important; }
+body.theme-spring #systemZoomRange,
+body.theme-spring #settingsOverlay .tab-toggle,
+body.theme-spring #userModal input[type="checkbox"] { accent-color: #ec407a !important; }
+
+/* Tablet & PC Optimierungen */
+@media screen and (min-width: 768px) {
+    body.theme-spring .tab-bar { height: 120px !important; }
+    body.theme-spring .tab-item .icon { font-size: 2rem !important; }
+    body.theme-spring .tab-item span { font-size: 1.2rem !important; }
+    body.theme-spring .modal-content { width: 550px !important; padding: 45px !important; border-radius: 20px !important; background: rgba(255, 250, 252, 0.96) !important; border: 2px solid #ec407a !important; }
+    body.theme-spring .modal-content input:not([type="password"]):not([type="text"]) { height: 90px !important; font-size: 3.5rem !important; color: #c2185b !important; -webkit-text-fill-color: #c2185b !important; border: 2px solid #ec407a !important; text-align: center !important; }
+    body.theme-spring .day-dot { height: 80px !important; font-size: 1.8rem !important; }
+}
+
+/* --- LAUFENDER ALARM-RAHMEN (SPRING - PINK & FRÜHLINGSGRÜN/GELB) --- */
+body.theme-spring .urgent-blink::after,
+body.theme-spring #list-todo li.urgent-blink::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    border-radius: inherit !important;
+    z-index: 10 !important;
+    background-image: 
+        linear-gradient(90deg, #ec407a 50%, #fff59d 50%),
+        linear-gradient(90deg, #ec407a 50%, #fff59d 50%),
+        linear-gradient(0deg, #ec407a 50%, #fff59d 50%),
+        linear-gradient(0deg, #ec407a 50%, #fff59d 50%);
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 40px 6px, 40px 6px, 6px 40px, 6px 40px;
+    background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px;
+    animation: xmas-running-border 0.3s infinite linear !important;
+}
+body.theme-spring .urgent-blink,
+body.theme-spring #list-todo li.urgent-blink {
+    position: relative !important;
+    overflow: hidden !important;
+}

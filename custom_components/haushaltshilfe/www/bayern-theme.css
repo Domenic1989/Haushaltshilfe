@@ -1,0 +1,451 @@
+/* ========================================================
+   --- FC BAYERN THEME (ROT, WEISS & GOLD - body.theme-bayern) ---
+   ======================================================== */
+
+/* --- ROTER FUNKENFLUG & GLANZ --- */
+@keyframes bayernDust {
+    0% {
+        background-position: 0px 0px, 0px 0px, 0px 0px;
+    }
+    100% {
+        background-position: 350px 700px, -250px 500px, 200px -300px;
+    }
+}
+
+/* --- BAYERN BASIS & HINTERGRUND (TIEFES ALLIANZ-ROT) --- */
+body.theme-bayern { 
+    background: linear-gradient(135deg, #7a0016 0%, #dc052d 50%, #50000e 100%) !important; 
+    background-attachment: fixed !important; 
+    background-size: cover !important; 
+    --text: #50000e; 
+    --todo: #90001f;       /* Dunkles Bayern-Rot für Sekundär-Buttons */
+    --primary: #dc052d;    /* Helles Allianz-Rot für Haupt-Buttons */
+    --bg: rgba(255, 255, 255, 0.96);
+    --card: rgba(255, 245, 247, 0.96);
+    --gray: #660012;
+    position: relative;
+}
+
+body.theme-bayern #loginOverlay { 
+    background: linear-gradient(135deg, #7a0016 0%, #dc052d 50%, #50000e 100%) !important; 
+}
+
+/* Dezent funkelnde rote & weiße Partikel im Hintergrund (blockiert keine Klicks!) */
+body.theme-bayern::before,
+body.theme-bayern #loginOverlay::before {
+    content: "⭐";
+    position: fixed;
+    inset: 0;
+    pointer-events: none !important;
+    z-index: 9999;
+    font-size: 0;
+    background-image: 
+        radial-gradient(4px 4px at 80px 40px, rgba(255, 255, 255, 0.9) 50%, transparent 100%),
+        radial-gradient(5px 5px at 210px 130px, rgba(255, 215, 0, 0.75) 50%, transparent 100%),
+        radial-gradient(3px 3px at 330px 250px, rgba(255, 255, 255, 0.75) 50%, transparent 100%),
+        radial-gradient(6px 6px at 150px 310px, rgba(255, 0, 0, 0.6) 50%, transparent 100%),
+        radial-gradient(4px 4px at 370px 70px, rgba(255, 255, 255, 0.85) 50%, transparent 100%),
+        radial-gradient(5px 5px at 60px 240px, rgba(255, 215, 0, 0.7) 50%, transparent 100%);
+    background-size: 420px 420px, 320px 320px, 260px 260px;
+    animation: bayernDust 20s linear infinite;
+}
+
+/* --- ALLGEMEINER ROT-WEISSER GLAS-EFFEKT (ROT-WEISS & STERNE-RAND) --- */
+body.theme-bayern .login-card, 
+body.theme-bayern .input-card, 
+body.theme-bayern .card,
+body.theme-bayern li, 
+body.theme-bayern .day-card, 
+body.theme-bayern #trash-content, 
+body.theme-bayern .cat-btn, 
+body.theme-bayern .fav-chip, 
+body.theme-bayern .tab-bar, 
+body.theme-bayern .theme-toggle-top, 
+body.theme-bayern .admin-btn, 
+body.theme-bayern .cook-select, 
+body.theme-bayern .user-btn, 
+body.theme-bayern .month-card { 
+    background: rgba(255, 245, 247, 0.88) !important; 
+    backdrop-filter: blur(20px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important; 
+    border: 1.5px solid rgba(220, 5, 45, 0.6) !important; 
+    box-shadow: 0 8px 32px rgba(80, 0, 14, 0.35), inset 0 0 12px rgba(255, 255, 255, 0.7) !important; 
+    color: #50000e !important; 
+}
+
+/* Kleine Bayern-Sterne (für die Meistersterne) oben rechts auf den Karten */
+body.theme-bayern .month-card,
+body.theme-bayern .day-card {
+    position: relative !important;
+}
+body.theme-bayern .month-card::after {
+    content: "⭐";
+    position: absolute;
+    top: 3px;
+    right: 5px;
+    font-size: 1.1rem;
+    opacity: 0.8;
+    pointer-events: none;
+}
+body.theme-bayern .day-card::after {
+    content: "⚽";
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 0.9rem;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* --- SIDEBAR BUTTONS --- */
+body.theme-bayern .side-btn { 
+    background: rgba(255, 245, 247, 0.88) !important; 
+    backdrop-filter: blur(20px) saturate(180%) !important; 
+    border: 1.5px solid rgba(220, 5, 45, 0.6) !important; 
+    color: #50000e !important; 
+    display: flex !important; 
+    flex-direction: row !important; 
+    justify-content: flex-start !important; 
+    align-items: center !important; 
+    gap: 10px !important; 
+    padding: 8px 12px !important; 
+    min-height: 50px !important; 
+    border-radius: 12px !important; 
+}
+
+/* --- TEXTE ROT/WEISS --- */
+body.theme-bayern h1 { 
+    color: #ffffff !important; 
+    text-shadow: 0 2px 12px rgba(220, 5, 45, 0.8) !important;
+    font-weight: 800 !important; 
+}
+body.theme-bayern .status-bar {
+    color: #ffe4e6 !important;
+    font-weight: 700 !important;
+}
+body.theme-bayern .main-input, 
+body.theme-bayern .day-input, 
+body.theme-bayern .cat-btn, 
+body.theme-bayern .admin-btn, 
+body.theme-bayern .fav-chip, 
+body.theme-bayern .trash-name, 
+body.theme-bayern .day-label span, 
+body.theme-bayern .tab-item, 
+body.theme-bayern .user-label, 
+body.theme-bayern #list-todo li div { 
+    color: #50000e !important; 
+    font-weight: 700 !important; 
+}
+
+/* --- AKTIVE ELEMENTE (BAYERN-ROT & WEISSER RAND) --- */
+body.theme-bayern .side-btn.active-shop, 
+body.theme-bayern .side-btn.active-todo, 
+body.theme-bayern .cat-btn.active-shop, 
+body.theme-bayern .cat-btn.active-food, 
+body.theme-bayern .cat-btn.active-todo, 
+body.theme-bayern .user-btn.selected { 
+    background: linear-gradient(135deg, #dc052d 0%, #90001f 100%) !important; 
+    color: #ffffff !important; 
+    border: 1.5px solid #ffffff !important; 
+    box-shadow: 0 5px 15px rgba(220, 5, 45, 0.5) !important; 
+}
+
+/* --- TAB-BAR --- */
+body.theme-bayern .tab-bar { 
+    padding: 0 !important; 
+    margin: 0 !important; 
+    height: 80px !important; 
+    display: flex !important; 
+    align-items: stretch !important; 
+    justify-content: space-around !important; 
+    border-top: 2px solid #ffffff !important; 
+    background: rgba(255, 245, 247, 0.94) !important;
+}
+body.theme-bayern .tab-item { 
+    flex: 1 !important; 
+    height: 100% !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    background: transparent !important; 
+}
+body.theme-bayern .tab-item.active-shop, 
+body.theme-bayern .tab-item.active-food, 
+body.theme-bayern .tab-item.active-todo, 
+body.theme-bayern .tab-item.active-finance, 
+body.theme-bayern .tab-item.active-trash { 
+    background: linear-gradient(180deg, #dc052d 0%, #90001f 100%) !important; 
+    color: #ffffff !important; 
+    border-radius: 0 !important; 
+    height: 100% !important; 
+    width: 100% !important; 
+    transform: none !important; 
+    box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.4) !important; 
+}
+body.theme-bayern .tab-item.active-shop .icon, 
+body.theme-bayern .tab-item.active-food .icon, 
+body.theme-bayern .tab-item.active-todo .icon, 
+body.theme-bayern .tab-item.active-trash .icon, 
+body.theme-bayern .tab-item.active-finance .icon, 
+body.theme-bayern .tab-item.active-shop span, 
+body.theme-bayern .tab-item.active-food span, 
+body.theme-bayern .tab-item.active-finance span, 
+body.theme-bayern .tab-item.active-todo span,
+body.theme-bayern .tab-item.active-trash span { 
+    color: #ffffff !important; 
+}
+
+/* --- DAY-DOTS --- */
+body.theme-bayern .day-dot { 
+    background: #ffffff !important; 
+    color: #50000e !important; 
+    border: 1px solid rgba(220, 5, 45, 0.45) !important; 
+    cursor: pointer !important; 
+    display: flex !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+}
+body.theme-bayern .day-dot.active { 
+    background: linear-gradient(135deg, #dc052d 0%, #90001f 100%) !important; 
+    color: #ffffff !important; 
+    border: 2px solid #ffffff !important; 
+    transform: scale(1.05) !important; 
+    box-shadow: 0 4px 12px rgba(220, 5, 45, 0.5) !important; 
+}
+
+/* --- MODALS & FINANCE --- */
+body.theme-bayern #intervalModal > div, 
+body.theme-bayern #editModal > div, 
+body.theme-bayern #shopQtyModal > div, 
+body.theme-bayern #finance-modal > div,
+body.theme-bayern #passwordModal > div,
+body.theme-bayern #fixkostenModal > div,
+body.theme-bayern #userModal > div,
+body.theme-bayern #roomModal > div, 
+body.theme-bayern #deleteModal > div,
+body.theme-bayern #customConfirmModal .modal-card,
+body.theme-bayern #customDeleteModal .modal-card,
+body.theme-bayern #customInputModal .modal-card,
+body.theme-bayern #customFoodModal .modal-card { 
+    background: rgba(255, 245, 247, 0.96) !important; 
+    backdrop-filter: blur(25px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important; 
+    border: 2px solid #dc052d !important; 
+    box-shadow: 0 20px 60px rgba(80, 0, 14, 0.45) !important; 
+    color: #50000e !important; 
+    border-radius: 20px !important; 
+}
+
+body.theme-bayern .summary-total { 
+    color: #dc052d !important; 
+    border-top: 2px solid rgba(220, 5, 45, 0.4) !important; 
+}
+body.theme-bayern .month-card h3, 
+body.theme-bayern #modal-content h2,
+body.theme-bayern #modal-header-fixed h2,
+body.theme-bayern #editModal h2, 
+body.theme-bayern #editModal h3, 
+body.theme-bayern #editModal label,
+body.theme-bayern #passwordModal h3,
+body.theme-bayern #fixkostenModal h2,
+body.theme-bayern #userModal h3,
+body.theme-bayern #roomModal h3, 
+body.theme-bayern #deleteModal h3,
+body.theme-bayern #customConfirmTitle,
+body.theme-bayern #customDeleteTitle,
+body.theme-bayern #customInputTitle,
+body.theme-bayern #customFoodTitle { 
+    color: #b90022 !important; 
+    font-weight: 800 !important; 
+}
+
+body.theme-bayern .modal-content h1, 
+body.theme-bayern .modal-content h2, 
+body.theme-bayern .modal-content h3, 
+body.theme-bayern .modal-content label,
+body.theme-bayern #fixkostenModal label, 
+body.theme-bayern #fixkostenModal p,
+body.theme-bayern #userModal label,
+body.theme-bayern #deleteModal p,
+body.theme-bayern #customConfirmMessage,
+body.theme-bayern #customDeleteMessage,
+body.theme-bayern #customInputMessage,
+body.theme-bayern #customFoodMessage,
+body.theme-bayern #settingsOverlay label,
+body.theme-bayern #modal-content small { 
+    color: #50000e !important; 
+    font-weight: 700 !important; 
+}
+
+/* Eingabefelder in Modals */
+body.theme-bayern #edit-assignee,
+body.theme-bayern #modalAssignee, 
+body.theme-bayern #edit-name, 
+body.theme-bayern #modalName, 
+body.theme-bayern #modalTitle,
+body.theme-bayern #modalDate, 
+body.theme-bayern #edit-date-val,
+body.theme-bayern #modalTime, 
+body.theme-bayern #edit-time,
+body.theme-bayern #fixkostenModal input, 
+body.theme-bayern #fixkostenModal select,
+body.theme-bayern #set_token,
+body.theme-bayern #set_master_pw, 
+body.theme-bayern #set_admin_pw,
+body.theme-bayern #userModal input[type="text"], 
+body.theme-bayern #userModal input[type="password"],
+body.theme-bayern #passwordModal input[type="password"],
+body.theme-bayern #newRoomInput,
+body.theme-bayern #customInputField,
+body.theme-bayern #customFoodField,
+body.theme-bayern .finance-input-row input, 
+body.theme-bayern .finance-input-row select { 
+    color: #50000e !important; 
+    font-weight: 800 !important; 
+    border: 2px solid #b90022 !important; 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border-radius: 12px !important; 
+    outline: none !important; 
+}
+
+body.theme-bayern #modalValue, 
+body.theme-bayern #edit-interval-val, 
+body.theme-bayern #shopQtyValue { 
+    color: #b90022 !important; 
+    font-weight: 900 !important; 
+    border: 2px solid #dc052d !important; 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border-radius: 15px !important; 
+    padding: 15px; 
+    text-align: center; 
+    font-size: 1.8rem !important; 
+}
+
+/* Primäre Buttons (Bayern-Rot) */
+body.theme-bayern .btn-add,
+body.theme-bayern #tplSaveBtn,
+body.theme-bayern #passwordModal button[onclick*="closePasswordModal(true)"],
+body.theme-bayern #fixkostenModal button[onclick*="addFixkostenTemplate"],
+body.theme-bayern .finance-controls button[onclick*="addNewYear"],
+body.theme-bayern .finance-controls button[onclick*="addNewMonth"],
+body.theme-bayern #settingsOverlay button[onclick*="saveSystemSettings"],
+body.theme-bayern #userModal button[onclick*="saveUserModal"],
+body.theme-bayern #roomModal button[onclick*="confirmAddRoom"], 
+body.theme-bayern #deleteModal button[onclick*="confirmDelete"],
+body.theme-bayern #customFoodModal button[onclick*="resolveFoodPrompt(true)"],
+body.theme-bayern button[onclick*="confirmInterval('t')"],
+body.theme-bayern button[onclick*="saveEdit('t')"],
+body.theme-bayern button[onclick*="confirmShopAdd"] { 
+    background: linear-gradient(135deg, #dc052d 0%, #90001f 100%) !important; 
+    color: #ffffff !important; 
+    border: 1.5px solid #ffffff !important; 
+    box-shadow: 0 4px 15px rgba(220, 5, 45, 0.4) !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important;
+}
+
+/* Sekundäre Intervall-Buttons (Dunkles Weinrot) */
+body.theme-bayern button[onclick*="confirmInterval('m')"],
+body.theme-bayern button[onclick*="confirmInterval('s')"],
+body.theme-bayern button[onclick*="confirmInterval('days')"],
+body.theme-bayern button[onclick*="confirmInterval('date')"],
+body.theme-bayern button[onclick*="saveEdit('m')"],
+body.theme-bayern button[onclick*="saveEdit('s')"],
+body.theme-bayern button[onclick*="saveEdit('days')"],
+body.theme-bayern button[onclick*="saveEdit('date')"] {
+    background: linear-gradient(135deg, #7a0016 0%, #50000e 100%) !important;
+    color: #ffffff !important;
+    border: 1.5px solid #ff80ab !important;
+    box-shadow: 0 4px 12px rgba(80, 0, 14, 0.35) !important;
+}
+
+/* Schließen / Sekundäre Modal-Buttons */
+body.theme-bayern #finance-modal button[onclick*="closeFinanceModal"],
+body.theme-bayern #passwordModal button[onclick*="closePasswordModal(false)"],
+body.theme-bayern #fixkostenModal button[onclick*="fixkostenModal"],
+body.theme-bayern .finance-controls button[onclick*="fixkostenModal"],
+body.theme-bayern #settingsOverlay button[onclick*="settingsOverlay']"],
+body.theme-bayern #userModal button[onclick*="closeUserModal"],
+body.theme-bayern #roomModal button[onclick*="closeRoomModal"], 
+body.theme-bayern #deleteModal button[onclick*="closeDeleteModal"],
+body.theme-bayern #customConfirmNo,
+body.theme-bayern #customDeleteModal button[onclick*="resolveDelete(false)"],
+body.theme-bayern #customFoodModal button[onclick*="resolveFoodPrompt(false)"],
+body.theme-bayern #tplEditBtn,
+body.theme-bayern #tplCancelEditBtn { 
+    background: rgba(255, 255, 255, 0.85) !important; 
+    color: #50000e !important; 
+    border: 1.5px solid #dc052d !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important;
+}
+
+/* Badges & Listen */
+body.theme-bayern .shop-badge { 
+    display: flex !important; 
+    background: rgba(220, 5, 45, 0.15) !important; 
+    color: #b90022 !important; 
+    width: 24px !important; 
+    height: 24px !important; 
+    border-radius: 50% !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    border: 1px solid rgba(220, 5, 45, 0.3) !important; 
+}
+body.theme-bayern .side-btn.active-shop .shop-badge,
+body.theme-bayern .side-btn.active-todo .shop-badge { 
+    background: #ffffff !important; 
+    color: #90001f !important; 
+    font-weight: 900 !important;
+}
+
+body.theme-bayern #fixkostenList > div { background: rgba(255, 255, 255, 0.85) !important; border: 1.5px solid rgba(220, 5, 45, 0.5) !important; }
+body.theme-bayern #fixkostenList strong { color: #50000e !important; }
+body.theme-bayern #fixkostenList span[style*="var(--primary)"],
+body.theme-bayern #list-todo li span[style*="color:var(--gray)"],
+body.theme-bayern #list-todo li .user-label { color: #dc052d !important; font-weight: 800 !important; }
+
+/* Theme Dropdown & Zoom */
+body.theme-bayern .theme-dropdown { background: rgba(80, 0, 14, 0.95) !important; backdrop-filter: blur(25px) !important; border: 1.5px solid #ffffff !important; }
+body.theme-bayern .theme-dropdown div { color: #ffffff !important; border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important; }
+body.theme-bayern .theme-dropdown div:hover { background: rgba(220, 5, 45, 0.7) !important; }
+body.theme-bayern .zoom-btn { background: #ffffff !important; color: #b90022 !important; border: 1px solid #dc052d !important; }
+body.theme-bayern #systemZoomRange,
+body.theme-bayern #settingsOverlay .tab-toggle,
+body.theme-bayern #userModal input[type="checkbox"] { accent-color: #dc052d !important; }
+
+/* Tablet & PC Optimierungen */
+@media screen and (min-width: 768px) {
+    body.theme-bayern .tab-bar { height: 120px !important; }
+    body.theme-bayern .tab-item .icon { font-size: 2rem !important; }
+    body.theme-bayern .tab-item span { font-size: 1.2rem !important; }
+    body.theme-bayern .modal-content { width: 550px !important; padding: 45px !important; border-radius: 20px !important; background: rgba(255, 245, 247, 0.96) !important; border: 2px solid #dc052d !important; }
+    body.theme-bayern .modal-content input:not([type="password"]):not([type="text"]) { height: 90px !important; font-size: 3.5rem !important; color: #b90022 !important; -webkit-text-fill-color: #b90022 !important; border: 2px solid #dc052d !important; text-align: center !important; }
+    body.theme-bayern .day-dot { height: 80px !important; font-size: 1.8rem !important; }
+}
+
+/* --- LAUFENDER ALARM-RAHMEN (BAYERN - ROT & WEISS) --- */
+body.theme-bayern .urgent-blink::after,
+body.theme-bayern #list-todo li.urgent-blink::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    border-radius: inherit !important;
+    z-index: 10 !important;
+    background-image: 
+        linear-gradient(90deg, #dc052d 50%, #ffffff 50%),
+        linear-gradient(90deg, #dc052d 50%, #ffffff 50%),
+        linear-gradient(0deg, #dc052d 50%, #ffffff 50%),
+        linear-gradient(0deg, #dc052d 50%, #ffffff 50%);
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 40px 6px, 40px 6px, 6px 40px, 6px 40px;
+    background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px;
+    animation: xmas-running-border 0.3s infinite linear !important;
+}
+body.theme-bayern .urgent-blink,
+body.theme-bayern #list-todo li.urgent-blink {
+    position: relative !important;
+    overflow: hidden !important;
+}

@@ -1,0 +1,462 @@
+/* ========================================================
+   --- ROYAL ARENA THEME (KÖNIGSBLAU & WEISS - body.theme-royal) ---
+   ======================================================== */
+
+/* --- FLUTLICHT-STAUB ANIMATION --- */
+@keyframes royalDust {
+    0% {
+        background-position: 0px 0px, 0px 0px, 0px 0px;
+    }
+    100% {
+        background-position: 300px 600px, -250px 450px, 150px -300px;
+    }
+}
+
+/* --- ROYAL BASIS & HINTERGRUND (STADION-NACHTBLAU) --- */
+body.theme-royal { 
+    background: linear-gradient(135deg, #00122e 0%, #00337c 50%, #001f4d 100%) !important; 
+    background-attachment: fixed !important; 
+    background-size: cover !important; 
+    --text: #001f4d; 
+    --todo: #00337c;       /* Dunkles Königsblau für Sekundär-Buttons */
+    --primary: #0055b3;    /* Strahlendes Königsblau für Haupt-Buttons */
+    --bg: rgba(255, 255, 255, 0.96);
+    --card: rgba(242, 247, 255, 0.96);
+    --gray: #002b66;
+    position: relative;
+}
+
+body.theme-royal #loginOverlay { 
+    background: linear-gradient(135deg, #00122e 0%, #00337c 50%, #001f4d 100%) !important; 
+}
+
+/* Flutlicht-Glanz & blauer Funkenflug im Hintergrund (blockiert keine Klicks!) */
+body.theme-royal::before,
+body.theme-royal #loginOverlay::before {
+    content: "⚒️";
+    position: fixed;
+    inset: 0;
+    pointer-events: none !important;
+    z-index: 9999;
+    font-size: 0;
+    background-image: 
+        radial-gradient(4px 4px at 70px 50px, rgba(255, 255, 255, 0.85) 50%, transparent 100%),
+        radial-gradient(5px 5px at 200px 150px, rgba(56, 189, 248, 0.75) 50%, transparent 100%),
+        radial-gradient(3px 3px at 320px 270px, rgba(255, 255, 255, 0.75) 50%, transparent 100%),
+        radial-gradient(6px 6px at 130px 340px, rgba(0, 119, 255, 0.7) 50%, transparent 100%),
+        radial-gradient(4px 4px at 360px 90px, rgba(255, 255, 255, 0.9) 50%, transparent 100%),
+        radial-gradient(5px 5px at 60px 230px, rgba(186, 230, 253, 0.8) 50%, transparent 100%);
+    background-size: 400px 400px, 310px 310px, 250px 250px;
+    animation: royalDust 22s linear infinite;
+}
+
+/* --- ALLGEMEINER EIS-GLAS-EFFEKT (WEISS-BLAU & SILBER-BLAUER RAND) --- */
+body.theme-royal .login-card, 
+body.theme-royal .input-card, 
+body.theme-royal li, 
+body.theme-royal .day-card, 
+body.theme-royal #trash-content, 
+body.theme-royal .cat-btn, 
+body.theme-royal .fav-chip, 
+body.theme-royal .tab-bar, 
+body.theme-royal .theme-toggle-top, 
+body.theme-royal .admin-btn, 
+body.theme-royal .cook-select, 
+body.theme-royal .user-btn, 
+body.theme-royal .month-card { 
+    background: rgba(242, 247, 255, 0.86) !important; 
+    backdrop-filter: blur(20px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important; 
+    border: 1.5px solid rgba(0, 85, 179, 0.55) !important; 
+    box-shadow: 0 8px 32px rgba(0, 15, 40, 0.3), inset 0 0 12px rgba(255, 255, 255, 0.6) !important; 
+    color: #001f4d !important; 
+}
+
+/* Kleine Arena-Deko oben rechts auf den Monats- und Tageskarten */
+body.theme-royal .month-card,
+body.theme-royal .day-card {
+    position: relative !important;
+}
+body.theme-royal .month-card::after {
+    content: "⚒️";
+    position: absolute;
+    top: 3px;
+    right: 5px;
+    font-size: 1.1rem;
+    opacity: 0.65;
+    pointer-events: none;
+}
+body.theme-royal .day-card::after {
+    content: "⚽";
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    font-size: 0.9rem;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* --- SIDEBAR BUTTONS --- */
+body.theme-royal .side-btn { 
+    background: rgba(242, 247, 255, 0.86) !important; 
+    backdrop-filter: blur(20px) saturate(180%) !important; 
+    border: 1.5px solid rgba(0, 85, 179, 0.55) !important; 
+    color: #001f4d !important; 
+    display: flex !important; 
+    flex-direction: row !important; 
+    justify-content: flex-start !important; 
+    align-items: center !important; 
+    gap: 10px !important; 
+    padding: 8px 12px !important; 
+    min-height: 50px !important; 
+    border-radius: 12px !important; 
+}
+
+/* --- TEXTE DUNKELBLAU AUF EIS-GLAS --- */
+body.theme-royal h1 { 
+    color: #ffffff !important; 
+    text-shadow: 0 2px 12px rgba(0, 119, 255, 0.7) !important;
+    font-weight: 800 !important; 
+}
+body.theme-royal .status-bar {
+    color: #e0f2fe !important;
+    font-weight: 700 !important;
+}
+body.theme-royal .main-input, 
+body.theme-royal .day-input, 
+body.theme-royal .cat-btn, 
+body.theme-royal .admin-btn, 
+body.theme-royal .fav-chip, 
+body.theme-royal .trash-name, 
+body.theme-royal .day-label span, 
+body.theme-royal .tab-item, 
+body.theme-royal .user-label, 
+body.theme-royal #list-todo li div { 
+    color: #001f4d !important; 
+    font-weight: 700 !important; 
+}
+
+/* --- AKTIVE ELEMENTE (KÖNIGSBLAU & WEISSER RAND) --- */
+body.theme-royal .side-btn.active-shop, 
+body.theme-royal .side-btn.active-todo, 
+body.theme-royal .cat-btn.active-shop, 
+body.theme-royal .cat-btn.active-food, 
+body.theme-royal .cat-btn.active-todo, 
+body.theme-royal .user-btn.selected { 
+    background: linear-gradient(135deg, #0055b3 0%, #00337c 100%) !important; 
+    color: #ffffff !important; 
+    border: 1.5px solid #ffffff !important; 
+    box-shadow: 0 5px 15px rgba(0, 85, 179, 0.5) !important; 
+}
+
+/* --- TAB-BAR MIT STRAHLENDER KANTE --- */
+body.theme-royal .tab-bar { 
+    padding: 0 !important; 
+    margin: 0 !important; 
+    height: 80px !important; 
+    display: flex !important; 
+    align-items: stretch !important; 
+    justify-content: space-around !important; 
+    border-top: 2px solid #38bdf8 !important; 
+    background: rgba(242, 247, 255, 0.92) !important;
+}
+body.theme-royal .tab-item { 
+    flex: 1 !important; 
+    height: 100% !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    background: transparent !important; 
+}
+body.theme-royal .tab-item.active-shop, 
+body.theme-royal .tab-item.active-food, 
+body.theme-royal .tab-item.active-todo, 
+body.theme-royal .tab-item.active-finance, 
+body.theme-royal .tab-item.active-trash { 
+    background: linear-gradient(180deg, #0055b3 0%, #00337c 100%) !important; 
+    color: #ffffff !important; 
+    border-radius: 0 !important; 
+    height: 100% !important; 
+    width: 100% !important; 
+    transform: none !important; 
+    box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.35) !important; 
+}
+body.theme-royal .tab-item.active-shop .icon, 
+body.theme-royal .tab-item.active-food .icon, 
+body.theme-royal .tab-item.active-todo .icon, 
+body.theme-royal .tab-item.active-trash .icon, 
+body.theme-royal .tab-item.active-finance .icon, 
+body.theme-royal .tab-item.active-shop span, 
+body.theme-royal .tab-item.active-food span, 
+body.theme-royal .tab-item.active-finance span, 
+body.theme-royal .tab-item.active-todo span,
+body.theme-royal .tab-item.active-trash span { 
+    color: #ffffff !important; 
+}
+
+/* --- DAY-DOTS FIX --- */
+body.theme-royal .day-dot { 
+    background: #ffffff !important; 
+    color: #001f4d !important; 
+    border: 1px solid rgba(0, 85, 179, 0.4) !important; 
+    cursor: pointer !important; 
+    display: flex !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+}
+body.theme-royal .day-dot.active { 
+    background: linear-gradient(135deg, #0055b3 0%, #00337c 100%) !important; 
+    color: #ffffff !important; 
+    border: 2px solid #38bdf8 !important; 
+    transform: scale(1.05) !important; 
+    box-shadow: 0 4px 12px rgba(0, 85, 179, 0.45) !important; 
+}
+
+/* --- MODALS & FINANCE --- */
+body.theme-royal #intervalModal > div, 
+body.theme-royal #editModal > div, 
+body.theme-royal #shopQtyModal > div, 
+body.theme-royal #finance-modal > div,
+body.theme-royal #passwordModal > div,
+body.theme-royal #fixkostenModal > div,
+body.theme-royal #userModal > div,
+body.theme-royal #roomModal > div, 
+body.theme-royal #deleteModal > div,
+body.theme-royal #customConfirmModal .modal-card,
+body.theme-royal #customDeleteModal .modal-card,
+body.theme-royal #customInputModal .modal-card,
+body.theme-royal #customFoodModal .modal-card { 
+    background: rgba(242, 247, 255, 0.96) !important; 
+    backdrop-filter: blur(25px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important; 
+    border: 2px solid #0055b3 !important; 
+    box-shadow: 0 20px 60px rgba(0, 15, 40, 0.45) !important; 
+    color: #001f4d !important; 
+    border-radius: 20px !important; 
+}
+
+body.theme-royal .summary-total { 
+    color: #0055b3 !important; 
+    border-top: 2px solid rgba(0, 85, 179, 0.4) !important; 
+}
+body.theme-royal .month-card h3, 
+body.theme-royal #modal-content h2,
+body.theme-royal #modal-header-fixed h2,
+body.theme-royal #editModal h2, 
+body.theme-royal #editModal h3, 
+body.theme-royal #editModal label,
+body.theme-royal #passwordModal h3,
+body.theme-royal #fixkostenModal h2,
+body.theme-royal #userModal h3,
+body.theme-royal #roomModal h3, 
+body.theme-royal #deleteModal h3,
+body.theme-royal #customConfirmTitle,
+body.theme-royal #customDeleteTitle,
+body.theme-royal #customInputTitle,
+body.theme-royal #customFoodTitle { 
+    color: #004494 !important; 
+    font-weight: 800 !important; 
+}
+
+body.theme-royal .modal-content h1, 
+body.theme-royal .modal-content h2, 
+body.theme-royal .modal-content h3, 
+body.theme-royal .modal-content label,
+body.theme-royal #fixkostenModal label, 
+body.theme-royal #fixkostenModal p,
+body.theme-royal #userModal label,
+body.theme-royal #deleteModal p,
+body.theme-royal #customConfirmMessage,
+body.theme-royal #customDeleteMessage,
+body.theme-royal #customInputMessage,
+body.theme-royal #customFoodMessage,
+body.theme-royal #settingsOverlay label,
+body.theme-royal #modal-content small { 
+    color: #001f4d !important; 
+    font-weight: 700 !important; 
+}
+
+/* Abbrechen Buttons in Modals */
+body.theme-royal .modal-content button[onclick*="closeEdit"], 
+body.theme-royal .modal-content button[onclick*="intervalModal"], 
+body.theme-royal .modal-content button[onclick*="shopQtyModal"] { 
+    color: #004494 !important; 
+    font-weight: 800 !important; 
+    opacity: 1 !important; 
+    background: none; 
+    border: none; 
+    cursor: pointer; 
+}
+
+/* Eingabefelder in Modals */
+body.theme-royal #edit-assignee,
+body.theme-royal #modalAssignee, 
+body.theme-royal #edit-name, 
+body.theme-royal #modalName, 
+body.theme-royal #modalTitle,
+body.theme-royal #modalDate, 
+body.theme-royal #edit-date-val,
+body.theme-royal #modalTime, 
+body.theme-royal #edit-time,
+body.theme-royal #fixkostenModal input, 
+body.theme-royal #fixkostenModal select,
+body.theme-royal #set_token,
+body.theme-royal #set_master_pw, 
+body.theme-royal #set_admin_pw,
+body.theme-royal #userModal input[type="text"], 
+body.theme-royal #userModal input[type="password"],
+body.theme-royal #passwordModal input[type="password"],
+body.theme-royal #newRoomInput,
+body.theme-royal #customInputField,
+body.theme-royal #customFoodField,
+body.theme-royal .finance-input-row input, 
+body.theme-royal .finance-input-row select { 
+    color: #001f4d !important; 
+    font-weight: 800 !important; 
+    border: 2px solid #004494 !important; 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border-radius: 12px !important; 
+    outline: none !important; 
+}
+
+body.theme-royal #modalValue, 
+body.theme-royal #edit-interval-val, 
+body.theme-royal #shopQtyValue { 
+    color: #004494 !important; 
+    font-weight: 900 !important; 
+    border: 2px solid #0055b3 !important; 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border-radius: 15px !important; 
+    padding: 15px; 
+    text-align: center; 
+    font-size: 1.8rem !important; 
+}
+
+/* Primäre Buttons (Königsblau) */
+body.theme-royal .btn-add,
+body.theme-royal #tplSaveBtn,
+body.theme-royal #passwordModal button[onclick*="closePasswordModal(true)"],
+body.theme-royal #fixkostenModal button[onclick*="addFixkostenTemplate"],
+body.theme-royal .finance-controls button[onclick*="addNewYear"],
+body.theme-royal .finance-controls button[onclick*="addNewMonth"],
+body.theme-royal #settingsOverlay button[onclick*="saveSystemSettings"],
+body.theme-royal #userModal button[onclick*="saveUserModal"],
+body.theme-royal #roomModal button[onclick*="confirmAddRoom"], 
+body.theme-royal #deleteModal button[onclick*="confirmDelete"],
+body.theme-royal #customFoodModal button[onclick*="resolveFoodPrompt(true)"],
+body.theme-royal button[onclick*="confirmInterval('t')"],
+body.theme-royal button[onclick*="saveEdit('t')"],
+body.theme-royal button[onclick*="confirmShopAdd"] { 
+    background: linear-gradient(135deg, #0055b3 0%, #00337c 100%) !important; 
+    color: #ffffff !important; 
+    border: 1.5px solid #38bdf8 !important; 
+    box-shadow: 0 4px 15px rgba(0, 85, 179, 0.4) !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important;
+}
+
+/* Sekundäre Intervall-Buttons (Dunkles Marineblau) */
+body.theme-royal button[onclick*="confirmInterval('m')"],
+body.theme-royal button[onclick*="confirmInterval('s')"],
+body.theme-royal button[onclick*="confirmInterval('days')"],
+body.theme-royal button[onclick*="confirmInterval('date')"],
+body.theme-royal button[onclick*="saveEdit('m')"],
+body.theme-royal button[onclick*="saveEdit('s')"],
+body.theme-royal button[onclick*="saveEdit('days')"],
+body.theme-royal button[onclick*="saveEdit('date')"] {
+    background: linear-gradient(135deg, #002b66 0%, #00183b 100%) !important;
+    color: #ffffff !important;
+    border: 1.5px solid #38bdf8 !important;
+    box-shadow: 0 4px 12px rgba(0, 24, 59, 0.35) !important;
+}
+
+/* Schließen / Sekundäre Modal-Buttons */
+body.theme-royal #finance-modal button[onclick*="closeFinanceModal"],
+body.theme-royal #passwordModal button[onclick*="closePasswordModal(false)"],
+body.theme-royal #fixkostenModal button[onclick*="fixkostenModal"],
+body.theme-royal .finance-controls button[onclick*="fixkostenModal"],
+body.theme-royal #settingsOverlay button[onclick*="settingsOverlay']"],
+body.theme-royal #userModal button[onclick*="closeUserModal"],
+body.theme-royal #roomModal button[onclick*="closeRoomModal"], 
+body.theme-royal #deleteModal button[onclick*="closeDeleteModal"],
+body.theme-royal #customConfirmNo,
+body.theme-royal #customDeleteModal button[onclick*="resolveDelete(false)"],
+body.theme-royal #customFoodModal button[onclick*="resolveFoodPrompt(false)"],
+body.theme-royal #tplEditBtn,
+body.theme-royal #tplCancelEditBtn { 
+    background: rgba(255, 255, 255, 0.85) !important; 
+    color: #001f4d !important; 
+    border: 1.5px solid #0055b3 !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important;
+}
+
+/* Badges & Listen */
+body.theme-royal .shop-badge { 
+    display: flex !important; 
+    background: rgba(0, 85, 179, 0.15) !important; 
+    color: #004494 !important; 
+    width: 24px !important; 
+    height: 24px !important; 
+    border-radius: 50% !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    border: 1px solid rgba(0, 85, 179, 0.3) !important; 
+}
+body.theme-royal .side-btn.active-shop .shop-badge,
+body.theme-royal .side-btn.active-todo .shop-badge { 
+    background: #ffffff !important; 
+    color: #00337c !important; 
+    font-weight: 900 !important;
+}
+
+body.theme-royal #fixkostenList > div { background: rgba(255, 255, 255, 0.85) !important; border: 1.5px solid rgba(0, 85, 179, 0.5) !important; }
+body.theme-royal #fixkostenList strong { color: #001f4d !important; }
+body.theme-royal #fixkostenList span[style*="var(--primary)"],
+body.theme-royal #list-todo li span[style*="color:var(--gray)"],
+body.theme-royal #list-todo li .user-label { color: #0055b3 !important; font-weight: 800 !important; }
+
+/* Theme Dropdown & Zoom */
+body.theme-royal .theme-dropdown { background: rgba(0, 24, 59, 0.94) !important; backdrop-filter: blur(25px) !important; border: 1.5px solid #38bdf8 !important; }
+body.theme-royal .theme-dropdown div { color: #ffffff !important; border-bottom: 1px solid rgba(56, 189, 248, 0.25) !important; }
+body.theme-royal .theme-dropdown div:hover { background: rgba(0, 85, 179, 0.7) !important; }
+body.theme-royal .zoom-btn { background: #ffffff !important; color: #004494 !important; border: 1px solid #0055b3 !important; }
+body.theme-royal #systemZoomRange,
+body.theme-royal #settingsOverlay .tab-toggle,
+body.theme-royal #userModal input[type="checkbox"] { accent-color: #0055b3 !important; }
+
+/* Tablet & PC Optimierungen */
+@media screen and (min-width: 768px) {
+    body.theme-royal .tab-bar { height: 120px !important; }
+    body.theme-royal .tab-item .icon { font-size: 2rem !important; }
+    body.theme-royal .tab-item span { font-size: 1.2rem !important; }
+    body.theme-royal .modal-content { width: 550px !important; padding: 45px !important; border-radius: 20px !important; background: rgba(242, 247, 255, 0.96) !important; border: 2px solid #0055b3 !important; }
+    body.theme-royal .modal-content input:not([type="password"]):not([type="text"]) { height: 90px !important; font-size: 3.5rem !important; color: #004494 !important; -webkit-text-fill-color: #004494 !important; border: 2px solid #0055b3 !important; text-align: center !important; }
+    body.theme-royal .day-dot { height: 80px !important; font-size: 1.8rem !important; }
+}
+
+/* --- LAUFENDER ALARM-RAHMEN (ROYAL - KÖNIGSBLAU & WEISS) --- */
+body.theme-royal .urgent-blink::after,
+body.theme-royal #list-todo li.urgent-blink::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    pointer-events: none !important;
+    border-radius: inherit !important;
+    z-index: 10 !important;
+    background-image: 
+        linear-gradient(90deg, #0055b3 50%, #ffffff 50%),
+        linear-gradient(90deg, #0055b3 50%, #ffffff 50%),
+        linear-gradient(0deg, #0055b3 50%, #ffffff 50%),
+        linear-gradient(0deg, #0055b3 50%, #ffffff 50%);
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 40px 6px, 40px 6px, 6px 40px, 6px 40px;
+    background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px;
+    animation: xmas-running-border 0.3s infinite linear !important;
+}
+body.theme-royal .urgent-blink,
+body.theme-royal #list-todo li.urgent-blink {
+    position: relative !important;
+    overflow: hidden !important;
+}

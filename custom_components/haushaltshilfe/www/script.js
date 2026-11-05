@@ -382,7 +382,7 @@ async function loadDeviceZoom() {
                 // Theme vom Server übernehmen, falls vorhanden (inkl. Winter & Weihnachten!)
                 if (data.theme) {
                     window.curTheme = data.theme;
-                    const themes = ["theme-light", "theme-dark", "theme-glass", "theme-blue", "theme-green", "theme-winter", "theme-xmas"];
+                    const themes = ["theme-light", "theme-dark", "theme-glass", "theme-blue", "theme-green", "theme-winter", "theme-xmas", "theme-bayern"];
                     document.body.classList.remove(...themes);
                     document.body.className = window.curTheme;
                     localStorage.setItem('app_theme', window.curTheme);
@@ -697,7 +697,7 @@ function toggleThemeMenu(event) {
 }
 
 async function setTheme(themeName) {
-    const themes = ["theme-light", "theme-dark", "theme-glass", "theme-blue", "theme-green", "theme-winter", "theme-xmas", "theme-newyear"];
+    const themes = ["theme-light", "theme-dark", "theme-glass", "theme-blue", "theme-green", "theme-winter", "theme-xmas", "theme-newyear", "theme-royal", "theme-spring"];
     document.body.classList.remove(...themes);
     window.curTheme = themeName;
     document.body.className = window.curTheme;
