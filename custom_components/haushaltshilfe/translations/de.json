@@ -23,8 +23,12 @@
           "trash_yellow_date": "🗑️ Gelber Sack: Sensor für Datum",
           "trash_paper_days": "🗑️ Papiertonne: Sensor für Tage",
           "trash_paper_date": "🗑️ Papiertonne: Sensor für Datum",
-          "trash_rest_days": "🗑️ Restmüll: Sensor für Tage",
-          "trash_rest_date": "🗑️ Restmüll: Sensor für Datum"
+          "trash_rest_days": "🗑️ Restmull: Sensor für Tage",
+          "trash_rest_date": "🗑️ Restmull: Sensor für Datum",
+          "trash_bio_days": "🟢 Biomüll: Sensor für Tage",
+          "trash_bio_date": "🟢 Biomüll: Sensor für Datum",
+          "trash_xmas_days": "🎄 Weihnachtsbaum: Sensor für Tage",
+          "trash_xmas_date": "🎄 Weihnachtsbaum: Sensor für Datum"
         },
         "data_description": {
           "trash_yellow_days": "Wähle hier und in den folgenden Feldern deine Sensoren für die Müllabfuhr aus."

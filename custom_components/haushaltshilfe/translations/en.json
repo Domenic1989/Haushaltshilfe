@@ -24,7 +24,11 @@
           "trash_paper_days": "🗑️ Paper Bin: Days Sensor",
           "trash_paper_date": "🗑️ Paper Bin: Date Sensor",
           "trash_rest_days": "🗑️ Residual Waste: Days Sensor",
-          "trash_rest_date": "🗑️ Residual Waste: Date Sensor"
+          "trash_rest_date": "🗑️ Residual Waste: Date Sensor",
+          "trash_bio_days": "🟢 Organic Waste: Days Sensor",
+          "trash_bio_date": "🟢 Organic Waste: Date Sensor",
+          "trash_xmas_days": "🎄 Christmas Tree: Days Sensor",
+          "trash_xmas_date": "🎄 Christmas Tree: Date Sensor"
         },
         "data_description": {
           "trash_yellow_days": "Select your sensors for waste collection here and in the fields below."
