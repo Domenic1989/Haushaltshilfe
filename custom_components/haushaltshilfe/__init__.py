@@ -21,6 +21,10 @@ from .const import (
     CONF_TRASH_PAPER_DATE,
     CONF_TRASH_REST_DAYS,
     CONF_TRASH_REST_DATE,
+    CONF_TRASH_BIO_DAYS,
+    CONF_TRASH_BIO_DATE,
+    CONF_TRASH_XMAS_DAYS,
+    CONF_TRASH_XMAS_DATE,
 )
 from .security import (
     hash_password,
@@ -203,6 +207,28 @@ class HaushaltshilfeCredentialsView(HomeAssistantView):
                 "name": "Restmüll",
                 "icon": "🗑️",
             })
+            
+        # --- NEU: Biomüll ---
+        bio_days = _get_opt(CONF_TRASH_BIO_DAYS, "sensor.biomuell")
+        bio_date = _get_opt(CONF_TRASH_BIO_DATE, "sensor.biomuell_datum")
+        if bio_days and bio_date:
+            trash_config.append({
+                "id": bio_days,
+                "dateId": bio_date,
+                "name": "Biomüll",
+                "icon": "🟢",
+            })
+
+        # --- NEU: Weihnachtsbäume ---
+        xmas_days = _get_opt(CONF_TRASH_XMAS_DAYS, "sensor.weihnachtsbaum")
+        xmas_date = _get_opt(CONF_TRASH_XMAS_DATE, "sensor.weihnachtsbaum_datum")
+        if xmas_days and xmas_date:
+            trash_config.append({
+                "id": xmas_days,
+                "dateId": xmas_date,
+                "name": "Weihnachtsbaum",
+                "icon": "🎄",
+            })    
 
         return self.json({
             "visible_tabs": visible_tabs,

@@ -22,6 +22,10 @@ from .const import (
     CONF_TRASH_PAPER_DATE,
     CONF_TRASH_REST_DAYS,
     CONF_TRASH_REST_DATE,
+    CONF_TRASH_BIO_DAYS,
+    CONF_TRASH_BIO_DATE,
+    CONF_TRASH_XMAS_DAYS,
+    CONF_TRASH_XMAS_DATE,
 )
 
 # Verfügbare Tabs für das Formular
@@ -50,6 +54,10 @@ TRASH_DEFAULTS = {
     CONF_TRASH_PAPER_DATE: "sensor.papier_datum",
     CONF_TRASH_REST_DAYS: "sensor.restmull",
     CONF_TRASH_REST_DATE: "sensor.restmull_datum",
+    CONF_TRASH_BIO_DAYS: "sensor.biomuell",
+    CONF_TRASH_BIO_DATE: "sensor.biomuell_datum",
+    CONF_TRASH_XMAS_DAYS: "sensor.weihnachtsbaum",
+    CONF_TRASH_XMAS_DATE: "sensor.weihnachtsbaum_datum",
 }
 
 
@@ -87,6 +95,10 @@ class HaushaltshilfeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Optional(CONF_TRASH_PAPER_DATE, default=TRASH_DEFAULTS[CONF_TRASH_PAPER_DATE]): SENSOR_SELECTOR,
             vol.Optional(CONF_TRASH_REST_DAYS, default=TRASH_DEFAULTS[CONF_TRASH_REST_DAYS]): SENSOR_SELECTOR,
             vol.Optional(CONF_TRASH_REST_DATE, default=TRASH_DEFAULTS[CONF_TRASH_REST_DATE]): SENSOR_SELECTOR,
+            vol.Optional(CONF_TRASH_BIO_DAYS, default=TRASH_DEFAULTS[CONF_TRASH_BIO_DAYS]): SENSOR_SELECTOR,
+            vol.Optional(CONF_TRASH_BIO_DATE, default=TRASH_DEFAULTS[CONF_TRASH_BIO_DATE]): SENSOR_SELECTOR,
+            vol.Optional(CONF_TRASH_XMAS_DAYS, default=TRASH_DEFAULTS[CONF_TRASH_XMAS_DAYS]): SENSOR_SELECTOR,
+            vol.Optional(CONF_TRASH_XMAS_DATE, default=TRASH_DEFAULTS[CONF_TRASH_XMAS_DATE]): SENSOR_SELECTOR,
         })
 
         return self.async_show_form(
@@ -164,6 +176,22 @@ class HaushaltshilfeOptionsFlowHandler(config_entries.OptionsFlow):
             vol.Optional(
                 CONF_TRASH_REST_DATE,
                 description={"suggested_value": _get_trash_opt(CONF_TRASH_REST_DATE)},
+            ): SENSOR_SELECTOR,
+            vol.Optional(
+                CONF_TRASH_BIO_DAYS,
+                description={"suggested_value": _get_trash_opt(CONF_TRASH_BIO_DAYS)},
+            ): SENSOR_SELECTOR,
+            vol.Optional(
+                CONF_TRASH_BIO_DATE,
+                description={"suggested_value": _get_trash_opt(CONF_TRASH_BIO_DATE)},
+            ): SENSOR_SELECTOR,
+            vol.Optional(
+                CONF_TRASH_XMAS_DAYS,
+                description={"suggested_value": _get_trash_opt(CONF_TRASH_XMAS_DAYS)},
+            ): SENSOR_SELECTOR,
+            vol.Optional(
+                CONF_TRASH_XMAS_DATE,
+                description={"suggested_value": _get_trash_opt(CONF_TRASH_XMAS_DATE)},
             ): SENSOR_SELECTOR,
         })
 
