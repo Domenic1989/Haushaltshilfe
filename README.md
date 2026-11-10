@@ -18,7 +18,7 @@ Eine elegante, benutzerfreundliche All-in-One-Lösung für die Organisation dein
 
 ## ✨ Features
 
- - 🍽️ **Wochen-Essensplan**: Speiseplan von Montag bis Sonntag übersichtlich verwalten.
+ - 🍽️ **Wochen-Essensplan**: Speiseplan von Montag bis Sonntag übersichtlich verwalten für diese Woche und nächste Woche
  - 🗑️ **Müllabfuhr-Übersicht**: Direkte Anbindung an bestehende Müll-Sensoren über ein zentrales Konfigurations-Makro.
  - 🔄 **Neustart-sicher**: Alle Daten (Finanzen, Einkäufe, Aufgaben) bleiben auch nach einem Home Assistant Neustart dauerhaft gespeichert.
 -- 🔑 **Multi-Device Login & Token-Speicherung**: Einmalig auf jedem Gerät (Smartphone, Tablet, PC) einrichten – die Sitzung bleibt dauerhaft gespeichert!
@@ -40,20 +40,16 @@ Eine elegante, benutzerfreundliche All-in-One-Lösung für die Organisation dein
 
 ---
 
-## 🚀 Installation & Einrichtung
+# 🚀 Installation & Einrichtung
 
-### 1. Installation über HACS (oder Manuell)
+### Installation über HACS (Empfohlen)
 
-#### Via HACS (Empfohlen)
 1. Öffne **HACS** in deiner Home Assistant Instanz.
-2. Klicke oben rechts auf die drei Punkte ➔ **Benutzerdefinierte Repositories**.
-3. Füge die URL `https://github.com/Domenic1989/Haushaltshilfe` ein und wähle als Kategorie **Integration**.
-4. Klicke auf **Herunterladen**.
+2. Suche nach **Haushaltshilfe** (die Integration ist direkt im offiziellen HACS-Default-Store verfügbar).
+3. Klicke auf **Herunterladen**.
+4. Starte deine Home Assistant Instanz einmal neu, damit die Integration geladen wird.
 
-#### Manuelle Installation
-Kopiere den Ordner `custom_components/haushaltshilfe` in deinen Home Assistant Ordner `custom_components/`.
-
----
+*(Falls du die Integration früher manuell installiert hattest, lösche bitte vorab den alten Ordner `custom_components/haushaltshilfe` aus deinem Home Assistant Verzeichnis, bevor du sie über HACS installierst.)*
 
 ### 2. Integration aktivieren
 
@@ -188,11 +184,13 @@ Sämtliche Navigations-Tabs (🛒 Einkaufsliste, 📋 Aufgaben, 🍽️ Essenspl
 
 ## 3. 🍽️ Wochenplan-Modul (`Essen` / `v-food`)
 
-- **Gericht eintragen**: Trage direkt im Feld des jeweiligen Wochentags (MO–SO) ein, was gekocht wird.
+- **2-Wochen-Planung (Diese Woche / Nächste Woche)**: Nutze den Wochen-Umschalter oben, um nahtlos zwischen dem Speiseplan für **Diese Woche** und **Nächste Woche** zu wechseln.
+- **Mahlzeiten eintragen**: Trage in den Feldern des jeweiligen Wochentags (MO–SO) separat für Frühstück, Mittagessen und Abendessen ein, was es gibt.
 - **Koch / Verantwortlichen zuweisen**: Wähle im Dropdown-Menü neben dem Tag die kochende Person aus.
 - **Kategorien & Favoriten**: Nutze **`📂 + Kategorie`** und **`⭐️ + Favoriten`**, um Lieblingsgerichte schnell in den Wochenplan einzufügen.
-- **Woche zurücksetzen**: Klicke unten auf **`Woche zurücksetzen 🧹`**, um alle Tage auf einmal zu leeren.
-
+- **Woche verschieben / abschließen**: Klicke auf **`Woche abschließen/verschieben 🔄`**, um die Gerichte von „Nächste Woche“ manuell nach vorne in „Diese Woche“ zu rücken und die nächste Woche zu leeren.
+- **Automatischer Wochenwechsel**: Der Essensplan rückt jeden Sonntag um 23:00 Uhr automatisch weiter, sodass die nächste Woche nahtlos in die aktuelle Woche übergeht.
+- **Woche zurücksetzen**: Klicke unten auf **`Woche zurücksetzen 🧹`**, um alle Tage der aktiven Woche auf einmal zu leeren.
 ---
 
 ## 4. 🏠 Aufgaben- & Haus-Modul (`Haus` / `v-todo`)
@@ -214,29 +212,39 @@ Sämtliche Navigations-Tabs (🛒 Einkaufsliste, 📋 Aufgaben, 🍽️ Essenspl
 ## 5. 💰 Finanz-Modul (`Finanzen` / `v-finance`)
 
 - Das Finanz-Modul ist in eine übersichtliche Zwei-Ebenen-Struktur (Jahre ➔ Monate) unterteilt:
-- Jahr anlegen: Klicke oben auf ➕ Jahr hinzufügen und gib eine vierstellige Jahreszahl ein (z. B. 2026), um das Jahr als neue Übersichtskarte zu erstellen.
-- Jahr öffnen: Klicke auf eine Jahreskarte, um in die Monatsansicht des jeweiligen Jahres zu wechseln. (Über das Mülleimer-Icon 🗑️ auf der Jahreskarte lässt sich das gesamte Jahr inklusive aller Monate löschen).
-- Monat anlegen: Klicke im geöffneten Jahr auf ➕ Monat in diesem Jahr hinzufügen (z. B. Oktober). Hinterlegte Fixkosten-Vorlagen werden dabei automatisch für diesen Monat übernommen.
-- Einträge verwalten: Klicke auf eine Monatskarte, um das Detail-Modal (finance-modal) zu öffnen.
-- Fixum & Spendings: Trage Fixkosten (Miete, Internet) oder variable Ausgaben (Einkauf, Tanken) mit Betrag (€) und Beschreibung ein.
-- Eintrag löschen: Klicke auf das ✕ neben dem jeweiligen Eintrag.
----
+- **Jahr anlegen**: Klicke oben auf `➕ Jahr hinzufügen` und gib eine vierstellige Jahreszahl ein (z. B. 2026), um das Jahr als neue Übersichtskarte zu erstellen.
+- **Jahr öffnen**: Klicke auf eine Jahreskarte, um in die Monatsansicht des jeweiligen Jahres zu wechseln. (Über das Mülleimer-Icon `🗑️` auf der Jahreskarte lässt sich das gesamte Jahr inklusive aller Monate löschen).
+- **Monat anlegen**: Klicke im geöffneten Jahr auf `➕ Monat in diesem Jahr hinzufügen` (z. B. Oktober). Hinterlegte Fixkosten-Vorlagen werden dabei automatisch für diesen Monat übernommen.
+- **Einträge verwalten**: Klicke auf eine Monatskarte, um das Detail-Modal (`finance-modal`) zu öffnen.
+- **Fixum & Spendings**: Trage Fixkosten (Miete, Internet) oder variable Ausgaben (Einkauf, Tanken) mit Betrag (€) und Beschreibung ein.
+- **Eintrag löschen**: Klicke auf das `✕` neben dem jeweiligen Eintrag.
+- **Standard-Fixkosten-Vorlagen verwalten**: Über die Einstellungen kannst du wiederkehrende Posten (inklusive Intervall-Auswahl wie monatlich, quartalsweise oder in bestimmten Monaten) hinterlegen. 
+  - **Bearbeiten leicht gemacht**: Klicke einfach direkt auf einen bestehenden Fixkosten-Eintrag in der Liste, um ihn sofort in die Eingabefelder zu laden, anzupassen und per `💾 Änderung speichern` zu aktualisieren.
 
 ## 6. 🚛 Müll-Modul (`Müll` / `v-trash`)
 
-- Zeigt automatisch die nächsten Abholtermine für **Gelber Sack**, **Altpapier**, **Restmüll** und **Biomüll** an.
+- Zeigt automatisch die nächsten Abholtermine für **Gelber Sack**, **Altpapier**, **Restmüll**, **Biomüll** und die **Weihnachtsbaum-Abholung** an.
 - Die Daten werden automatisch live aus den hinterlegten Home-Assistant-Sensoren geladen.
 
 ---
 
 ## 7. 🎨 Themes & Design anpassen (`theme-dropdown`)
 
-Klicke oben auf das Paletten-Symbol **`🎨`**, um das Erscheinungsbild der Oberfläche zu wechseln:
+## 🎨 Themes & Design-Auswahl
+
+Klicke oben auf das Paletten-Symbol **`🎨`**, um das Erscheinungsbild der Oberfläche flexibel zu wechseln:
+
 - 💎 **Glass** (Glassmorphism-Look)
 - 🌑 **Dark** (Dunkler Modus)
 - ☀️ **Light** (Helles Design)
 - 🟢 **Green** (Grüne Akzente)
 - 🔵 **Blue** (Blaue Akzente)
+- ❄️ **Winter** (Winter-Design)
+- 🎄 **Weihnachten** (Mit festlichen Dekorationen)
+- 🎆 **Neujahr** (Silvester- & Neujahrs-Look)
+- ⚒️ Königsblau (Schalke-Design)
+- 🌸 **Frühling** (Frühlingshaftes Design)
+- 🔴 **FC Bayern** (Mit roten Fußball-Akzenten)
 
 ---
 
