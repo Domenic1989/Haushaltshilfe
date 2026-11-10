@@ -1,6 +1,6 @@
 :root { 
     --primary: #34c759; 
-    --accent: #ff9500; 
+    --accent: rgba(255, 102, 0, 0.2); 
     --danger: #ff3b30; 
     --todo: #007aff; 
     --trash: #5856d6; 
@@ -188,7 +188,7 @@ body #deleteModal {
     background: var(--card) !important; 
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
-    min-width: 16rem;
+    min-width: 25rem;
     border-radius: 25px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
     z-index: 1000000 !important;
@@ -208,13 +208,15 @@ body #deleteModal {
     padding: 1.35rem;
     text-align: center;
     font-weight: bold;
-    font-size: 1.2rem;
+    font-size: 1.5rem !important;
+    min-height: 2.3rem;
     cursor: pointer;
     color: var(--text) !important; 
     border-bottom: 1px solid rgba(120, 120, 120, 0.1);
     -webkit-tap-highlight-color: transparent;
     white-space: nowrap;
 }
+
 
 .theme-dropdown div:active {
     background: rgba(120, 120, 120, 0.2);
@@ -538,6 +540,103 @@ li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: co
 .day-dot { flex: 1 !important; height: 3.1rem !important; font-size: 1rem !important; display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; font-weight: 800 !important; border-radius: 12px !important; transition: 0.2s !important; border: 1px solid rgba(0,0,0,0.1) !important; }
 .modal-row input { flex: 2 !important; min-width: 0 !important; font-size: 1rem !important; } 
 .modal-row select { flex: 3 !important; min-width: 0 !important; font-size: 1rem !important; }
+/* --- WOCHEN-UMSCHALTER (DIESE / NÄCHSTE WOCHE + ABSCHLIESSEN) --- */
+.week-switcher {
+    display: flex;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.week-switch-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: var(--card, #ffffff);
+    color: var(--text, #1c1c1e);
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.week-switch-btn.active-food {
+    background: var(--primary, #ff9500);
+    color: #ffffff;
+    border-color: transparent;
+}
+
+/* Dezent abgesetztes Styling für den Reset/Vorrücken-Button */
+.week-switch-btn.reset-week-btn {
+    flex: 0 0 auto; /* Nimmt nur so viel Platz wie nötig, lässt den Wochen-Buttons mehr Raum */
+    padding: 10px 14px;
+    border: 1px dashed var(--primary, #ff9500);
+}
+
+.week-switch-btn.reset-week-btn:active {
+    transform: scale(0.96);
+}
+
+.food-auto-info {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text, #1c1c1e);
+    background: rgba(128, 128, 128, 0.1); /* Ein dezenter neutraler Hintergrund */
+    border: 1px solid rgba(128, 128, 128, 0.2); /* Ein feiner, sauberer Rahmen */
+    padding: 8px 12px;
+    border-radius: 10px;
+    margin: 8px 0 16px 0;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+/* --- 3 MAHLZEITEN NEBENEINANDER (GLEICHE HÖHE WIE VORHER) --- */
+.meal-inputs-inline {
+    display: flex;
+    flex: 1;
+    gap: 6px;
+    align-items: center;
+    min-width: 0; /* Verhindert Überlaufen auf kleineren Displays */
+}
+
+.meal-inputs-inline .day-input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    padding: 6px 8px !important;
+    font-size: 0.9rem;
+}
+
+/* --- MINI-BESCHRIFTUNG DIREKT ÜBER DEN FELDERN --- */
+.meal-field-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    gap: 3px;
+}
+
+.meal-mini-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding-left: 2px;
+}
+
+/* Die Inputs in den Gruppen auf volle Breite setzen */
+.meal-field-group .day-input {
+    width: 100% !important;
+    padding: 6px 8px !important;
+    font-size: 0.9rem;
+}
 
 /* --- TABLET / PC / LAPTOP OPTIMIERUNG --- */
 @media (min-width: 768px) {
@@ -1042,6 +1141,7 @@ body #customFoodModal,
 body #roomModal,
 body #passwordModal,
 body #userModal,
+bovy .cook-modal-card
 body #shopQtyModal {
     position: fixed !important;
     inset: 0 !important;
@@ -1069,6 +1169,8 @@ body #customFoodModal.show, body #customFoodModal[style*="display: flex"], body 
 body #roomModal.show, body #roomModal[style*="display: flex"], body #roomModal[style*="display:flex"],
 body #passwordModal.show, body #passwordModal[style*="display: flex"], body #passwordModal[style*="display:flex"],
 body #userModal.show, body #userModal[style*="display: flex"], body #userModal[style*="display:flex"],
+body.cook-modal-card body .cook-modal-card[style*="display: flex"], body .cook-modal-card[style*="display:flex"],
+body.custom-cook-wrapper body .custom-cook-wrapper[style*="display: flex"], body .custom-cook-wrapper[style*="display:flex"],
 body #shopQtyModal.show, body #shopQtyModal[style*="display: flex"], body #shopQtyModal[style*="display:flex"] {
     display: flex !important;
 }
@@ -1081,6 +1183,8 @@ body #customFoodModal > div,
 body #roomModal > div,
 body #passwordModal > div,
 body #userModal > div,
+body .cook-modal-card > div,
+body .custom-cook-wrapper > div,
 body #shopQtyModal > div {
     position: relative !important;
     width: 100% !important;
@@ -1146,6 +1250,8 @@ body #customFoodModal > div > div:last-child,
 body #roomModal > div > div:last-child,
 body #passwordModal > div > div:last-child,
 body #userModal > div > div:last-child,
+body .cook-modal-card > div > div:last-child,
+body .custom-cook-wrapper > div > div:last-child,
 body #shopQtyModal > div {
     display: flex !important;
     flex-direction: column !important;
@@ -1272,7 +1378,7 @@ body #settingsOverlay input[type="checkbox"] {
     flex-shrink: 0 !important;
 }
 
-//* ========================================================
+/* ========================================================
    --- EDIT- & INTERVAL-MODAL (ZENTRIERT MIT RAND & ZOOM-SCHUTZ) ---
    ======================================================== */
 #intervalModal,
@@ -1426,4 +1532,147 @@ body #settingsOverlay input[type="checkbox"] {
     border: 0 !important;
     margin: 15px 0 !important;
     width: 100% !important;
+}
+
+/* ========================================================
+   --- "WER KOCHT?" FELDER & ZENTRALES THEME-MODAL ---
+   ======================================================== */
+
+/* 1. Die Essens-Felder nehmen sich den Platz links */
+html body .day-card .meal-inputs-inline {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+}
+
+.custom-cook-wrapper {
+    position: relative !important;
+    margin-left: auto !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+}
+
+/* 2. Der Button hat eine feste, saubere Größe (kein Ausreißen mehr) */
+.custom-cook-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    padding: 8px 12px !important;
+    border-radius: 12px !important;
+    font-weight: 800 !important;
+    font-size: 0.85rem !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    /* Feste Breite für den PC */
+    width: 400px !important;
+    min-width: 400px !important;
+    max-width: 400px !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.custom-cook-btn:active {
+    transform: scale(0.97) !important;
+}
+
+.custom-cook-btn .cook-arrow {
+    font-size: 0.8rem !important;
+    opacity: 0.8 !important;
+}
+
+/* 3. Das zentrierte Modal in der Bildschirmmitte (Einheitliche Standard-Größe) */
+.cook-modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(5px) !important;
+    z-index: 999999 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 20px !important;
+    box-sizing: border-box !important;
+    animation: cookModalFadeIn 0.18s ease-out !important;
+}
+
+@keyframes cookModalFadeIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+
+.cook-modal-list {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin-top: 15px !important;
+}
+
+
+/* Handy- & Tablet-Optimierung (Max 900px) */
+@media (max-width: 900px) {
+    .custom-cook-btn {
+        /* Feste Breite für Handy und Tablet */
+        width: 150px !important;
+        min-width: 150px !important;
+        max-width: 150px !important;
+        font-size: 0.73rem !important;
+        padding: 5px 8px !important;
+    }
+    .cook-modal-card {
+        max-width: min(350px, 90vw) !important;
+        padding: 18px !important;
+    }
+    .cook-modal-option {
+        font-size: 0.95rem !important;
+        min-height: 2.7rem !important;
+        padding: 10px 12px !important;
+    }
+}
+
+/* ========================================================
+   --- INTERVALL-AUSWAHL BUTTON & MODAL ---
+   ======================================================== */
+
+#tpl_months + .custom-cook-wrapper {
+    width: 100% !important;
+    display: block !important;
+    margin-left: 0 !important;
+}
+
+/* Der Button fügt sich nahtlos in dein Formular ein */
+#custom-interval-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 3.2rem !important;
+    padding: 0 12px !important;
+    border-radius: 12px !important;
+    font-weight: 800 !important;
+    font-size: 0.95rem !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+    background: var(--card) !important;
+    color: var(--text) !important;
+    border: 2px solid var(--primary, #d4af37) !important;
+}
+
+#custom-interval-btn:active {
+    transform: scale(0.98) !important;
+}
+
+html, body, div, ul, ol, .modal-content {
+    scrollbar-width: none !important; /* Für Firefox */
+    -ms-overflow-style: none !important; /* Für ältere Edge/IE */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+div::-webkit-scrollbar,
+ul::-webkit-scrollbar,
+.modal-content::-webkit-scrollbar {
+    display: none !important; /* Für Chrome, Safari und Opera */
 }

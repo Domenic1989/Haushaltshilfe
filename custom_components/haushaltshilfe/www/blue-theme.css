@@ -1,299 +1,647 @@
-/* --- BLUE GLASS THEME BASIS & HINTERGRUND (HELL) --- */
-body.theme-blue { background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%) !important; background-attachment: fixed; background-size: cover; --text: #1c1c1e; }
-body.theme-blue #loginOverlay { background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%) !important; }
+/* ========================================================
+   --- BLUE GLASS THEME (SAPHIR, EISBLAU & KRISTALL-GLAS - body.theme-blue) ---
+   ======================================================== */
 
-/* --- ALLGEMEINER GLAS-EFFEKT (BLAU) --- */
-body.theme-blue .login-card, body.theme-blue .input-card, body.theme-blue li, body.theme-blue .day-card, body.theme-blue #trash-content, body.theme-blue .cat-btn, body.theme-blue .fav-chip, body.theme-blue .tab-bar, body.theme-blue .theme-toggle-top, body.theme-blue .admin-btn, body.theme-blue .cook-select, body.theme-blue .user-btn, body.theme-blue .month-card { background: rgba(255, 255, 255, 0.45) !important; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08) !important; color: #000000 !important; }
+/* --- SAPHIR- & EISBLAU-GLITZER-ANIMATION --- */
+@keyframes blueSparkle {
+    0% {
+        background-position: 0px 0px, 0px 0px, 0px 0px;
+    }
+    100% {
+        background-position: 500px 1000px, -400px 600px, 300px 500px;
+    }
+}
 
-/* --- SIDEBAR BUTTONS (ZAHL DIREKT NEBEN NAME) --- */
-body.theme-blue .side-btn { background: rgba(255, 255, 255, 0.45) !important; backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.5) !important; color: #000000 !important; display: flex !important; flex-direction: row !important; justify-content: flex-start !important; align-items: center !important; gap: 10px !important; padding: 8px 12px !important; min-height: 50px !important; border-radius: 12px !important; }
+/* --- BLUE GLASS BASIS & HINTERGRUND (EDLER SAPHIR-EISBLAU-VERLAUF) --- */
+body.theme-blue { 
+    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 55%, #004d8c 100%) !important; 
+    background-attachment: fixed !important; 
+    background-size: cover !important; 
+    --text: #003366; 
+    --todo: #0769b5;       /* Kräftiges Royal-Blau für Sekundär-Elemente */
+    --primary: #0984e3;    /* Haupt-Blau */
+    --bg: rgba(255, 255, 255, 0.95);
+    --card: rgba(240, 248, 255, 0.92);
+    --gray: #003366;       /* Tiefes Dunkelblau für perfekte Lesbarkeit */
+    position: relative;
+}
 
-/* --- TEXTE SCHWARZ AUF GLAS --- */
-body.theme-blue h1, body.theme-blue .main-input, body.theme-blue .day-input, body.theme-blue .cat-btn, body.theme-blue .admin-btn, body.theme-blue .fav-chip, body.theme-blue .trash-name, body.theme-blue .day-label span, body.theme-blue .status-bar, body.theme-blue .tab-item, body.theme-blue .user-label, body.theme-blue #list-todo li div { color: #000000 !important; font-weight: 700 !important; }
+body.theme-blue #loginOverlay { 
+    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 55%, #004d8c 100%) !important; 
+}
 
-/* --- AKTIVE ELEMENTE (ROYAL-BLAU & WEISSE SCHRIFT) --- */
-body.theme-blue .side-btn.active-shop, body.theme-blue .side-btn.active-todo, body.theme-blue .cat-btn.active-shop, body.theme-blue .cat-btn.active-food, body.theme-blue .cat-btn.active-todo, body.theme-blue .user-btn.selected { background: #0984e3 !important; color: #ffffff !important; border-color: rgba(255, 255, 255, 0.6) !important; box-shadow: 0 5px 15px rgba(9, 132, 227, 0.3) !important; }
+/* Glitzernder Saphir- & Eisblau-Funkenregen im Hintergrund (blockiert keine Klicks!) */
+body.theme-blue::before,
+body.theme-blue #loginOverlay::before {
+    content: "💎";
+    position: fixed;
+    inset: 0;
+    pointer-events: none !important;
+    z-index: 9999;
+    font-size: 0;
+    background-image: 
+        radial-gradient(4px 4px at 90px 50px, rgba(255, 255, 255, 0.9) 50%, transparent 100%),
+        radial-gradient(6px 6px at 250px 160px, rgba(116, 185, 255, 0.85) 50%, transparent 100%),
+        radial-gradient(3px 3px at 320px 280px, rgba(255, 255, 255, 0.8) 50%, transparent 100%),
+        radial-gradient(5px 5px at 150px 350px, rgba(0, 210, 255, 0.7) 50%, transparent 100%),
+        radial-gradient(4px 4px at 390px 90px, rgba(255, 255, 255, 0.85) 50%, transparent 100%),
+        radial-gradient(5px 5px at 60px 240px, rgba(9, 132, 227, 0.75) 50%, transparent 100%);
+    background-size: 450px 450px, 350px 350px, 280px 280px;
+    animation: blueSparkle 22s linear infinite;
+}
 
-/* --- TAB-BAR TOTAL-RESET BLAU --- */
-body.theme-blue .tab-bar { padding: 0 !important; margin: 0 !important; height: 80px !important; display: flex !important; align-items: stretch !important; justify-content: space-around !important; border-top: 1px solid rgba(255,255,255,0.2) !important; }
-body.theme-blue .tab-item { flex: 1 !important; height: 100% !important; display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important; background: transparent !important; }
-body.theme-blue .tab-item.active-shop, body.theme-blue .tab-item.active-food, body.theme-blue .tab-item.active-todo, body.theme-blue .tab-item.active-finance, body.theme-blue .tab-item.active-trash { background: #0984e3 !important; color: #ffffff !important; border-radius: 0 !important; height: 100% !important; width: 100% !important; transform: none !important; box-shadow: none !important; }
-body.theme-blue .tab-item.active-shop .icon, body.theme-blue .tab-item.active-food .icon, body.theme-blue .tab-item.active-todo .icon, body.theme-blue .tab-item.active-trash .icon, body.theme-blue .tab-item.active-finance .icon, body.theme-blue .tab-item.active-shop span, body.theme-blue .tab-item.active-food span, body.theme-blue .tab-item.active-finance span, body.theme-blue .tab-item.active-todo span { color: #ffffff !important; }
+/* --- ALLGEMEINER GLAS-EFFEKT (HELLES EISBLAU-GLAS & SCHIMMER-KANTE) --- */
+body.theme-blue .login-card, 
+body.theme-blue .input-card, 
+body.theme-blue .card,
+body.theme-blue li, 
+body.theme-blue .day-card, 
+body.theme-blue #trash-content, 
+body.theme-blue .cat-btn, 
+body.theme-blue .fav-chip, 
+body.theme-blue .tab-bar, 
+body.theme-blue .theme-toggle-top, 
+body.theme-blue .admin-btn, 
+body.theme-blue .cook-select, 
+body.theme-blue .user-btn, 
+body.theme-blue .month-card { 
+    background: rgba(255, 255, 255, 0.58) !important; 
+    backdrop-filter: blur(20px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important; 
+    border: 1.5px solid rgba(255, 255, 255, 0.75) !important; 
+    box-shadow: 0 8px 32px rgba(0, 51, 102, 0.14), inset 0 0 12px rgba(255, 255, 255, 0.65) !important; 
+    color: #003366 !important; 
+}
+
+/* Kleine Diamant-Deko oben rechts auf den Monats- und Tageskarten */
+body.theme-blue .month-card,
+body.theme-blue .day-card {
+    position: relative !important;
+}
+body.theme-blue .month-card::after {
+    content: "💎";
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    font-size: 1.1rem;
+    opacity: 1.75;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 4px rgba(9, 132, 227, 0.4));
+}
+body.theme-blue .day-card::after {
+    content: "💎";
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    font-size: 0.95rem;
+    opacity: 1.65;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 4px rgba(9, 132, 227, 0.4));
+}
+
+/* --- SIDEBAR BUTTONS --- */
+body.theme-blue .side-btn { 
+    background: rgba(255, 255, 255, 0.58) !important; 
+    backdrop-filter: blur(20px) saturate(180%) !important; 
+    border: 1.5px solid rgba(255, 255, 255, 0.75) !important; 
+    color: #003366 !important; 
+    display: flex !important; 
+    flex-direction: row !important; 
+    justify-content: flex-start !important; 
+    align-items: center !important; 
+    gap: 10px !important; 
+    padding: 8px 12px !important; 
+    min-height: 50px !important; 
+    border-radius: 12px !important; 
+}
+
+/* --- TEXTE TIEFES SAPHIR-DUNKELBLAU AUF GLAS --- */
+body.theme-blue h1 { 
+    color: #003366 !important; 
+    text-shadow: 0 2px 12px rgba(255, 255, 255, 0.7) !important;
+    font-weight: 800 !important; 
+}
+body.theme-blue .status-bar {
+    color: #003366 !important;
+    font-weight: 800 !important;
+}
+body.theme-blue .main-input, 
+body.theme-blue .day-input, 
+body.theme-blue .side-btn,
+body.theme-blue .cat-btn, 
+body.theme-blue .admin-btn, 
+body.theme-blue .fav-chip, 
+body.theme-blue .trash-name, 
+body.theme-blue .day-label span, 
+body.theme-blue .tab-item, 
+body.theme-blue .user-label, 
+body.theme-blue #list-todo li div { 
+    color: #003366 !important; 
+    font-weight: 700 !important; 
+}
+
+body.theme-blue .main-input::placeholder,
+body.theme-blue .login-card input[type="password"]::placeholder,
+body.theme-blue .login-card input[type="text"]::placeholder { 
+    color: #0769b5 !important; 
+    font-weight: 700 !important; 
+}
+
+/* --- AKTIVE ELEMENTE (EDLER SAPHIR-VERLAUF & WEISSE SCHRIFT) --- */
+body.theme-blue .side-btn.active-shop, 
+body.theme-blue .side-btn.active-todo, 
+body.theme-blue .cat-btn.active-shop, 
+body.theme-blue .cat-btn.active-food, 
+body.theme-blue .cat-btn.active-todo, 
+body.theme-blue .user-btn.selected { 
+    background: linear-gradient(135deg, #0984e3 0%, #004d8c 100%) !important; 
+    color: #ffffff !important; 
+    border: 1.5px solid #ffffff !important; 
+    box-shadow: 0 5px 20px rgba(9, 132, 227, 0.45) !important; 
+    font-weight: 900 !important;
+}
+
+/* --- TAB-BAR MIT GLAS-KANTE --- */
+body.theme-blue .tab-bar { 
+    padding: 0 !important; 
+    margin: 0 !important; 
+    height: 80px !important; 
+    display: flex !important; 
+    align-items: stretch !important; 
+    justify-content: space-around !important; 
+    border-top: 2px solid rgba(255, 255, 255, 0.8) !important; 
+    background: rgba(255, 255, 255, 0.7) !important;
+}
+body.theme-blue .tab-item { 
+    flex: 1 !important; 
+    height: 100% !important; 
+    margin: 0 !important; 
+    padding: 0 !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    background: transparent !important; 
+}
+body.theme-blue .tab-item.active-shop, 
+body.theme-blue .tab-item.active-food, 
+body.theme-blue .tab-item.active-todo, 
+body.theme-blue .tab-item.active-finance, 
+body.theme-blue .tab-item.active-trash { 
+    background: linear-gradient(180deg, #0984e3 0%, #004d8c 100%) !important; 
+    color: #ffffff !important; 
+    border-radius: 0 !important; 
+    height: 100% !important; 
+    width: 100% !important; 
+    transform: none !important; 
+    box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.4) !important; 
+    font-weight: 900 !important;
+}
+body.theme-blue .tab-item.active-shop .icon, 
+body.theme-blue .tab-item.active-food .icon, 
+body.theme-blue .tab-item.active-todo .icon, 
+body.theme-blue .tab-item.active-trash .icon, 
+body.theme-blue .tab-item.active-finance .icon, 
+body.theme-blue .tab-item.active-shop span, 
+body.theme-blue .tab-item.active-food span, 
+body.theme-blue .tab-item.active-finance span, 
+body.theme-blue .tab-item.active-todo span,
+body.theme-blue .tab-item.active-trash span { 
+    color: #ffffff !important; 
+    font-weight: 800 !important;
+}
 
 /* --- DAY-DOTS FIX (TAGES-AUSWAHL) --- */
-body.theme-blue .day-dot { background: #ffffff !important; color: #000000 !important; border: 1px solid rgba(0, 0, 0, 0.1) !important; cursor: pointer !important; display: flex !important; justify-content: center !important; align-items: center !important; }
-body.theme-blue .day-dot.active { background: #0984e3 !important; color: #ffffff !important; border: 2px solid #ffffff !important; transform: scale(1.05) !important; box-shadow: 0 4px 10px rgba(9, 132, 227, 0.3) !important; }
+body.theme-blue .day-dot { 
+    background: rgba(255, 255, 255, 0.9) !important; 
+    color: #003366 !important; 
+    border: 1.5px solid rgba(9, 132, 227, 0.5) !important; 
+    cursor: pointer !important; 
+    display: flex !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+}
+body.theme-blue .day-dot.active { 
+    background: linear-gradient(135deg, #0984e3 0%, #004d8c 100%) !important; 
+    color: #ffffff !important; 
+    border: 2px solid #ffffff !important; 
+    transform: scale(1.05) !important; 
+    box-shadow: 0 4px 12px rgba(9, 132, 227, 0.45) !important; 
+    font-weight: 900 !important;
+}
 
-/* --- MODALS & FINANCE --- */
-body.theme-blue #intervalModal > div, body.theme-blue #editModal > div, body.theme-blue #shopQtyModal > div, body.theme-blue #finance-modal > div { background: rgba(116, 185, 255, 0.85) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important; color: #000000 !important; }
-body.theme-blue .finance-input-row input, body.theme-blue .finance-input-row select { background: rgba(255, 255, 255, 0.5) !important; border: 1px solid rgba(255, 255, 255, 0.3) !important; color: #000000 !important; }
-body.theme-blue .summary-total { color: #0984e3 !important; border-top: 2px solid rgba(9, 132, 227, 0.2) !important; }
-body.theme-blue .month-card h3, body.theme-blue #modal-content h2 { color: #0984e3 !important; font-weight: 800 !important; }
-body.theme-blue .modal-content h1, body.theme-blue .modal-content h2, body.theme-blue .modal-content h3, body.theme-blue .modal-content label { color: #003366 !important; }
+/* --- MODALS & FINANCE (EDLES EISBLAU-GLAS & SAPHIR-RAHMEN) --- */
+body.theme-blue #intervalModal > div, 
+body.theme-blue #editModal > div, 
+body.theme-blue #shopQtyModal > div, 
+body.theme-blue #finance-modal > div,
+body.theme-blue #passwordModal > div,
+body.theme-blue #fixkostenModal > div,
+body.theme-blue #userModal > div,
+body.theme-blue #roomModal > div, 
+body.theme-blue #deleteModal > div,
+body.theme-blue #customConfirmModal .modal-card,
+body.theme-blue #customDeleteModal .modal-card,
+body.theme-blue #customInputModal .modal-card,
+body.theme-blue #customFoodModal .modal-card { 
+    background: rgba(235, 248, 255, 0.94) !important; 
+    backdrop-filter: blur(30px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(30px) saturate(180%) !important; 
+    border: 2px solid #0984e3 !important; 
+    box-shadow: 0 20px 60px rgba(0, 51, 102, 0.3), inset 0 0 15px rgba(116, 185, 255, 0.25) !important; 
+    color: #003366 !important; 
+    border-radius: 20px !important; 
+}
 
-/* --- BLUE THEME: ABBRECH BUTTON --- */
+body.theme-blue #modal-header-fixed { 
+    background: transparent !important; 
+}
+
+/* --- EINGABEFELDER IN MODALS --- */
+body.theme-blue .finance-input-row input, 
+body.theme-blue .finance-input-row select,
+body.theme-blue #finance-modal .finance-input-row input[type="number"], 
+body.theme-blue #finance-modal .finance-input-row input[type="text"],
+body.theme-blue #fixkostenModal input, 
+body.theme-blue #fixkostenModal select,
+body.theme-blue #set_token,
+body.theme-blue #set_master_pw, 
+body.theme-blue #set_admin_pw,
+body.theme-blue #userModal input[type="text"], 
+body.theme-blue #userModal input[type="password"],
+body.theme-blue #newRoomInput,
+body.theme-blue #customInputField,
+body.theme-blue #customFoodField,
+body.theme-blue #passwordModal input[type="password"],
+body.theme-blue #edit-assignee,
+body.theme-blue #modalAssignee, 
+body.theme-blue #edit-name, 
+body.theme-blue #modalName, 
+body.theme-blue #modalTitle,
+body.theme-blue #modalDate, 
+body.theme-blue #edit-date-val,
+body.theme-blue #modalTime, 
+body.theme-blue #edit-time { 
+    color: #003366 !important; 
+    font-weight: 800 !important; 
+    border: 2px solid #0769b5 !important; 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border-radius: 12px !important; 
+    outline: none !important; 
+    transition: all 0.2s ease;
+    box-shadow: inset 0 2px 6px rgba(0, 51, 102, 0.06) !important;
+}
+
+body.theme-blue #modalDate, 
+body.theme-blue #edit-date-val,
+body.theme-blue #modalTime, 
+body.theme-blue #edit-time {
+    padding: 12px;
+    font-family: inherit;
+    text-align: center;
+}
+
+body.theme-blue #modalTime:focus, 
+body.theme-blue #edit-time:focus,
+body.theme-blue #set_token:focus, 
+body.theme-blue #set_master_pw:focus, 
+body.theme-blue #set_admin_pw:focus,
+body.theme-blue #finance-modal .finance-input-row input:focus, 
+body.theme-blue #finance-modal .finance-input-row select:focus,
+body.theme-blue #fixkostenModal input:focus,
+body.theme-blue #userModal input:focus { 
+    background: #ffffff !important; 
+    border-color: #0984e3 !important; 
+    box-shadow: 0 0 12px rgba(9, 132, 227, 0.4) !important; 
+}
+
+body.theme-blue #fixkostenModal input::placeholder,
+body.theme-blue #userModal input::placeholder,
+body.theme-blue #newRoomInput::placeholder,
+body.theme-blue #customInputField::placeholder,
+body.theme-blue #customFoodField::placeholder,
+body.theme-blue .finance-input-row input::placeholder,
+body.theme-blue #finance-modal .finance-input-row input::placeholder { 
+    color: rgba(0, 51, 102, 0.45) !important; 
+    font-weight: 700 !important;
+}
+
+/* --- SPEZIELL: DIE BOX FÜR "SICHTBARE TABS IN DER LEISTE" AUF BLUE-STYLE --- */
+body.theme-blue #settingsOverlay div[style*="background"],
+body.theme-blue #settingsOverlay div[style*="background-color"],
+body.theme-blue #settingsOverlay .tab-toggle-container,
+body.theme-blue #settingsOverlay ul,
+body.theme-blue #settingsOverlay .settings-box,
+body.theme-blue #userModal div[style*="background:rgba"] {
+    background: rgba(255, 255, 255, 0.85) !important;
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    border: 1.5px solid #0984e3 !important;
+    color: #003366 !important;
+    backdrop-filter: blur(15px) !important;
+}
+
+body.theme-blue #settingsOverlay label,
+body.theme-blue #settingsOverlay span {
+    color: #003366 !important;
+    font-weight: 800 !important;
+}
+
+body.theme-blue .summary-total { 
+    color: #003366 !important; 
+    border-top: 2px solid rgba(9, 132, 227, 0.5) !important; 
+    font-weight: 900 !important;
+}
+
+/* Alle Modal- & Karten-Überschriften kräftig Dunkelblau (#003366) */
+body.theme-blue .month-card h3, 
+body.theme-blue #modal-content h2,
+body.theme-blue #modal-header-fixed h2,
+body.theme-blue #editModal h2, 
+body.theme-blue #editModal h3, 
+body.theme-blue #passwordModal h3,
+body.theme-blue #fixkostenModal h2,
+body.theme-blue #userModal h3,
+body.theme-blue #roomModal h3, 
+body.theme-blue #deleteModal h3,
+body.theme-blue #customConfirmTitle,
+body.theme-blue #customDeleteTitle,
+body.theme-blue #customInputTitle,
+body.theme-blue #customFoodTitle,
+body.theme-blue #settingsOverlay h2,
+body.theme-blue #settingsOverlay h3,
+body.theme-blue .modal-content h1, 
+body.theme-blue .modal-content h2, 
+body.theme-blue .modal-content h3 { 
+    color: #003366 !important; 
+    -webkit-text-fill-color: #003366 !important;
+    font-weight: 900 !important; 
+}
+
+/* Alle Labels & Texte in Modals klar lesbar */
+body.theme-blue #fixkostenModal label, 
+body.theme-blue #fixkostenModal p,
+body.theme-blue #userModal label,
+body.theme-blue #deleteModal p,
+body.theme-blue #customConfirmMessage,
+body.theme-blue #customDeleteMessage,
+body.theme-blue #customInputMessage,
+body.theme-blue #customFoodMessage,
+body.theme-blue #editModal label,
+body.theme-blue .modal-content label,
+body.theme-blue #modal-content small { 
+    color: #003366 !important; 
+    -webkit-text-fill-color: #003366 !important;
+    font-weight: 800 !important; 
+    opacity: 0.95 !important;
+}
+
+/* --- ABBRECHEN BUTTON --- */
 body.theme-blue .modal-content button[onclick*="closeEdit"], 
 body.theme-blue .modal-content button[onclick*="intervalModal"], 
-body.theme-blue .modal-content button[onclick*="shopQtyModal"] { color: #003366 !important; font-weight: 800 !important; opacity: 1 !important; background: none; border: none; transition: all 0.2s ease; cursor: pointer; }
-
+body.theme-blue .modal-content button[onclick*="shopQtyModal"] { 
+    color: #003366 !important; 
+    font-weight: 800 !important; 
+    opacity: 1 !important; 
+    background: none; 
+    border: none; 
+    transition: all 0.2s ease; 
+    cursor: pointer; 
+}
 body.theme-blue .modal-content button[onclick*="closeEdit"]:hover, 
 body.theme-blue .modal-content button[onclick*="intervalModal"]:hover, 
-body.theme-blue .modal-content button[onclick*="shopQtyModal"]:hover { color: #00509d !important; transform: scale(1.1); background: rgba(0, 51, 102, 0.05) !important; border-radius: 8px; }
+body.theme-blue .modal-content button[onclick*="shopQtyModal"]:hover { 
+    color: #0984e3 !important; 
+    transform: scale(1.08); 
+    background: rgba(9, 132, 227, 0.12) !important; 
+    border-radius: 8px; 
+}
 
-/* --- BLUE THEME: NAMEN & EINGABE --- */
-body.theme-blue #editModal > div { background: rgba(116, 185, 255, 0.85) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important; color: #000000 !important; border-radius: 20px !important; }
-body.theme-blue #editModal h2, body.theme-blue #editModal h3, body.theme-blue #editModal label { color: #003366 !important; font-weight: 800 !important; }
-body.theme-blue #edit-assignee { color: #003366 !important; font-weight: 800 !important; border: 2px solid #003366 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 15px !important; padding: 12px; transition: all 0.2s ease; outline: none; }
-body.theme-blue #modalAssignee, body.theme-blue #edit-name, body.theme-blue #modalName, body.theme-blue #modalTitle { color: #003366 !important; font-weight: 800 !important; border: 2px solid #003366 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 15px !important; transition: all 0.2s ease; outline: none; }
-/* --- BLUE THEME: DATUM --- */
-body.theme-blue #modalDate, body.theme-blue #edit-date-val { color: #003366 !important; font-weight: 800 !important; border: 2px solid #003366 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 15px !important; padding: 12px; transition: all 0.2s ease; outline: none; font-family: inherit; }
+/* --- ZAHLEN / INTERVALL --- */
+body.theme-blue #modalValue, 
+body.theme-blue #edit-interval-val, 
+body.theme-blue #shopQtyValue { 
+    color: #003366 !important; 
+    font-weight: 900 !important; 
+    border: 2px solid #0984e3 !important; 
+    background: rgba(255, 255, 255, 0.95) !important; 
+    border-radius: 15px !important; 
+    padding: 15px; 
+    text-align: center; 
+    font-size: 1.8rem !important; 
+    outline: none;
+}
 
-/* --- BLUE THEME: ZAHLEN / INTERVALL --- */
-body.theme-blue #modalValue, body.theme-blue #edit-interval-val, body.theme-blue #shopQtyValue { color: #003366 !important; font-weight: 900 !important; border: 2px solid #003366 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 15px !important; padding: 15px; text-align: center; font-size: 1.8rem !important; transition: all 0.2s ease; outline: none; }
+/* --- PRIMÄRE BUTTONS (SAPHIR-VERLAUF MIT WEISSER SCHRIFT) --- */
+body.theme-blue .btn-add,
+body.theme-blue #finance-modal .finance-input-row .btn-add,
+body.theme-blue #tplSaveBtn,
+body.theme-blue #passwordModal button[onclick*="closePasswordModal(true)"],
+body.theme-blue #fixkostenModal button[onclick*="addFixkostenTemplate"],
+body.theme-blue .finance-controls button[onclick*="addNewYear"],
+body.theme-blue .finance-controls button[onclick*="addNewMonth"],
+body.theme-blue #settingsOverlay button[onclick*="saveSystemSettings"],
+body.theme-blue #userModal button[onclick*="saveUserModal"],
+body.theme-blue #roomModal button[onclick*="confirmAddRoom"], 
+body.theme-blue #deleteModal button[onclick*="confirmDelete"],
+body.theme-blue #customFoodModal button[onclick*="resolveFoodPrompt(true)"],
+body.theme-blue #customInputModal button[onclick*="resolveInput(true)"] { 
+    background: linear-gradient(135deg, #0984e3 0%, #004d8c 100%) !important; 
+    color: #ffffff !important; 
+    border: 1.5px solid #ffffff !important; 
+    box-shadow: 0 4px 15px rgba(9, 132, 227, 0.45) !important; 
+    font-weight: 900 !important; 
+    border-radius: 12px !important;
+}
 
-/* --- BLUE THEME: FINANCE MODAL FIX (KOMPAKT) --- */
-body.theme-blue #finance-modal > div { background: rgba(116, 185, 255, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid rgba(255, 255, 255, 0.5) !important; } /* Fenster-Hintergrund & Glas-Effekt */
-body.theme-blue #modal-header-fixed { background: transparent !important; } /* Header-Hintergrund durchsichtig */
-body.theme-blue #modal-header-fixed h2 { color: #0984e3 !important; font-weight: 800 !important; } /* Monatsname in Theme-Blau */
-body.theme-blue .finance-input-row input, body.theme-blue .finance-input-row select { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003366 !important; color: #003366 !important; font-weight: bold !important; } /* Eingabefelder Weiß-Transparent mit Kontrast-Rahmen */
-body.theme-blue .finance-input-row input::placeholder { color: rgba(0, 51, 102, 0.5) !important; } /* Platzhalter-Farbe */
-body.theme-blue .finance-input-row .btn-add { background: #0984e3 !important; color: #ffffff !important; box-shadow: 0 4px 15px rgba(9, 132, 227, 0.4) !important; } /* OK-Button Blau */
-body.theme-blue #finance-modal button[onclick*="closeFinanceModal"] { color: #003366 !important; background: rgba(255, 255, 255, 0.5) !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; } /* Schließ-X in Dunkelblau */
-body.theme-blue #modal-content small { color: #003366 !important; opacity: 0.8 !important; font-weight: 800 !important; } /* Fixkosten/Ausgaben Beschriftung */
-/* --- BLUE THEME: UHRZEIT KOMPAKT --- */
-body.theme-blue #modalTime, body.theme-blue #edit-time { color: #003366 !important; font-weight: 800 !important; border: 2px solid #003366 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 15px !important; padding: 12px; transition: all 0.2s ease; outline: none; font-family: inherit; text-align: center; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+/* Der Stift-Button (Bearbeiten) */
+body.theme-blue #tplEditBtn {
+    background: rgba(255, 255, 255, 0.85) !important;
+    color: #003366 !important;
+    border: 1.5px solid #0769b5 !important;
+    box-shadow: 0 4px 10px rgba(0, 51, 102, 0.1) !important;
+    border-radius: 12px !important;
+}
+body.theme-blue #tplEditBtn:active {
+    background: #0984e3 !important;
+    color: #ffffff !important;
+}
 
-/* Fokus-Effekt kompakt */
-body.theme-blue #modalTime:focus, body.theme-blue #edit-time:focus { background: #ffffff !important; box-shadow: 0 0 10px rgba(9, 132, 227, 0.3) !important; }
+/* Der Abbrechen-Button (✖) im Formular */
+body.theme-blue #tplCancelEditBtn {
+    background: rgba(255, 255, 255, 0.85) !important;
+    color: #ff3b30 !important;
+    border: 1.5px solid #0769b5 !important;
+    box-shadow: 0 4px 10px rgba(0, 51, 102, 0.1) !important;
+    border-radius: 12px !important;
+}
+body.theme-blue #tplCancelEditBtn:active {
+    background: #ff3b30 !important;
+    color: #ffffff !important;
+}
 
+/* --- SCHLIESSEN / SEKUNDÄRE MODAL-BUTTONS --- */
+body.theme-blue #finance-modal button[onclick*="closeFinanceModal"],
+body.theme-blue #passwordModal button[onclick*="closePasswordModal(false)"],
+body.theme-blue #fixkostenModal button[onclick*="fixkostenModal"],
+body.theme-blue .finance-controls button[onclick*="fixkostenModal"],
+body.theme-blue #settingsOverlay button[onclick*="settingsOverlay']"],
+body.theme-blue #userModal button[onclick*="closeUserModal"],
+body.theme-blue #roomModal button[onclick*="closeRoomModal"], 
+body.theme-blue #deleteModal button[onclick*="closeDeleteModal"],
+body.theme-blue #customConfirmNo,
+body.theme-blue #customDeleteModal button[onclick*="resolveDelete(false)"],
+body.theme-blue #customFoodModal button[onclick*="resolveFoodPrompt(false)"],
+body.theme-blue #customInputModal button[onclick*="resolveInput(false)"] { 
+    background: rgba(255, 255, 255, 0.8) !important; 
+    color: #003366 !important; 
+    border: 1.5px solid #0769b5 !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important;
+    backdrop-filter: blur(10px);
+}
+
+body.theme-blue #finance-modal button[onclick*="closeFinanceModal"] {
+    top: 1px !important;
+    right: 1px !important;
+}
+
+/* Rote Löschen- & Beenden-Buttons */
+body.theme-blue #customDeleteModal div[style*="display:flex"] { 
+    display: flex !important; 
+    flex-direction: column !important; 
+    gap: 10px !important; 
+}
+body.theme-blue #customDeleteModal div[style*="display:flex"] button { 
+    width: 100% !important; 
+    flex: none !important; 
+}
+body.theme-blue .admin-close-btn, 
+body.theme-blue button[onclick*="closeUserAdmin"],
+body.theme-blue #customConfirmYes,
+body.theme-blue #customDeleteModal button[onclick*="resolveDelete(true)"] { 
+    background: #ff3b30 !important; 
+    color: #ffffff !important; 
+    border: 1px solid #ffffff !important;
+    box-shadow: 0 4px 15px rgba(255, 59, 48, 0.45) !important;
+    font-weight: 800 !important;
+    border-radius: 12px !important; 
+}
+
+/* --- FIXKOSTEN-LISTE DETAILS --- */
+body.theme-blue #fixkostenList > div { 
+    background: rgba(255, 255, 255, 0.8) !important; 
+    border: 1.5px solid rgba(9, 132, 227, 0.4) !important; 
+    backdrop-filter: blur(10px);
+}
+body.theme-blue #fixkostenList strong { 
+    color: #003366 !important; 
+}
+body.theme-blue #fixkostenList span[style*="var(--primary)"] { 
+    color: #004d8c !important; 
+    font-weight: 900 !important; 
+}
+body.theme-blue #fixkostenList div[style*="var(--gray)"] { 
+    color: #003366 !important; 
+    opacity: 0.85 !important; 
+    font-weight: 700 !important; 
+}
+body.theme-blue #fixkostenList div[style*="text-align:center"] { 
+    background: rgba(255, 255, 255, 0.5) !important; 
+    color: #003366 !important; 
+    border: 1px dashed rgba(9, 132, 227, 0.5) !important; 
+}
 
 /* --- TABLET & PC OPTIMIERUNGEN --- */
 @media screen and (min-width: 768px) {
     body.theme-blue .tab-bar { height: 120px !important; }
     body.theme-blue .tab-item .icon { font-size: 2rem !important; }
     body.theme-blue .tab-item span { font-size: 1.2rem !important; }
-    body.theme-blue .modal-content { width: 550px !important; padding: 45px !important; border-radius: 0px !important; background: rgba(255, 255, 255, 0.95) !important; border: 2px solid #003366 !important; }
-    body.theme-blue .modal-content h1, body.theme-blue .modal-content h2, body.theme-blue .modal-content h3, body.theme-blue .modal-content label { color: #003366 !important; }
-    body.theme-blue .modal-content input { height: 90px !important; font-size: 3.5rem !important; color:#003366 !important; -webkit-text-fill-color: #003366 !important; border: 2px solid #003366 !important; text-align: center !important; }
+    body.theme-blue .modal-content { 
+        width: 550px !important; 
+        padding: 45px !important; 
+        border-radius: 20px !important; 
+        background: rgba(235, 248, 255, 0.96) !important; 
+        border: 2px solid #0984e3 !important; 
+    }
+    body.theme-blue .modal-content input:not([type="password"]):not([type="text"]) { 
+        height: 90px !important; 
+        font-size: 3.5rem !important; 
+        color: #003366 !important; 
+        -webkit-text-fill-color: #003366 !important; 
+        border: 2px solid #0984e3 !important; 
+        background: #ffffff !important; 
+        text-align: center !important; 
+        font-weight: 900 !important; 
+    }
     body.theme-blue .day-dot { height: 80px !important; font-size: 1.8rem !important; }
-    body.theme-blue .finance-input-row input, body.theme-blue .finance-input-row select { border: 2px solid rgba(255, 255, 255, 0.7) !important; }
 }
 
-/* --- SONSTIGES --- */
-body.theme-blue .btn-add { background: #0984e3 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(9, 132, 227, 0.4) !important; }
-body.theme-blue .shop-badge { display: flex !important; background: rgba(0, 0, 0, 0.1) !important; color: #000000 !important; width: 24px !important; height: 24px !important; border-radius: 50% !important; justify-content: center !important; align-items: center !important; border: 1px solid rgba(0, 0, 0, 0.2) !important; }
-body.theme-blue .side-btn.active-shop .shop-badge { background: #ffffff !important; color: #0984e3 !important; }
-body.theme-blue .side-btn.active-todo .shop-badge { background: #ffffff !important; color: #0984e3 !important; }
-body.theme-blue .login-card input[type="password"]::placeholder { color: #0984e3 !important; font-weight: 700 !important; }
-body.theme-blue .admin-close-btn { background: #ff453a !important; color: #ffffff !important; border-radius: 12px !important; }
+/* --- SHOP BADGE & SONSTIGES --- */
+body.theme-blue .shop-badge { 
+    display: flex !important; 
+    background: rgba(9, 132, 227, 0.2) !important; 
+    color: #003366 !important; 
+    width: 24px !important; 
+    height: 24px !important; 
+    border-radius: 50% !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    border: 1px solid rgba(9, 132, 227, 0.4) !important; 
+    font-weight: 800 !important;
+}
+body.theme-blue .side-btn.active-shop .shop-badge,
+body.theme-blue .side-btn.active-todo .shop-badge { 
+    background: #ffffff !important; 
+    color: #004d8c !important; 
+    border-color: #ffffff !important;
+    font-weight: 900 !important;
+}
 
 /* --- THEME DROPDOWN BLUE --- */
-body.theme-blue .theme-dropdown { background: rgba(9, 132, 227, 0.7) !important; backdrop-filter: blur(25px) !important; border: 1px solid rgba(255, 255, 255, 0.3) !important; }
-body.theme-blue .theme-dropdown div { color: #ffffff !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important; }
-body.theme-blue .theme-dropdown div:hover { background: rgba(255, 255, 255, 0.2) !important; }
-
-/* --- BLUE THEME: SKRIPT-FREUNDLICH --- */
-
-/* 1. NUR das div färben (wie im Dark Theme) */
-body.theme-blue #list-todo li div {
-    color: #000000 !important;
+body.theme-blue .theme-dropdown { 
+    background: rgba(0, 77, 140, 0.94) !important; 
+    backdrop-filter: blur(25px) !important; 
+    -webkit-backdrop-filter: blur(25px) !important; 
+    border: 1.5px solid #74b9ff !important; 
+    box-shadow: 0 20px 60px rgba(0, 51, 102, 0.4) !important;
+}
+body.theme-blue .theme-dropdown div { 
+    color: #ffffff !important; 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important; 
+    font-weight: 800 !important;
+}
+body.theme-blue .theme-dropdown div:hover { 
+    background: rgba(116, 185, 255, 0.3) !important; 
 }
 
-/* 2. Den Aufgaben-Namen (strong) explizit schwarz machen */
-body.theme-blue #list-todo li strong {
-    color: #000000 !important;
-}
-
-/* 3. NUR die grauen Labels gezielt ansprechen */
+/* --- SKRIPT-FREUNDLICH (AUFGABENLISTE) --- */
+body.theme-blue #list-todo li div { color: #003366 !important; }
+body.theme-blue #list-todo li strong { color: #003366 !important; }
+body.theme-blue #list-token,
 body.theme-blue #list-todo li span[style*="color:var(--gray)"],
 body.theme-blue #list-todo li .user-label {
-    color: #000000 !important;
+    color: #004d8c !important;
     font-weight: 800 !important;
 }
+body.theme-blue #list-todo li div[style*="color:var(--gray)"] span {
+    color: #003366 !important;
+    font-weight: 700 !important;
+}
 
-/* WICHTIG: Lösche JEDE Zeile, die allgemein 'li span' mit !important färbt! */
-
-/* --- BLUE THEME: FIXKOSTEN MODAL & STEUERUNG (NEBEINANDER) --- */
-
-/* Modal-Fenster Hintergrund & Glas-Effekt */
-body.theme-blue #fixkostenModal > div { background: rgba(116, 185, 255, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid rgba(255, 255, 255, 0.5) !important; color: #000000 !important; }
-
-/* Modal Überschriften & Beschriftungen */
-body.theme-blue #fixkostenModal h2 { color: #0984e3 !important; font-weight: 800 !important; }
-body.theme-blue #fixkostenModal label, body.theme-blue #fixkostenModal p { color: #003366 !important; font-weight: 700 !important; }
-
-/* Eingabefelder (Bezeichnung, Betrag, Intervall-Select) */
-body.theme-blue #fixkostenModal input, body.theme-blue #fixkostenModal select { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003366 !important; color: #003366 !important; font-weight: 800 !important; border-radius: 12px !important; outline: none; }
-body.theme-blue #fixkostenModal input::placeholder { color: rgba(0, 51, 102, 0.5) !important; }
-
-/* Speichern-Button im Fixkosten-Modal */
-body.theme-blue #fixkostenModal button[onclick*="addFixkostenTemplate"] { background: #0984e3 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(9, 132, 227, 0.4) !important; font-weight: 800 !important; }
-
-/* Schließen-Buttons im Fixkosten-Modal (X-Button & unten) */
-body.theme-blue #fixkostenModal button[onclick*="fixkostenModal"] { color: #003366 !important; background: rgba(255, 255, 255, 0.6) !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; font-weight: 800 !important; }
-
-/* Vorlagen-Einträge in der Liste */
-body.theme-blue #fixkostenList > div { background: rgba(255, 255, 255, 0.6) !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; }
-body.theme-blue #fixkostenList strong { color: #003366 !important; }
-body.theme-blue #fixkostenList span[style*="var(--primary)"] { color: #0984e3 !important; font-weight: 800 !important; }
-body.theme-blue #fixkostenList div[style*="var(--gray)"] { color: #003366 !important; opacity: 0.8 !important; font-weight: 700 !important; }
-body.theme-blue #fixkostenList div[style*="text-align:center"] { background: rgba(255, 255, 255, 0.4) !important; color: #003366 !important; border: 1px dashed rgba(0, 51, 102, 0.3) !important; }
-
-/* Hauptansicht Buttons */
-body.theme-blue .finance-controls button[onclick*="addNewYear"],
-body.theme-blue .finance-controls button[onclick*="addNewMonth"] { background: #0984e3 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(9, 132, 227, 0.4) !important; font-weight: 700 !important; }
-body.theme-blue .finance-controls button[onclick*="fixkostenModal"] { background: rgba(255, 255, 255, 0.6) !important; color: #003366 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; backdrop-filter: blur(10px); font-weight: 700 !important; }
-
-body.theme-blue #set_token { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003366 !important; color: #003366 !important; font-weight: 700 !important; border-radius: 12px !important; }
-body.theme-blue #set_master_pw, body.theme-blue #set_admin_pw { color: #003366 !important; font-weight: 800 !important; border: 2px solid #003366 !important; background: rgba(255, 255, 255, 0.9) !important; border-radius: 12px !important; outline: none !important; }
-body.theme-blue #set_token:focus, body.theme-blue #set_master_pw:focus, body.theme-blue #set_admin_pw:focus { background: #ffffff !important; border-color: #0984e3 !important; box-shadow: 0 0 10px rgba(9, 132, 227, 0.3) !important; }
-body.theme-blue #settingsOverlay .tab-toggle { accent-color: #0984e3 !important; }
-body.theme-blue #settingsOverlay label { color: #003366 !important; }
-body.theme-blue #settingsOverlay button[onclick*="saveSystemSettings"] { background: #0984e3 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(9, 132, 227, 0.4) !important; font-weight: 800 !important; }
-body.theme-blue #settingsOverlay button[onclick*="settingsOverlay']"] { background: rgba(255, 255, 255, 0.6) !important; color: #003366 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; backdrop-filter: blur(10px); font-weight: 800 !important; }
-
-/* --- BLUE THEME: BENUTZER MODAL (KOMPAKT NEBENEINANDER) --- */
-body.theme-blue #userModal > div { background: rgba(116, 185, 255, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid rgba(255, 255, 255, 0.5) !important; color: #000000 !important; }
-body.theme-blue #userModal h3 { color: #0984e3 !important; font-weight: 800 !important; }
-body.theme-blue #userModal label { color: #003366 !important; font-weight: 700 !important; }
-body.theme-blue #userModal input[type="text"], body.theme-blue #userModal input[type="password"] { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003366 !important; color: #003366 !important; font-weight: 800 !important; border-radius: 10px !important; outline: none !important; }
-body.theme-blue #userModal input::placeholder { color: rgba(0, 51, 102, 0.5) !important; }
-body.theme-blue #userModal div[style*="background:rgba"] { background: rgba(255, 255, 255, 0.4) !important; border: 1px solid rgba(255, 255, 255, 0.6) !important; }
-body.theme-blue #userModal input[type="checkbox"] { accent-color: #0984e3 !important; }
-body.theme-blue #userModal button[onclick*="saveUserModal"] { background: #0984e3 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(9, 132, 227, 0.4) !important; font-weight: 800 !important; }
-body.theme-blue #userModal button[onclick*="closeUserModal"] { background: rgba(255, 255, 255, 0.6) !important; color: #003366 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; font-weight: 800 !important; backdrop-filter: blur(10px); }
-body.theme-blue #passwordModal > div { background: rgba(116, 185, 255, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid rgba(255, 255, 255, 0.5) !important; color: #000000 !important; }
-body.theme-blue #passwordModal h3 { color: #0984e3 !important; font-weight: 800 !important; }
-body.theme-blue #passwordModal input[type="password"] { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003366 !important; color: #003366 !important; font-weight: 800 !important; border-radius: 10px !important; outline: none !important; font-size: 1.2rem !important; }
-body.theme-blue #passwordModal button[onclick*="closePasswordModal(true)"] { background: #0984e3 !important; color: #ffffff !important; font-weight: 800 !important; }
-body.theme-blue #passwordModal button[onclick*="closePasswordModal(false)"] { background: rgba(255, 255, 255, 0.6) !important; color: #003366 !important; font-weight: 800 !important; }
-/* --- BLUE THEME: ROOM & DELETE MODALS STYLING (NEBENEINANDER) --- */
-body.theme-blue #roomModal > div, 
-body.theme-blue #deleteModal > div { background: rgba(116, 185, 255, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid rgba(255, 255, 255, 0.5) !important; color: #000000 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important; border-radius: 20px !important; }
-body.theme-blue #roomModal h3, body.theme-blue #deleteModal h3 { color: #0984e3 !important; font-weight: 800 !important; }
-body.theme-blue #deleteModal p { color: #003366 !important; font-weight: 700 !important; }
-body.theme-blue #newRoomInput { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003366 !important; color: #003366 !important; font-weight: 800 !important; border-radius: 12px !important; outline: none !important; }
-body.theme-blue #newRoomInput::placeholder { color: rgba(0, 51, 102, 0.5) !important; }
-body.theme-blue #roomModal button[onclick*="confirmAddRoom"], body.theme-blue #deleteModal button[onclick*="confirmDelete"] { background: #0984e3 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(9, 132, 227, 0.4) !important; font-weight: 800 !important; }
-body.theme-blue #roomModal button[onclick*="closeRoomModal"], body.theme-blue #deleteModal button[onclick*="closeDeleteModal"] { background: rgba(255, 255, 255, 0.6) !important; color: #003366 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; font-weight: 800 !important; backdrop-filter: blur(10px); }
-/* --- BLUE THEME: CUSTOM CONFIRM MODAL --- */
-body.theme-blue #customConfirmModal .modal-card { background: rgba(116, 185, 255, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid rgba(255, 255, 255, 0.5) !important; color: #000000 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important; border-radius: 20px !important; }
-body.theme-blue #customConfirmTitle { color: #0984e3 !important; font-weight: 800 !important; }
-body.theme-blue #customConfirmMessage { color: #003366 !important; font-weight: 700 !important; }
-body.theme-blue #customConfirmYes { background: #ff453a !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 69, 58, 0.4) !important; font-weight: 800 !important; }
-body.theme-blue #customConfirmNo { background: rgba(255, 255, 255, 0.6) !important; color: #003366 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; font-weight: 800 !important; backdrop-filter: blur(10px); }
-/* --- BLUE THEME: CUSTOM CONFIRM MODAL --- */
-/* --- BLUE THEME: CUSTOM DELETE MODAL --- */
-body.theme-blue #customDeleteModal .modal-card { background: rgba(116, 185, 255, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid rgba(255, 255, 255, 0.5) !important; color: #000000 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2) !important; border-radius: 20px !important; }
-body.theme-blue #customDeleteTitle { color: #0984e3 !important; font-weight: 800 !important; }
-body.theme-blue #customDeleteMessage { color: #003366 !important; font-weight: 700 !important; }
-body.theme-blue #customDeleteModal div[style*="display:flex"] { display: flex !important; flex-direction: column !important; gap: 10px !important; }
-body.theme-blue #customDeleteModal div[style*="display:flex"] button { width: 100% !important; flex: none !important; }
-body.theme-blue #customDeleteModal button[onclick*="resolveDelete(false)"] { background: rgba(255, 255, 255, 0.6) !important; color: #003366 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; font-weight: 800 !important; backdrop-filter: blur(10px); border-radius: 12px !important; }
-body.theme-blue #customDeleteModal button[onclick*="resolveDelete(true)"] { background: #ff3b30 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4) !important; font-weight: 800 !important; border-radius: 12px !important; }
-/* --- BLUE THEME: INPUT MODAL --- */
-body.theme-blue #customInputModal .modal-card { background: rgba(116, 185, 255, 0.95) !important; backdrop-filter: blur(25px) !important; border: 2px solid rgba(255, 255, 255, 0.5) !important; border-radius: 20px !important; }
-body.theme-blue #customInputTitle { color: #0984e3 !important; font-weight: 800 !important; }
-body.theme-blue #customInputMessage { color: #003366 !important; font-weight: 700 !important; }
-body.theme-blue #customInputField { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003366 !important; color: #003366 !important; font-weight: 800 !important; }
-/* --- BLUE THEME: FOOD PROMPT MODAL --- */
-body.theme-blue #customFoodModal .modal-card { background: rgba(116, 185, 255, 0.95) !important; backdrop-filter: blur(25px) !important; border: 2px solid rgba(255, 255, 255, 0.5) !important; border-radius: 20px !important; }
-body.theme-blue #customFoodTitle { color: #0984e3 !important; font-weight: 800 !important; }
-body.theme-blue #customFoodMessage { color: #003366 !important; font-weight: 700 !important; }
-body.theme-blue #customFoodField { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003366 !important; color: #003366 !important; font-weight: 800 !important; }
-body.theme-blue #customFoodModal button[onclick*="resolveFoodPrompt(true)"] { background: #0984e3 !important; color: #ffffff !important; font-weight: 800 !important; border-radius: 12px !important; }
-body.theme-blue #customFoodModal button[onclick*="resolveFoodPrompt(false)"] { background: rgba(255, 255, 255, 0.6) !important; color: #003366 !important; font-weight: 800 !important; border-radius: 12px !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; }
-
-/* --- BLUE THEME: ZOOM REGLER STYLING (FÜR LOGIN & THEME-MENÜ) --- */
-body.theme-blue .zoom-control-row { background: rgba(255, 255, 255, 0.35) !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; }
-body.theme-blue .theme-dropdown .zoom-control-row { background: rgba(0, 0, 0, 0.15) !important; border: none !important; border-top: 1px solid rgba(255, 255, 255, 0.2) !important; }
-body.theme-blue .zoom-btn { background: rgba(255, 255, 255, 0.85) !important; color: #003366 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important; }
+/* --- ZOOM REGLER STYLING --- */
+body.theme-blue .zoom-control-row { background: rgba(255, 255, 255, 0.5) !important; border: 1.5px solid #0984e3 !important; }
+body.theme-blue .theme-dropdown .zoom-control-row { background: rgba(0, 0, 0, 0.2) !important; border: none !important; border-top: 1px solid rgba(116, 185, 255, 0.3) !important; }
+body.theme-blue .zoom-btn { background: rgba(255, 255, 255, 0.9) !important; color: #003366 !important; border: 1px solid #0984e3 !important; box-shadow: 0 4px 10px rgba(0, 51, 102, 0.12) !important; }
 body.theme-blue .zoom-btn:active { background: #0984e3 !important; color: #ffffff !important; border-color: #ffffff !important; }
 body.theme-blue .zoom-display { color: #003366 !important; font-weight: 800 !important; }
-body.theme-blue .theme-dropdown .zoom-display { color: #ffffff !important; }
-body.theme-blue #systemZoomRange { accent-color: #0984e3 !important; }
-/* --- BLUE THEME: FINANZ-EINGABEZEILE STYLING --- */
-body.theme-blue #finance-modal .finance-input-row input[type="number"], body.theme-blue #finance-modal .finance-input-row input[type="text"] { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003366 !important; color: #003366 !important; font-weight: 800 !important; border-radius: 12px !important; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05) !important; }
-body.theme-blue #finance-modal .finance-input-row input::placeholder { color: rgba(0, 51, 102, 0.5) !important; font-weight: 700 !important; }
-body.theme-blue #finance-modal .finance-input-row select { background: rgba(255, 255, 255, 0.9) !important; border: 2px solid #003366 !important; color: #003366 !important; font-weight: 800 !important; border-radius: 12px !important; }
-body.theme-blue #finance-modal .finance-input-row .btn-add { background: #0984e3 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.6) !important; box-shadow: 0 4px 15px rgba(9, 132, 227, 0.4) !important; font-weight: 800 !important; border-radius: 12px !important; }
-body.theme-blue #finance-modal .finance-input-row input:focus, body.theme-blue #finance-modal .finance-input-row select:focus { background: #ffffff !important; border-color: #0984e3 !important; box-shadow: 0 0 10px rgba(9, 132, 227, 0.3) !important; outline: none !important; }
-/* --- BLUE THEME: FIXKOSTEN MODAL & FORMULAR BUTTONS --- */
-body.theme-blue #fixkostenModal input,
-body.theme-blue #fixkostenModal select {
-    background: rgba(255, 255, 255, 0.9) !important;
-    border: 2px solid #003366 !important;
-    color: #003366 !important;
-    font-weight: 800 !important;
-    border-radius: 12px !important;
-    outline: none !important;
-}
+body.theme-blue .theme-dropdown .zoom-display { color: #74b9ff !important; font-weight: 800 !important; }
+body.theme-blue #systemZoomRange,
+body.theme-blue #settingsOverlay .tab-toggle,
+body.theme-blue #userModal input[type="checkbox"] { accent-color: #0984e3 !important; }
 
-body.theme-blue #fixkostenModal input::placeholder {
-    color: rgba(0, 51, 102, 0.5) !important;
-    font-weight: 700 !important;
-}
-
-body.theme-blue #fixkostenModal label {
-    color: #003366 !important;
-    font-weight: 700 !important;
-}
-
-/* Der Speichern-Button im Royal-Blau */
-body.theme-blue #tplSaveBtn {
-    background: #0984e3 !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.6) !important;
-    box-shadow: 0 4px 15px rgba(9, 132, 227, 0.4) !important;
-    font-weight: 800 !important;
-    border-radius: 12px !important;
-}
-
-body.theme-blue #tplSaveBtn:active {
-    background: #003366 !important;
-    color: #ffffff !important;
-}
-
-/* Der Stift-Button (Bearbeiten) im Blau-Glas-Look */
-body.theme-blue #tplEditBtn {
-    background: rgba(255, 255, 255, 0.6) !important;
-    color: #003366 !important;
-    border: 2px solid #003366 !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
-    border-radius: 12px !important;
-    backdrop-filter: blur(10px) !important;
-}
-
-body.theme-blue #tplEditBtn:active {
-    background: #0984e3 !important;
-    color: #ffffff !important;
-}
-
-/* Der Abbrechen-Button (✖) */
-body.theme-blue #tplCancelEditBtn {
-    background: rgba(255, 255, 255, 0.6) !important;
-    color: #ff3b30 !important;
-    border: 2px solid #003366 !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
-    border-radius: 12px !important;
-    backdrop-filter: blur(10px) !important;
-}
-
-body.theme-blue #tplCancelEditBtn:active {
-    background: #ff3b30 !important;
-    color: #ffffff !important;
-}
 /* ========================================================
-   --- NEU: MODAL-BUTTONS & VARIABLEN (BLUE) ---
+   --- INTERVALL- & MODAL-BUTTONS (BLUE) ---
    ======================================================== */
-
-body.theme-blue {
-    --todo: #1e3a8a;
-    --primary: #2563eb;
-    --bg: rgba(255, 255, 255, 0.95);
-    --card: rgba(240, 247, 255, 0.96);
-    --gray: #1e3a8a;
-}
 
 body.theme-blue button[onclick*="confirmInterval('m')"],
 body.theme-blue button[onclick*="confirmInterval('s')"],
@@ -303,20 +651,26 @@ body.theme-blue button[onclick*="saveEdit('m')"],
 body.theme-blue button[onclick*="saveEdit('s')"],
 body.theme-blue button[onclick*="saveEdit('days')"],
 body.theme-blue button[onclick*="saveEdit('date')"] {
-    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%) !important;
+    background: linear-gradient(135deg, #0769b5 0%, #004d8c 100%) !important;
     color: #ffffff !important;
-    border: 1.5px solid #60a5fa !important;
-    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3) !important;
+    border: 1.5px solid #74b9ff !important;
+    box-shadow: 0 4px 12px rgba(0, 77, 140, 0.35) !important;
+    font-weight: 800 !important;
 }
 
 body.theme-blue button[onclick*="confirmInterval('t')"],
 body.theme-blue button[onclick*="saveEdit('t')"],
 body.theme-blue button[onclick*="confirmShopAdd"] {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+    background: linear-gradient(135deg, #0984e3 0%, #004d8c 100%) !important;
     color: #ffffff !important;
-    border: 1.5px solid #93c5fd !important;
-    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.45) !important;
+    font-weight: 900 !important;
+    border: 1.5px solid #ffffff !important;
+    box-shadow: 0 4px 15px rgba(9, 132, 227, 0.5) !important;
 }
+
+/* ========================================================
+   --- LAUFENDER ALARM-RAHMEN (BLUE - SAPHIR & WEISS) ---
+   ======================================================== */
 
 @keyframes blue-running-border {
     0% { background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px; }
@@ -324,9 +678,9 @@ body.theme-blue button[onclick*="confirmShopAdd"] {
 }
 
 @keyframes blue-alarm-glow {
-    0%, 100% { box-shadow: 0 0 12px rgba(37, 99, 235, 0.6) !important; }
+    0%, 100% { box-shadow: 0 0 12px rgba(9, 132, 227, 0.6) !important; }
     50% { 
-        box-shadow: 0 0 30px #2563eb, 0 0 15px #60a5fa, inset 0 0 15px rgba(37, 99, 235, 0.4) !important; 
+        box-shadow: 0 0 30px #0984e3, 0 0 15px #74b9ff, inset 0 0 15px rgba(9, 132, 227, 0.4) !important; 
         transform: scale(1.01);
     }
 }
@@ -340,10 +694,10 @@ body.theme-blue #list-todo li.urgent-blink::after {
     border-radius: inherit !important;
     z-index: 10 !important;
     background-image: 
-        linear-gradient(90deg, #2563eb 50%, #60a5fa 50%),
-        linear-gradient(90deg, #2563eb 50%, #60a5fa 50%),
-        linear-gradient(0deg, #2563eb 50%, #60a5fa 50%),
-        linear-gradient(0deg, #2563eb 50%, #60a5fa 50%);
+        linear-gradient(90deg, #0984e3 50%, #ffffff 50%),
+        linear-gradient(90deg, #0984e3 50%, #ffffff 50%),
+        linear-gradient(0deg, #0984e3 50%, #ffffff 50%),
+        linear-gradient(0deg, #0984e3 50%, #ffffff 50%);
     background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
     background-size: 40px 6px, 40px 6px, 6px 40px, 6px 40px;
     background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px;
@@ -354,4 +708,60 @@ body.theme-blue .urgent-blink,
 body.theme-blue #list-todo li.urgent-blink {
     position: relative !important;
     overflow: hidden !important;
+}
+
+/* ========================================================
+   --- WOCHENPLAN & ESSENSPLAN IM BLUE-THEME ---
+   ======================================================== */
+
+body.theme-blue .day-card {
+    background: rgba(255, 255, 255, 0.68) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1.5px solid rgba(9, 132, 227, 0.55) !important;
+    box-shadow: 0 8px 24px rgba(0, 51, 102, 0.1) !important;
+}
+
+body.theme-blue .day-card .day-label,
+body.theme-blue .day-card .day-label span {
+    color: #003366 !important;
+    font-weight: 900 !important;
+}
+
+body.theme-blue .meal-mini-label {
+    color: #004d8c !important;
+    font-weight: 800 !important;
+}
+
+body.theme-blue .day-card .day-input {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1.5px solid rgba(9, 132, 227, 0.45) !important;
+    color: #003366 !important;
+    font-weight: 700 !important;
+}
+
+body.theme-blue .day-card .day-input::placeholder {
+    color: rgba(0, 51, 102, 0.45) !important;
+}
+
+body.theme-blue .day-card .day-input:focus {
+    background: #ffffff !important;
+    border-color: #0984e3 !important;
+    box-shadow: 0 0 0 3px rgba(9, 132, 227, 0.25) !important;
+}
+
+body.theme-blue .week-switch-btn {
+    background: rgba(255, 255, 255, 0.68) !important;
+    backdrop-filter: blur(15px) !important;
+    color: #003366 !important;
+    border: 1.5px solid rgba(9, 132, 227, 0.5) !important;
+    font-weight: 800 !important;
+}
+
+body.theme-blue .week-switch-btn.active-food {
+    background: linear-gradient(135deg, #0984e3 0%, #004d8c 100%) !important;
+    color: #ffffff !important;
+    border: 1.5px solid #ffffff !important;
+    box-shadow: 0 4px 15px rgba(9, 132, 227, 0.45) !important;
+    font-weight: 900 !important;
 }

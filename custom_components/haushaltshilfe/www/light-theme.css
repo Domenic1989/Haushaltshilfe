@@ -1,291 +1,419 @@
-/* --- SUNNY GLASS BASIS & HINTERGRUND (GELB) --- */
-body.theme-light { background: linear-gradient(135deg, #fff9e6 0%, #ffefba 100%) !important; background-attachment: fixed; background-size: cover; --text: #1c1c1e; }
-body.theme-light #loginOverlay { background: linear-gradient(135deg, #fff9e6 0%, #ffefba 100%) !important; }
-
-/* --- ALLGEMEINER GLAS-EFFEKT (HELL) --- */
-body.theme-light .login-card, body.theme-light .input-card, body.theme-light li, body.theme-light .day-card, body.theme-light #trash-content, body.theme-light .cat-btn, body.theme-light .fav-chip, body.theme-light .tab-bar, body.theme-light .theme-toggle-top, body.theme-light .admin-btn, body.theme-light .cook-select, body.theme-light .user-btn { background: rgba(255, 255, 255, 0.5) !important; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.6) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05) !important; color: #000000 !important; }
-
-/* --- SIDEBAR BUTTONS (ZAHL DIREKT NEBEN NAME) --- */
-body.theme-light .side-btn { background: rgba(255, 255, 255, 0.5) !important; backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.6) !important; color: #000000 !important; display: flex !important; flex-direction: row !important; justify-content: flex-start !important; align-items: center !important; gap: 10px !important; padding: 8px 12px !important; min-height: 50px !important; border-radius: 12px !important; }
-
-/* --- TEXTE SCHWARZ AUF GLAS --- */
-body.theme-light h1, body.theme-light .main-input, body.theme-light .day-input, body.theme-light .side-btn, body.theme-light .cat-btn, body.theme-light .admin-btn, body.theme-light .fav-chip, body.theme-light .trash-name, body.theme-light .day-label span, body.theme-light .status-bar, body.theme-light .tab-item { color: #000000 !important; font-weight: 700 !important; }
-
-/* --- AKTIVE ELEMENTE (GELB & SCHWARZE SCHRIFT) --- */
-body.theme-light .side-btn.active-shop, body.theme-light .side-btn.active-todo, body.theme-light .cat-btn.active-shop, body.theme-light .cat-btn.active-food, body.theme-light .cat-btn.active-todo, body.theme-light .user-btn.selected { background: #ffcc00 !important; color: #000000 !important; border-color: rgba(255, 255, 255, 0.8) !important; box-shadow: 0 5px 15px rgba(255, 204, 0, 0.3) !important; }
-
-/* --- TAB-BAR TOTAL-RESET LIGHT --- */
-body.theme-light .tab-bar { padding: 0 !important; margin: 0 !important; height: 80px !important; display: flex !important; align-items: stretch !important; justify-content: space-around !important; border-top: 1px solid rgba(0,0,0,0.05) !important; }
-body.theme-light .tab-item { flex: 1 !important; height: 100% !important; margin: 0 !important; padding: 0 !important; display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important; background: transparent !important; }
-body.theme-light .tab-item.active-shop, body.theme-light .tab-item.active-food, body.theme-light .tab-item.active-todo, body.theme-light .tab-item.active-finance, body.theme-light .tab-item.active-trash { background: #ffcc00 !important; color: #000000 !important; border-radius: 0 !important; height: 100% !important; width: 100% !important; transform: none !important; box-shadow: none !important; }
-
-/* --- MODAL LIGHT-FIX --- */
-body.theme-light #intervalModal > div, body.theme-light #editModal > div, body.theme-light #shopQtyModal > div { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important; color: #000000 !important; }
-body.theme-light .modal-content h1, body.theme-light .modal-content h2, body.theme-light .modal-content h3, body.theme-light .modal-content label { color: #ffcc00 !important; -webkit-text-fill-color: #ffcc00 !important; }
- 
-/* --- DAY-DOTS (INAKTIV WEISS-SCHWARZ / AKTIV GELB-SCHWARZ) --- */
-body.theme-light .day-dot { background: #ffffff !important; color: #000000 !important; border: 1px solid rgba(0, 0, 0, 0.1) !important; }
-body.theme-light .day-dot.active { background: #ffcc00 !important; color: #000000 !important; border: 2px solid #ffffff !important; transform: scale(1.05) !important; }
-
-/* --- LIGHT THEME: ABBRECH BUTTON --- */
-body.theme-light .modal-content button[onclick*="closeEdit"], 
-body.theme-light .modal-content button[onclick*="intervalModal"], 
-body.theme-light .modal-content button[onclick*="shopQtyModal"] { color: #997a00 !important; font-weight: 800 !important; opacity: 1 !important; background: none; border: none; transition: all 0.2s ease; cursor: pointer; }
-
-body.theme-light .modal-content button[onclick*="closeEdit"]:hover, 
-body.theme-light .modal-content button[onclick*="intervalModal"]:hover, 
-body.theme-light .modal-content button[onclick*="shopQtyModal"]:hover { color: #ffcc00 !important; transform: scale(1.1); background: rgba(255, 204, 0, 0.1) !important; border-radius: 8px; }
-
-/* --- LIGHT THEME: NAMEN & EINGABE --- */
-body.theme-light #editModal > div { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important; color: #000000 !important; border-radius: 20px !important; }
-body.theme-light #editModal h2, body.theme-light #editModal h3, body.theme-light #editModal label { color: #997a00 !important; font-weight: 800 !important; }
-body.theme-light #edit-assignee { color: #997a00 !important; font-weight: 800 !important; border: 2px solid #ffcc00 !important; background: rgba(255, 255, 255, 0.95) !important; border-radius: 15px !important; padding: 12px; transition: all 0.2s ease; outline: none; }
-body.theme-light #modalAssignee, body.theme-light #edit-name, body.theme-light #modalName, body.theme-light #modalTitle { color: #997a00 !important; font-weight: 800 !important; border: 2px solid #ffcc00 !important; background: rgba(255, 255, 255, 0.95) !important; border-radius: 15px !important; transition: all 0.2s ease; outline: none; }
-/* --- LIGHT THEME: DATUM --- */
-body.theme-light #modalDate, body.theme-light #edit-date-val { color: #997a00 !important; font-weight: 800 !important; border: 2px solid #ffcc00 !important; background: rgba(255, 255, 255, 0.95) !important; border-radius: 15px !important; padding: 12px; transition: all 0.2s ease; outline: none; font-family: inherit; }
-
-/* --- LIGHT THEME: ZAHLEN / INTERVALL --- */
-body.theme-light #modalValue, body.theme-light #edit-interval-val, body.theme-light #shopQtyValue { color: #997a00 !important; font-weight: 900 !important; border: 2px solid #ffcc00 !important; background: rgba(255, 255, 255, 0.95) !important; border-radius: 15px !important; padding: 15px; text-align: center; font-size: 1.8rem !important; transition: all 0.2s ease; outline: none; }
-
-/* --- SUNNY THEME (GELB): FINANCE MODAL FIX (KOMPAKT) --- */
-body.theme-light #finance-modal > div { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important; } /* Fenster-Hintergrund & Sunny-Glas */
-body.theme-light #modal-header-fixed { background: transparent !important; } /* Header nahtlos */
-body.theme-light #modal-header-fixed h2 { color: #ffcc00 !important; font-weight: 800 !important; text-shadow: 1px 1px 2px rgba(0,0,0,0.05); } /* Monatsname in Sonnengelb */
-body.theme-light .finance-input-row input, body.theme-light .finance-input-row select { background: #ffffff !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: bold !important; } /* Eingabefelder Weiß mit gelbem Rahmen */
-body.theme-light .finance-input-row input::placeholder { color: rgba(153, 122, 0, 0.5) !important; } /* Goldbraune Platzhalter */
-body.theme-light .finance-input-row .btn-add { background: #ffcc00 !important; color: #000000 !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; } /* OK-Button Gelb */
-body.theme-light #finance-modal button[onclick*="closeFinanceModal"] { color: #997a00 !important; background: rgba(255, 255, 255, 0.8) !important; border: 1px solid #ffcc00 !important; } /* Schließ-X in Goldbraun */
-body.theme-light #modal-content small { color: #997a00 !important; opacity: 0.8 !important; font-weight: 800 !important; } /* Fixkosten/Ausgaben Beschriftung */
-/* --- SUNNY THEME: UHRZEIT KOMPAKT --- */
-body.theme-light #modalTime, body.theme-light #edit-time { color: #997a00 !important; font-weight: 800 !important; border: 2px solid #ffcc00 !important; background: rgba(255, 255, 255, 0.95) !important; border-radius: 15px !important; padding: 12px; transition: all 0.2s ease; outline: none; font-family: inherit; text-align: center; }
-
-/* Fokus-Effekt Sunny kompakt */
-body.theme-light #modalTime:focus, body.theme-light #edit-time:focus { background: #ffffff !important; border-color: #997a00 !important; box-shadow: 0 0 10px rgba(255, 204, 0, 0.3) !important; }
-
-/* --- TABLET & PC OPTIMIERUNGEN --- */
-@media screen and (min-width: 768px) {
-    body.theme-light .tab-bar { height: 120px !important; }
-    body.theme-light .tab-item .icon { font-size: 2rem !important; }
-    body.theme-light .tab-item span { font-size: 1.2rem !important; }
-    body.theme-light .modal-content { width: 550px !important; padding: 45px !important; border-radius: 0px !important; background: #ffffff !important; border: 2px solid #ffcc00 !important; }
-    body.theme-light .modal-content h1, body.theme-light .modal-content h2, body.theme-light .modal-content h3, body.theme-light .modal-content label { color: #ffcc00 !important; -webkit-text-fill-color: #ffcc00 !important; font-weight: 900 !important; }
-    body.theme-light .modal-content input { height: 90px !important; font-size: 3.5rem !important; color: #ffcc00 !important; border: 2px solid #ffcc00 !important; background: #fffdf5 !important; text-align: center !important; font-weight: 900 !important; }
-    body.theme-light .day-dot { height: 80px !important; font-size: 1.8rem !important; }
-}
-
-/* --- FINANCE --- */
-body.theme-light .month-card { background: rgba(255, 255, 255, 0.5) !important; backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.6) !important; color: #000000 !important; }
-body.theme-light #finance-modal > div { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; color: #000000 !important; }
-body.theme-light .month-card h3, body.theme-light #modal-content h2 { color: #cca300 !important; font-weight: 800 !important; }
-body.theme-light .summary-total { color: #e6b800 !important; border-top: 2px solid rgba(255, 204, 0, 0.4) !important; }
-
-/* --- LISTEN DETAILS --- */
-body.theme-light #list-todo li span[style*="color:var(--gray)"], body.theme-light #list-todo li .user-label { color: #000000 !important; font-weight: 800 !important; }
-body.theme-light #list-todo li div[style*="color:var(--gray)"] span { color: #000000 !important; font-weight: 700 !important; }
-body.theme-light #list-todo li div { color: #000000 !important; }
-
-/* --- SONSTIGES --- */
-body.theme-light .btn-add { background: #ffcc00 !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; }
-body.theme-light .shop-badge { display: flex !important; background: #ffcc00 !important; color: #000000 !important; width: 26px !important; height: 26px !important; border-radius: 50% !important; justify-content: center !important; align-items: center !important; border: 1px solid rgba(0, 0, 0, 0.05) !important; }
-body.theme-light .side-btn.active-shop .shop-badge { background: #ffffff !important; color: #000000 !important; }
-body.theme-light .side-btn.active-todo .shop-badge { background: #ffffff !important; color: #000000 !important; }
-body.theme-light .login-card input[type="password"]::placeholder { color: #ffcc00 !important; font-weight: 700 !important; }
-body.theme-light .admin-close-btn { background: #ff453a !important; color: #ffffff !important; border-radius: 12px !important; }
-
-/* --- THEME DROPDOWN LIGHT (SUNNY YELLOW) --- */
-body.theme-light .theme-dropdown { background: rgba(255, 204, 0, 0.9) !important; backdrop-filter: blur(25px) !important; -webkit-backdrop-filter: blur(25px) !important; border: 1px solid rgba(255, 255, 255, 0.4) !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important; }
-body.theme-light .theme-dropdown div { color: #000000 !important; border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important; font-weight: 700 !important; }
-body.theme-light .theme-dropdown div:hover { background: rgba(255, 255, 255, 0.3) !important; }
-
-/* --- SUNNY LIGHT THEME (GELB): FIXKOSTEN MODAL & STEUERUNG (NEBENEINANDER) --- */
-
-/* Modal-Fenster Hintergrund & Gelber Glas-Effekt */
-body.theme-light #fixkostenModal > div { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important; color: #000000 !important; }
-
-/* Modal Überschriften & Beschriftungen */
-body.theme-light #fixkostenModal h2 { color: #997a00 !important; font-weight: 800 !important; }
-body.theme-light #fixkostenModal label, body.theme-light #fixkostenModal p { color: #997a00 !important; font-weight: 700 !important; opacity: 0.9 !important; }
-
-/* Eingabefelder (Bezeichnung, Betrag, Intervall-Select) */
-body.theme-light #fixkostenModal input, body.theme-light #fixkostenModal select { background: #ffffff !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 800 !important; border-radius: 12px !important; outline: none; }
-body.theme-light #fixkostenModal input::placeholder { color: rgba(153, 122, 0, 0.5) !important; }
-
-/* Speichern-Button im Fixkosten-Modal */
-body.theme-light #fixkostenModal button[onclick*="addFixkostenTemplate"] { background: #ffcc00 !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; font-weight: 800 !important; }
-
-/* Schließen-Buttons im Fixkosten-Modal (X-Button & unten) */
-body.theme-light #fixkostenModal button[onclick*="fixkostenModal"] { color: #997a00 !important; background: rgba(255, 255, 255, 0.8) !important; border: 1px solid #ffcc00 !important; font-weight: 800 !important; }
-
-/* Vorlagen-Einträge in der Liste */
-body.theme-light #fixkostenList > div { background: rgba(255, 255, 255, 0.7) !important; border: 1px solid rgba(255, 204, 0, 0.5) !important; }
-body.theme-light #fixkostenList strong { color: #000000 !important; }
-body.theme-light #fixkostenList span[style*="var(--primary)"] { color: #997a00 !important; font-weight: 800 !important; }
-body.theme-light #fixkostenList div[style*="var(--gray)"] { color: #997a00 !important; opacity: 0.8 !important; font-weight: 700 !important; }
-body.theme-light #fixkostenList div[style*="text-align:center"] { background: rgba(255, 255, 255, 0.5) !important; color: #997a00 !important; border: 1px dashed rgba(255, 204, 0, 0.6) !important; }
-
-/* Hauptansicht Buttons */
-body.theme-light .finance-controls button[onclick*="addNewYear"],
-body.theme-light .finance-controls button[onclick*="addNewMonth"] { background: #ffcc00 !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; font-weight: 700 !important; }
-body.theme-light .finance-controls button[onclick*="fixkostenModal"] { background: rgba(255, 255, 255, 0.5) !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.6) !important; backdrop-filter: blur(20px); font-weight: 700 !important; }
-/* --- LIGHT THEME: FIX SCHLIESSUNG & BUTTON MONAT HINZUFÜGEN --- */
-body.theme-light .side-btn.active-todo .shop-badge { background: #ffffff !important; color: #000000 !important; }
-body.theme-light .finance-controls button[onclick*="addNewMonth"] { background: #ffcc00 !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; font-weight: 800 !important; }
-
-body.theme-light #set_token { background: rgba(255, 255, 255, 0.95) !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 700 !important; border-radius: 12px !important; }
-body.theme-light #set_master_pw, body.theme-light #set_admin_pw { color: #997a00 !important; font-weight: 800 !important; border: 2px solid #ffcc00 !important; background: rgba(255, 255, 255, 0.95) !important; border-radius: 12px !important; outline: none !important; }
-body.theme-light #set_token:focus, body.theme-light #set_master_pw:focus, body.theme-light #set_admin_pw:focus { background: #ffffff !important; border-color: #997a00 !important; box-shadow: 0 0 10px rgba(255, 204, 0, 0.3) !important; }
-body.theme-light #settingsOverlay .tab-toggle { accent-color: #ffcc00 !important; }
-body.theme-light #settingsOverlay label { color: #997a00 !important; }
-body.theme-light #settingsOverlay button[onclick*="saveSystemSettings"] { background: #ffcc00 !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.8) !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; font-weight: 800 !important; }
-body.theme-light #settingsOverlay button[onclick*="settingsOverlay']"] { background: rgba(255, 255, 255, 0.5) !important; color: #997a00 !important; border: 1px solid #ffcc00 !important; backdrop-filter: blur(20px); font-weight: 800 !important; }
-/* --- LIGHT THEME: BENUTZER MODAL (KOMPAKT NEBENEINANDER) --- */
-body.theme-light #userModal > div { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important; color: #000000 !important; }
-body.theme-light #userModal h3 { color: #997a00 !important; font-weight: 800 !important; }
-body.theme-light #userModal label { color: #997a00 !important; font-weight: 700 !important; opacity: 0.9 !important; }
-body.theme-light #userModal input[type="text"], body.theme-light #userModal input[type="password"] { background: #ffffff !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 800 !important; border-radius: 10px !important; outline: none !important; }
-body.theme-light #userModal input::placeholder { color: rgba(153, 122, 0, 0.5) !important; }
-body.theme-light #userModal div[style*="background:rgba"] { background: rgba(255, 255, 255, 0.5) !important; border: 1px solid rgba(255, 204, 0, 0.6) !important; }
-body.theme-light #userModal input[type="checkbox"] { accent-color: #ffcc00 !important; }
-body.theme-light #userModal button[onclick*="saveUserModal"] { background: #ffcc00 !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; font-weight: 800 !important; }
-body.theme-light #userModal button[onclick*="closeUserModal"] { background: rgba(255, 255, 255, 0.8) !important; color: #997a00 !important; border: 1px solid #ffcc00 !important; font-weight: 800 !important; backdrop-filter: blur(10px); }
-body.theme-light #passwordModal > div { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; color: #000000 !important; }
-body.theme-light #passwordModal h3 { color: #997a00 !important; font-weight: 800 !important; }
-body.theme-light #passwordModal input[type="password"] { background: #ffffff !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 800 !important; border-radius: 10px !important; outline: none !important; font-size: 1.2rem !important; }
-body.theme-light #passwordModal button[onclick*="closePasswordModal(true)"] { background: #ffcc00 !important; color: #000000 !important; font-weight: 800 !important; }
-body.theme-light #passwordModal button[onclick*="closePasswordModal(false)"] { background: rgba(255, 255, 255, 0.8) !important; color: #997a00 !important; font-weight: 800 !important; }
-/* --- LIGHT THEME: ROOM & DELETE MODALS STYLING (NEBENEINANDER) --- */
-body.theme-light #roomModal > div, body.theme-light #deleteModal > div { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important; color: #000000 !important; border-radius: 20px !important; }
-body.theme-light #roomModal h3, body.theme-light #deleteModal h3 { color: #997a00 !important; font-weight: 800 !important; }
-body.theme-light #deleteModal p { color: #997a00 !important; font-weight: 700 !important; opacity: 0.9 !important; }
-body.theme-light #newRoomInput { background: #ffffff !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 800 !important; border-radius: 12px !important; outline: none !important; }
-body.theme-light #newRoomInput::placeholder { color: rgba(153, 122, 0, 0.5) !important; }
-body.theme-light #roomModal button[onclick*="confirmAddRoom"], body.theme-light #deleteModal button[onclick*="confirmDelete"] { background: #ffcc00 !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; font-weight: 800 !important; }
-body.theme-light #roomModal button[onclick*="closeRoomModal"], body.theme-light #deleteModal button[onclick*="closeDeleteModal"] { background: rgba(255, 255, 255, 0.8) !important; color: #997a00 !important; border: 1px solid #ffcc00 !important; font-weight: 800 !important; backdrop-filter: blur(10px); }
-/* --- LIGHT THEME: INPUT MODAL --- */
-body.theme-light #customInputModal .modal-card { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; border-radius: 20px !important; }
-body.theme-light #customInputTitle { color: #997a00 !important; font-weight: 800 !important; }
-body.theme-light #customInputMessage { color: #997a00 !important; font-weight: 700 !important; opacity: 0.9 !important; }
-body.theme-light #customInputField { background: rgba(255, 255, 255, 0.8) !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 800 !important; }
-/* --- LIGHT THEME: CUSTOM CONFIRM MODAL --- */
-body.theme-light #customConfirmModal .modal-card { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important; color: #000000 !important; border-radius: 20px !important; }
-body.theme-light #customConfirmTitle { color: #997a00 !important; font-weight: 800 !important; }
-body.theme-light #customConfirmMessage { color: #997a00 !important; font-weight: 700 !important; opacity: 0.9 !important; }
-body.theme-light #customConfirmYes { background: #ff3b30 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4) !important; font-weight: 800 !important; }
-body.theme-light #customConfirmNo { background: rgba(255, 255, 255, 0.8) !important; color: #997a00 !important; border: 1px solid #ffcc00 !important; font-weight: 800 !important; backdrop-filter: blur(10px); }
-/* --- LIGHT THEME: CUSTOM DELETE MODAL --- */
-body.theme-light #customDeleteModal .modal-card { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; -webkit-backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1) !important; color: #000000 !important; border-radius: 20px !important; }
-body.theme-light #customDeleteTitle { color: #997a00 !important; font-weight: 800 !important; }
-body.theme-light #customDeleteMessage { color: #997a00 !important; font-weight: 700 !important; opacity: 0.9 !important; }
-body.theme-light #customDeleteModal div[style*="display:flex"] { display: flex !important; flex-direction: column !important; gap: 10px !important; }
-body.theme-light #customDeleteModal div[style*="display:flex"] button { width: 100% !important; flex: none !important; }
-body.theme-light #customDeleteModal button[onclick*="resolveDelete(false)"] { background: rgba(255, 255, 255, 0.8) !important; color: #997a00 !important; border: 1px solid #ffcc00 !important; font-weight: 800 !important; backdrop-filter: blur(10px); border-radius: 12px !important; }
-body.theme-light #customDeleteModal button[onclick*="resolveDelete(true)"] { background: #ff3b30 !important; color: #ffffff !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4) !important; font-weight: 800 !important; border-radius: 12px !important; }
-/* --- LIGHT THEME: FOOD PROMPT MODAL --- */
-body.theme-light #customFoodModal .modal-card { background: rgba(255, 250, 230, 0.95) !important; backdrop-filter: blur(25px) saturate(180%) !important; border: 2px solid #ffcc00 !important; border-radius: 20px !important; }
-body.theme-light #customFoodTitle { color: #997a00 !important; font-weight: 800 !important; }
-body.theme-light #customFoodMessage { color: #997a00 !important; font-weight: 700 !important; opacity: 0.9 !important; }
-body.theme-light #customFoodField { background: rgba(255, 255, 255, 0.8) !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 800 !important; }
-body.theme-light #customFoodModal button[onclick*="resolveFoodPrompt(true)"] { background: #ffcc00 !important; color: #7a5e00 !important; font-weight: 800 !important; border-radius: 12px !important; }
-body.theme-light #customFoodModal button[onclick*="resolveFoodPrompt(false)"] { background: rgba(255, 255, 255, 0.8) !important; color: #997a00 !important; font-weight: 800 !important; border-radius: 12px !important; border: 1px solid #ffcc00 !important; }
-/* --- SUNNY LIGHT THEME: ZOOM REGLER STYLING (FÜR LOGIN & THEME-MENÜ) --- */
-body.theme-light .zoom-control-row { background: rgba(255, 255, 255, 0.4) !important; border: 1px solid rgba(255, 255, 255, 0.7) !important; }
-body.theme-light .theme-dropdown .zoom-control-row { background: rgba(0, 0, 0, 0.08) !important; border: none !important; border-top: 1px solid rgba(0, 0, 0, 0.1) !important; }
-body.theme-light .zoom-btn { background: rgba(255, 255, 255, 0.9) !important; color: #997a00 !important; border: 1px solid rgba(255, 204, 0, 0.6) !important; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important; }
-body.theme-light .zoom-btn:active { background: #ffcc00 !important; color: #000000 !important; border-color: #ffcc00 !important; }
-body.theme-light .zoom-display { color: #997a00 !important; font-weight: 800 !important; }
-body.theme-light .theme-dropdown .zoom-display { color: #000000 !important; }
-body.theme-light #systemZoomRange { accent-color: #ffcc00 !important; }
-/* --- LIGHT THEME: FINANZ-EINGABEZEILE STYLING --- */
-body.theme-light #finance-modal .finance-input-row input[type="number"], body.theme-light #finance-modal .finance-input-row input[type="text"] { background: #ffffff !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 800 !important; border-radius: 12px !important; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05) !important; }
-body.theme-light #finance-modal .finance-input-row input::placeholder { color: rgba(153, 122, 0, 0.5) !important; font-weight: 700 !important; }
-body.theme-light #finance-modal .finance-input-row select { background: #ffffff !important; border: 2px solid #ffcc00 !important; color: #997a00 !important; font-weight: 800 !important; border-radius: 12px !important; }
-body.theme-light #finance-modal .finance-input-row .btn-add { background: #ffcc00 !important; color: #000000 !important; border: 1px solid rgba(255, 255, 255, 0.5) !important; box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; font-weight: 800 !important; border-radius: 12px !important; }
-body.theme-light #finance-modal .finance-input-row input:focus, body.theme-light #finance-modal .finance-input-row select:focus { background: #ffffff !important; border-color: #997a00 !important; box-shadow: 0 0 10px rgba(255, 204, 0, 0.3) !important; outline: none !important; }
-/* --- LIGHT THEME: FIXKOSTEN-MODAL & FORMULAR BUTTONS --- */
-body.theme-light #fixkostenModal input,
-body.theme-light #fixkostenModal select {
-    background: #ffffff !important;
-    color: #997a00 !important;
-    border: 1.5px solid #ffcc00 !important;
-    font-weight: 700 !important;
-}
-
-body.theme-light #fixkostenModal label {
-    color: #997a00 !important;
-    font-weight: 800 !important;
-}
-
-/* Der Speichern-Button im hellen Gelb/Gold-Ton */
-body.theme-light #tplSaveBtn {
-    background: #ffcc00 !important;
-    color: #000000 !important;
-    border: 1px solid rgba(255, 255, 255, 0.5) !important;
-    box-shadow: 0 4px 10px rgba(255, 204, 0, 0.3) !important;
-    font-weight: 800 !important;
-}
-
-body.theme-light #tplSaveBtn:active {
-    background: #997a00 !important;
-    color: #ffffff !important;
-}
-
-/* Der Stift-Button (Bearbeiten) */
-body.theme-light #tplEditBtn {
-    background: rgba(255, 255, 255, 0.9) !important;
-    color: #997a00 !important;
-    border: 1.5px solid #ffcc00 !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
-}
-
-body.theme-light #tplEditBtn:active {
-    background: #ffcc00 !important;
-    color: #000000 !important;
-}
-
-/* Der Abbrechen-Button (✖) */
-body.theme-light #tplCancelEditBtn {
-    background: rgba(255, 255, 255, 0.9) !important;
-    color: #ff3b30 !important;
-    border: 1.5px solid #ffcc00 !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
-}
-
-body.theme-light #tplCancelEditBtn:active {
-    background: #ff3b30 !important;
-    color: #ffffff !important;
-}
-
-/* Listeneinträge im Fixkosten-Modus */
-body.theme-light #fixkostenList > div {
-    background: rgba(255, 255, 255, 0.75) !important;
-    border: 1.5px solid rgba(255, 204, 0, 0.5) !important;
-}
-
-body.theme-light #fixkostenList strong {
-    color: #1c1c1e !important;
-}
-
-body.theme-light #fixkostenList span[style*="var(--primary)"] {
-    color: #997a00 !important;
-    font-weight: 800 !important;
-}
-
-body.theme-light #fixkostenList div[style*="var(--gray)"] {
-    color: #8e8e93 !important;
-    font-weight: 700 !important;
-}
 /* ========================================================
-   --- LIGHT THEME: BUTTONS & LAUFENDER ALARM-RAHMEN ---
+   --- SUNNY GLASS THEME (KOMPLETT GELB & OPTIMIERT - body.theme-light) ---
    ======================================================== */
 
-body.theme-light {
-    --todo: #475569;
-    --primary: #ffcc00;
-    --bg: #f1f5f9;
-    --card: #ffffff;
-    --gray: #64748b;
+/* --- DEZENTER GOLD/GELBER SONNENGLANZ IM HINTERGRUND --- */
+@keyframes sunnyDust {
+    0% {
+        background-position: 0px 0px, 0px 0px, 0px 0px;
+    }
+    100% {
+        background-position: 350px 700px, -250px 500px, 200px -300px;
+    }
 }
 
+/* --- SUNNY GLASS BASIS & HINTERGRUND (GELB, KEIN GRAU) --- */
+body.theme-light { 
+    background: linear-gradient(135deg, #fff9e6 0%, #ffefba 50%, #ffe699 100%) !important; 
+    background-attachment: fixed !important; 
+    background-size: cover !important; 
+    --text: #1c1c1e; 
+    --todo: #e6b800;       /* Warmes Goldgelb statt Grau für Sekundär-Elemente */
+    --primary: #ffcc00;    /* Kräftiges Sonnengelb für Haupt-Elemente */
+    --bg: rgba(255, 253, 245, 0.96);
+    --card: rgba(255, 255, 255, 0.92);
+    --gray: #665200;       /* Dunkles Goldbraun statt Grau für optimale Lesbarkeit */
+    position: relative;
+}
+
+body.theme-light #loginOverlay { 
+    background: linear-gradient(135deg, #fff9e6 0%, #ffefba 50%, #ffe699 100%) !important; 
+}
+
+/* Dezent funkelnde gelbe & weiße Sonnenpartikel im Hintergrund (blockiert keine Klicks!) */
+body.theme-light::before,
+body.theme-light #loginOverlay::before {
+    content: "☀️";
+    position: fixed;
+    inset: 0;
+    pointer-events: none !important;
+    z-index: 9999;
+    font-size: 0;
+    background-image: 
+        radial-gradient(4px 4px at 80px 40px, rgba(255, 255, 255, 0.9) 50%, transparent 100%),
+        radial-gradient(5px 5px at 210px 130px, rgba(255, 204, 0, 0.55) 50%, transparent 100%),
+        radial-gradient(3px 3px at 330px 250px, rgba(255, 255, 255, 0.8) 50%, transparent 100%),
+        radial-gradient(6px 6px at 150px 310px, rgba(245, 158, 11, 0.45) 50%, transparent 100%),
+        radial-gradient(4px 4px at 370px 70px, rgba(255, 255, 255, 0.85) 50%, transparent 100%),
+        radial-gradient(5px 5px at 60px 240px, rgba(255, 204, 0, 0.5) 50%, transparent 100%);
+    background-size: 420px 420px, 320px 320px, 260px 260px;
+    animation: sunnyDust 22s linear infinite;
+}
+
+/* --- ALLGEMEINER GLAS-EFFEKT (HELL & GELBER RAND) --- */
+body.theme-light .login-card, 
+body.theme-light .input-card, 
+body.theme-light .card,
+body.theme-light li, 
+body.theme-light .day-card, 
+body.theme-light #trash-content, 
+body.theme-light .cat-btn, 
+body.theme-light .fav-chip, 
+body.theme-light .tab-bar, 
+body.theme-light .theme-toggle-top, 
+body.theme-light .admin-btn, 
+body.theme-light .cook-select, 
+body.theme-light .user-btn,
+body.theme-light .month-card { 
+    background: rgba(255, 255, 255, 0.75) !important; 
+    backdrop-filter: blur(20px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important; 
+    border: 1.5px solid rgba(255, 204, 0, 0.65) !important; 
+    box-shadow: 0 8px 32px rgba(153, 122, 0, 0.1), inset 0 0 12px rgba(255, 255, 255, 0.8) !important; 
+    color: #1c1c1e !important; 
+}
+
+/* Kleine Sonnen-Icons oben rechts auf den Karten (wie im Bayern-Theme) */
+body.theme-light .month-card,
+body.theme-light .day-card {
+    position: relative !important;
+}
+body.theme-light .month-card::after {
+    content: "☀️";
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    font-size: 1.05rem;
+    opacity: 1.7;
+    pointer-events: none;
+}
+body.theme-light .day-card::after {
+    content: "☀️";
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    font-size: 0.9rem;
+    opacity: 1.55;
+    pointer-events: none;
+}
+
+/* --- SIDEBAR BUTTONS (ZAHL DIREKT NEBEN NAME) --- */
+body.theme-light .side-btn { 
+    background: rgba(255, 255, 255, 0.75) !important; 
+    backdrop-filter: blur(20px) saturate(180%) !important; 
+    border: 1.5px solid rgba(255, 204, 0, 0.65) !important; 
+    color: #1c1c1e !important; 
+    display: flex !important; 
+    flex-direction: row !important; 
+    justify-content: flex-start !important; 
+    align-items: center !important; 
+    gap: 10px !important; 
+    padding: 8px 12px !important; 
+    min-height: 50px !important; 
+    border-radius: 12px !important; 
+}
+
+/* --- TEXTE SCHWARZ / DUNKELBRAUN AUF GLAS (PERFEKT LESBAR) --- */
+body.theme-light h1 { 
+    color: #1c1c1e !important; 
+    text-shadow: 0 2px 10px rgba(255, 204, 0, 0.5) !important;
+    font-weight: 800 !important; 
+}
+body.theme-light .status-bar {
+    color: #4d3d00 !important;
+    font-weight: 800 !important;
+}
+body.theme-light .main-input, 
+body.theme-light .day-input, 
+body.theme-light .side-btn, 
+body.theme-light .cat-btn, 
+body.theme-light .admin-btn, 
+body.theme-light .fav-chip, 
+body.theme-light .trash-name, 
+body.theme-light .day-label span, 
+body.theme-light .tab-item,
+body.theme-light .user-label,
+body.theme-light #list-todo li div { 
+    color: #1c1c1e !important; 
+    font-weight: 700 !important; 
+}
+
+body.theme-light .main-input::placeholder,
+body.theme-light .login-card input[type="password"]::placeholder,
+body.theme-light .login-card input[type="text"]::placeholder { 
+    color: #806600 !important; 
+    opacity: 0.75 !important;
+    font-weight: 700 !important; 
+}
+
+/* --- AKTIVE ELEMENTE (SONNENGELB & TIEFSCHWARZE SCHRIFT) --- */
+body.theme-light .side-btn.active-shop, 
+body.theme-light .side-btn.active-todo, 
+body.theme-light .cat-btn.active-shop, 
+body.theme-light .cat-btn.active-food, 
+body.theme-light .cat-btn.active-todo, 
+body.theme-light .user-btn.selected { 
+    background: linear-gradient(135deg, #ffd633 0%, #ffcc00 100%) !important; 
+    color: #000000 !important; 
+    border: 1.5px solid #cca300 !important; 
+    box-shadow: 0 5px 15px rgba(255, 204, 0, 0.45) !important; 
+    font-weight: 800 !important;
+}
+
+/* --- TAB-BAR TOTAL-RESET LIGHT --- */
+body.theme-light .tab-bar { 
+    padding: 0 !important; 
+    margin: 0 !important; 
+    height: 80px !important; 
+    display: flex !important; 
+    align-items: stretch !important; 
+    justify-content: space-around !important; 
+    border-top: 2px solid #ffcc00 !important; 
+    background: rgba(255, 252, 235, 0.95) !important;
+}
+body.theme-light .tab-item { 
+    flex: 1 !important; 
+    height: 100% !important; 
+    margin: 0 !important; 
+    padding: 0 !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    background: transparent !important; 
+}
+body.theme-light .tab-item.active-shop, 
+body.theme-light .tab-item.active-food, 
+body.theme-light .tab-item.active-todo, 
+body.theme-light .tab-item.active-finance, 
+body.theme-light .tab-item.active-trash { 
+    background: linear-gradient(180deg, #ffd633 0%, #ffcc00 100%) !important; 
+    color: #000000 !important; 
+    border-radius: 0 !important; 
+    height: 100% !important; 
+    width: 100% !important; 
+    transform: none !important; 
+    box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.6) !important; 
+}
+body.theme-light .tab-item.active-shop .icon, 
+body.theme-light .tab-item.active-food .icon, 
+body.theme-light .tab-item.active-todo .icon, 
+body.theme-light .tab-item.active-trash .icon, 
+body.theme-light .tab-item.active-finance .icon, 
+body.theme-light .tab-item.active-shop span, 
+body.theme-light .tab-item.active-food span, 
+body.theme-light .tab-item.active-finance span, 
+body.theme-light .tab-item.active-todo span,
+body.theme-light .tab-item.active-trash span { 
+    color: #000000 !important; 
+    font-weight: 800 !important;
+}
+
+/* --- DAY-DOTS (INAKTIV WEISS-SCHWARZ / AKTIV GELB-SCHWARZ) --- */
+body.theme-light .day-dot { 
+    background: #ffffff !important; 
+    color: #1c1c1e !important; 
+    border: 1.5px solid rgba(255, 204, 0, 0.6) !important; 
+    cursor: pointer !important; 
+    display: flex !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+}
+body.theme-light .day-dot.active { 
+    background: linear-gradient(135deg, #ffd633 0%, #ffcc00 100%) !important; 
+    color: #000000 !important; 
+    border: 2px solid #b38f00 !important; 
+    transform: scale(1.05) !important; 
+    box-shadow: 0 4px 12px rgba(255, 204, 0, 0.5) !important; 
+    font-weight: 900 !important;
+}
+
+/* --- ALLE MODALS & FINANCE (KOMPLETT IN SONNENGELB & CREMEWEISS) --- */
+body.theme-light #intervalModal > div, 
+body.theme-light #editModal > div, 
+body.theme-light #shopQtyModal > div, 
+body.theme-light #finance-modal > div,
+body.theme-light #passwordModal > div,
+body.theme-light #fixkostenModal > div,
+body.theme-light #userModal > div,
+body.theme-light #roomModal > div, 
+body.theme-light #deleteModal > div,
+body.theme-light #customConfirmModal .modal-card,
+body.theme-light #customDeleteModal .modal-card,
+body.theme-light #customInputModal .modal-card,
+body.theme-light #customFoodModal .modal-card { 
+    background: rgba(255, 251, 235, 0.97) !important; 
+    backdrop-filter: blur(25px) saturate(180%) !important; 
+    -webkit-backdrop-filter: blur(25px) saturate(180%) !important; 
+    border: 2px solid #ffcc00 !important; 
+    box-shadow: 0 20px 60px rgba(153, 122, 0, 0.2) !important; 
+    color: #1c1c1e !important; 
+    border-radius: 20px !important; 
+}
+
+body.theme-light #modal-header-fixed { 
+    background: transparent !important; 
+}
+
+body.theme-light .summary-total { 
+    color: #806600 !important; 
+    border-top: 2px solid #ffcc00 !important; 
+    font-weight: 900 !important;
+}
+
+/* Alle Modal-Überschriften in kräftigem Dunkel-Goldbraun für beste Lesbarkeit */
+body.theme-light .month-card h3, 
+body.theme-light #modal-content h2,
+body.theme-light #modal-header-fixed h2,
+body.theme-light #editModal h2, 
+body.theme-light #editModal h3, 
+body.theme-light #editModal label,
+body.theme-light #passwordModal h3,
+body.theme-light #fixkostenModal h2,
+body.theme-light #userModal h3,
+body.theme-light #roomModal h3, 
+body.theme-light #deleteModal h3,
+body.theme-light #customConfirmTitle,
+body.theme-light #customDeleteTitle,
+body.theme-light #customInputTitle,
+body.theme-light #customFoodTitle { 
+    color: #665200 !important; 
+    font-weight: 800 !important; 
+}
+
+/* Alle Labels & Texte in Modals dunkel und gestochen scharf (kein helles Gelb auf Weiß!) */
+body.theme-light .modal-content h1, 
+body.theme-light .modal-content h2, 
+body.theme-light .modal-content h3, 
+body.theme-light .modal-content label,
+body.theme-light #fixkostenModal label, 
+body.theme-light #fixkostenModal p,
+body.theme-light #userModal label,
+body.theme-light #deleteModal p,
+body.theme-light #customConfirmMessage,
+body.theme-light #customDeleteMessage,
+body.theme-light #customInputMessage,
+body.theme-light #customFoodMessage,
+body.theme-light #settingsOverlay label,
+body.theme-light #settingsOverlay h2,
+body.theme-light #settingsOverlay h3,
+body.theme-light #modal-content small { 
+    color: #4d3d00 !important; 
+    -webkit-text-fill-color: #4d3d00 !important;
+    font-weight: 800 !important; 
+    opacity: 1 !important;
+}
+
+/* --- EINGABEFELDER IN MODALS --- */
+body.theme-light #edit-assignee,
+body.theme-light #modalAssignee, 
+body.theme-light #edit-name, 
+body.theme-light #modalName, 
+body.theme-light #modalTitle,
+body.theme-light #modalDate, 
+body.theme-light #edit-date-val,
+body.theme-light #modalTime, 
+body.theme-light #edit-time,
+body.theme-light #fixkostenModal input, 
+body.theme-light #fixkostenModal select,
+body.theme-light #set_token,
+body.theme-light #set_master_pw, 
+body.theme-light #set_admin_pw,
+body.theme-light #userModal input[type="text"], 
+body.theme-light #userModal input[type="password"],
+body.theme-light #passwordModal input[type="password"],
+body.theme-light #newRoomInput,
+body.theme-light #customInputField,
+body.theme-light #customFoodField,
+body.theme-light .finance-input-row input, 
+body.theme-light .finance-input-row select,
+body.theme-light #finance-modal .finance-input-row input[type="number"], 
+body.theme-light #finance-modal .finance-input-row input[type="text"] { 
+    color: #1c1c1e !important; 
+    font-weight: 800 !important; 
+    border: 2px solid #ffcc00 !important; 
+    background: #ffffff !important; 
+    border-radius: 12px !important; 
+    outline: none !important; 
+    transition: all 0.2s ease;
+}
+
+body.theme-light #modalDate, 
+body.theme-light #edit-date-val,
+body.theme-light #modalTime, 
+body.theme-light #edit-time {
+    padding: 12px;
+    font-family: inherit;
+    text-align: center;
+}
+
+body.theme-light #fixkostenModal input::placeholder,
+body.theme-light #userModal input::placeholder,
+body.theme-light #newRoomInput::placeholder,
+body.theme-light #customInputField::placeholder,
+body.theme-light #customFoodField::placeholder,
+body.theme-light .finance-input-row input::placeholder,
+body.theme-light #finance-modal .finance-input-row input::placeholder { 
+    color: rgba(128, 102, 0, 0.55) !important; 
+    font-weight: 700 !important;
+}
+
+/* Fokus-Effekt für Eingabefelder */
+body.theme-light #modalTime:focus, 
+body.theme-light #edit-time:focus,
+body.theme-light #set_token:focus, 
+body.theme-light #set_master_pw:focus, 
+body.theme-light #set_admin_pw:focus,
+body.theme-light #finance-modal .finance-input-row input:focus, 
+body.theme-light #finance-modal .finance-input-row select:focus,
+body.theme-light #fixkostenModal input:focus,
+body.theme-light #userModal input:focus { 
+    background: #fffdf5 !important; 
+    border-color: #b38f00 !important; 
+    box-shadow: 0 0 10px rgba(255, 204, 0, 0.4) !important; 
+}
+
+/* Große Zahlen- / Intervall-Werte */
+body.theme-light #modalValue, 
+body.theme-light #edit-interval-val, 
+body.theme-light #shopQtyValue { 
+    color: #1c1c1e !important; 
+    font-weight: 900 !important; 
+    border: 2px solid #ffcc00 !important; 
+    background: #ffffff !important; 
+    border-radius: 15px !important; 
+    padding: 15px; 
+    text-align: center; 
+    font-size: 1.8rem !important; 
+    outline: none;
+}
+
+/* --- PRIMÄRE BUTTONS (KRÄFTIGES SONNENGELB MIT SCHWARZER SCHRIFT) --- */
+body.theme-light .btn-add,
+body.theme-light #finance-modal .finance-input-row .btn-add,
+body.theme-light #tplSaveBtn,
+body.theme-light #passwordModal button[onclick*="closePasswordModal(true)"],
+body.theme-light #fixkostenModal button[onclick*="addFixkostenTemplate"],
+body.theme-light .finance-controls button[onclick*="addNewYear"],
+body.theme-light .finance-controls button[onclick*="addNewMonth"],
+body.theme-light #settingsOverlay button[onclick*="saveSystemSettings"],
+body.theme-light #userModal button[onclick*="saveUserModal"],
+body.theme-light #roomModal button[onclick*="confirmAddRoom"], 
+body.theme-light #deleteModal button[onclick*="confirmDelete"],
+body.theme-light #customFoodModal button[onclick*="resolveFoodPrompt(true)"],
+body.theme-light #customInputModal button[onclick*="resolveInput(true)"],
+body.theme-light button[onclick*="confirmInterval('t')"],
+body.theme-light button[onclick*="saveEdit('t')"],
+body.theme-light button[onclick*="confirmShopAdd"] { 
+    background: linear-gradient(135deg, #ffd633 0%, #ffcc00 100%) !important; 
+    color: #000000 !important; 
+    border: 1.5px solid #b38f00 !important; 
+    box-shadow: 0 4px 15px rgba(255, 204, 0, 0.4) !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important;
+}
+
+/* Sekundäre Intervall-Buttons (Jetzt AUCH in hellem Sonnengelb statt Grau!) */
 body.theme-light button[onclick*="confirmInterval('m')"],
 body.theme-light button[onclick*="confirmInterval('s')"],
 body.theme-light button[onclick*="confirmInterval('days')"],
@@ -294,22 +422,218 @@ body.theme-light button[onclick*="saveEdit('m')"],
 body.theme-light button[onclick*="saveEdit('s')"],
 body.theme-light button[onclick*="saveEdit('days')"],
 body.theme-light button[onclick*="saveEdit('date')"] {
-    background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
-    color: #ffffff !important;
-    border: 1.5px solid #94a3b8 !important;
-    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15) !important;
+    background: linear-gradient(135deg, #ffeb99 0%, #ffdf6b 100%) !important;
+    color: #1c1c1e !important;
+    border: 1.5px solid #e6b800 !important;
+    box-shadow: 0 4px 12px rgba(255, 204, 0, 0.25) !important;
+    font-weight: 800 !important;
 }
 
-/* Shop-Hinzufügen & Tage-Button jetzt auch in Gelb! */
-body.theme-light button[onclick*="confirmInterval('t')"],
-body.theme-light button[onclick*="saveEdit('t')"],
-body.theme-light button[onclick*="confirmShopAdd"] {
-    background: linear-gradient(135deg, #ffcc00 0%, #e6b800 100%) !important;
-    color: #1e293b !important; /* Dunkle Schrift auf Gelb */
-    border: 1.5px solid #cca300 !important;
-    box-shadow: 0 4px 12px rgba(255, 204, 0, 0.35) !important;
+/* --- SCHLIESSEN / SEKUNDÄRE MODAL-BUTTONS (CREMEWEISS MIT GELBEM RAND) --- */
+body.theme-light #finance-modal button[onclick*="closeFinanceModal"],
+body.theme-light #passwordModal button[onclick*="closePasswordModal(false)"],
+body.theme-light #fixkostenModal button[onclick*="fixkostenModal"],
+body.theme-light .finance-controls button[onclick*="fixkostenModal"],
+body.theme-light #settingsOverlay button[onclick*="settingsOverlay']"],
+body.theme-light #userModal button[onclick*="closeUserModal"],
+body.theme-light #roomModal button[onclick*="closeRoomModal"], 
+body.theme-light #deleteModal button[onclick*="closeDeleteModal"],
+body.theme-light #customConfirmNo,
+body.theme-light #customDeleteModal button[onclick*="resolveDelete(false)"],
+body.theme-light #customFoodModal button[onclick*="resolveFoodPrompt(false)"],
+body.theme-light #customInputModal button[onclick*="resolveInput(false)"],
+body.theme-light #tplEditBtn { 
+    background: rgba(255, 255, 255, 0.9) !important; 
+    color: #4d3d00 !important; 
+    border: 1.5px solid #ffcc00 !important; 
+    font-weight: 800 !important; 
+    border-radius: 12px !important;
+    backdrop-filter: blur(10px);
 }
 
+/* Text-Abbrechen-Buttons in Modals */
+body.theme-light .modal-content button[onclick*="closeEdit"], 
+body.theme-light .modal-content button[onclick*="intervalModal"], 
+body.theme-light .modal-content button[onclick*="shopQtyModal"] { 
+    color: #665200 !important; 
+    font-weight: 800 !important; 
+    opacity: 1 !important; 
+    background: none; 
+    border: none; 
+    transition: all 0.2s ease; 
+    cursor: pointer; 
+}
+body.theme-light .modal-content button[onclick*="closeEdit"]:hover, 
+body.theme-light .modal-content button[onclick*="intervalModal"]:hover, 
+body.theme-light .modal-content button[onclick*="shopQtyModal"]:hover { 
+    color: #000000 !important; 
+    transform: scale(1.05); 
+    background: rgba(255, 204, 0, 0.25) !important; 
+    border-radius: 8px; 
+}
+
+/* Rote Löschen- & Beenden-Buttons */
+body.theme-light .admin-close-btn, 
+body.theme-light button[onclick*="closeUserAdmin"],
+body.theme-light #customConfirmYes,
+body.theme-light #customDeleteModal button[onclick*="resolveDelete(true)"] { 
+    background: #ff3b30 !important; 
+    color: #ffffff !important; 
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 4px 15px rgba(255, 59, 48, 0.4) !important;
+    font-weight: 800 !important;
+    border-radius: 12px !important; 
+}
+
+body.theme-light #tplCancelEditBtn {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #ff3b30 !important;
+    border: 1.5px solid #ffcc00 !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 12px !important;
+}
+
+body.theme-light #customDeleteModal div[style*="display:flex"] { 
+    display: flex !important; 
+    flex-direction: column !important; 
+    gap: 10px !important; 
+}
+body.theme-light #customDeleteModal div[style*="display:flex"] button { 
+    width: 100% !important; 
+    flex: none !important; 
+}
+
+/* --- BADGES, LISTEN & FIXKOSTEN-EINTRÄGE --- */
+body.theme-light .shop-badge { 
+    display: flex !important; 
+    background: #ffcc00 !important; 
+    color: #000000 !important; 
+    width: 26px !important; 
+    height: 26px !important; 
+    border-radius: 50% !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    border: 1px solid rgba(153, 122, 0, 0.3) !important; 
+    font-weight: 800 !important;
+}
+body.theme-light .side-btn.active-shop .shop-badge,
+body.theme-light .side-btn.active-todo .shop-badge { 
+    background: #ffffff !important; 
+    color: #000000 !important; 
+    font-weight: 900 !important;
+}
+
+body.theme-light #fixkostenList > div { 
+    background: rgba(255, 255, 255, 0.85) !important; 
+    border: 1.5px solid rgba(255, 204, 0, 0.6) !important; 
+}
+body.theme-light #fixkostenList strong { 
+    color: #1c1c1e !important; 
+}
+body.theme-light #fixkostenList span[style*="var(--primary)"] { 
+    color: #806600 !important; 
+    font-weight: 800 !important; 
+}
+body.theme-light #fixkostenList div[style*="var(--gray)"] { 
+    color: #665200 !important; 
+    font-weight: 700 !important; 
+}
+body.theme-light #fixkostenList div[style*="text-align:center"] { 
+    background: rgba(255, 255, 255, 0.6) !important; 
+    color: #665200 !important; 
+    border: 1px dashed #ffcc00 !important; 
+}
+
+/* Todo-Liste Details (Name & Datum klar lesbar in Schwarz/Dunkelbraun) */
+body.theme-light #list-todo li span[style*="color:var(--gray)"],
+body.theme-light #list-todo li .user-label {
+    color: #665200 !important;
+    font-weight: 800 !important;
+}
+body.theme-light #list-todo li div[style*="color:var(--gray)"] span {
+    color: #1c1c1e !important;
+    font-weight: 700 !important;
+}
+
+body.theme-light #userModal div[style*="background:rgba"] { 
+    background: rgba(255, 255, 255, 0.65) !important; 
+    border: 1px solid rgba(255, 204, 0, 0.6) !important; 
+}
+
+/* --- THEME DROPDOWN & ZOOM REGLER --- */
+body.theme-light .theme-dropdown { 
+    background: rgba(255, 214, 51, 0.96) !important; 
+    backdrop-filter: blur(25px) !important; 
+    -webkit-backdrop-filter: blur(25px) !important; 
+    border: 1.5px solid #ffffff !important; 
+    box-shadow: 0 20px 60px rgba(153, 122, 0, 0.25) !important; 
+}
+body.theme-light .theme-dropdown div { 
+    color: #000000 !important; 
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important; 
+    font-weight: 800 !important; 
+}
+body.theme-light .theme-dropdown div:hover { 
+    background: rgba(255, 255, 255, 0.45) !important; 
+}
+
+body.theme-light .zoom-control-row { 
+    background: rgba(255, 255, 255, 0.55) !important; 
+    border: 1px solid rgba(255, 204, 0, 0.6) !important; 
+}
+body.theme-light .theme-dropdown .zoom-control-row { 
+    background: rgba(255, 255, 255, 0.3) !important; 
+    border: none !important; 
+    border-top: 1px solid rgba(0, 0, 0, 0.1) !important; 
+}
+body.theme-light .zoom-btn { 
+    background: #ffffff !important; 
+    color: #4d3d00 !important; 
+    border: 1px solid #ffcc00 !important; 
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important; 
+}
+body.theme-light .zoom-btn:active { 
+    background: #ffcc00 !important; 
+    color: #000000 !important; 
+    border-color: #b38f00 !important; 
+}
+body.theme-light .zoom-display,
+body.theme-light .theme-dropdown .zoom-display { 
+    color: #000000 !important; 
+    font-weight: 800 !important; 
+}
+body.theme-light #systemZoomRange,
+body.theme-light #settingsOverlay .tab-toggle,
+body.theme-light #userModal input[type="checkbox"] { 
+    accent-color: #ffcc00 !important; 
+}
+
+/* --- TABLET & PC OPTIMIERUNGEN --- */
+@media screen and (min-width: 768px) {
+    body.theme-light .tab-bar { height: 120px !important; }
+    body.theme-light .tab-item .icon { font-size: 2rem !important; }
+    body.theme-light .tab-item span { font-size: 1.2rem !important; }
+    body.theme-light .modal-content { 
+        width: 550px !important; 
+        padding: 45px !important; 
+        border-radius: 20px !important; 
+        background: rgba(255, 251, 235, 0.98) !important; 
+        border: 2px solid #ffcc00 !important; 
+    }
+    body.theme-light .modal-content input:not([type="password"]):not([type="text"]) { 
+        height: 90px !important; 
+        font-size: 3.5rem !important; 
+        color: #1c1c1e !important; 
+        -webkit-text-fill-color: #1c1c1e !important; 
+        border: 2px solid #ffcc00 !important; 
+        background: #ffffff !important; 
+        text-align: center !important; 
+        font-weight: 900 !important; 
+    }
+    body.theme-light .day-dot { height: 80px !important; font-size: 1.8rem !important; }
+}
+
+/* --- LAUFENDER ALARM-RAHMEN (GELB & WEISS) --- */
 @keyframes light-running-border {
     0% { background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px; }
     100% { background-position: 40px 0px, -40px 100%, 0px -40px, 100% 40px; }
@@ -331,14 +655,11 @@ body.theme-light #list-todo li.urgent-blink::after {
     pointer-events: none !important;
     border-radius: inherit !important;
     z-index: 10 !important;
-    
-    /* 4 laufende Linien passend zum Light-Theme in Gelb (#ffcc00) & Weiß */
     background-image: 
         linear-gradient(90deg, #ffcc00 50%, #ffffff 50%),
         linear-gradient(90deg, #ffcc00 50%, #ffffff 50%),
         linear-gradient(0deg, #ffcc00 50%, #ffffff 50%),
         linear-gradient(0deg, #ffcc00 50%, #ffffff 50%);
-        
     background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
     background-size: 40px 6px, 40px 6px, 6px 40px, 6px 40px;
     background-position: 0px 0px, 0px 100%, 0px 0px, 100% 0px;
@@ -349,4 +670,61 @@ body.theme-light .urgent-blink,
 body.theme-light #list-todo li.urgent-blink {
     position: relative !important;
     overflow: hidden !important;
+}
+
+/* ========================================================
+   --- WOCHENPLAN & ESSENSPLAN IM LIGHT-THEME (KOMPLETT GELB STATT GRAU!) ---
+   ======================================================== */
+
+body.theme-light .day-card {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1.5px solid rgba(255, 204, 0, 0.65) !important;
+    box-shadow: 0 4px 12px rgba(153, 122, 0, 0.08) !important;
+}
+
+/* Wochentag-Überschriften kräftig dunkelbraun/gold für top Kontrast */
+body.theme-light .day-card .day-label {
+    color: #665200 !important;
+    font-weight: 900 !important;
+}
+
+
+body.theme-light .meal-mini-label {
+    color: #806600 !important;
+    font-weight: 800 !important;
+}
+
+/* Eingabefelder im Essensplan mit sanftem Gelbton statt Grau */
+body.theme-light .day-card .day-input {
+    background: rgba(255, 251, 230, 0.9) !important;
+    border: 1.5px solid rgba(255, 204, 0, 0.55) !important;
+    color: #1c1c1e !important;
+    font-weight: 700 !important;
+}
+
+body.theme-light .day-card .day-input::placeholder {
+    color: rgba(128, 102, 0, 0.5) !important;
+}
+
+body.theme-light .day-card .day-input:focus {
+    background: #ffffff !important;
+    border-color: #ffcc00 !important;
+    box-shadow: 0 0 0 3px rgba(255, 204, 0, 0.3) !important;
+}
+
+/* Wochen-Umschalter (Inaktiv: Weiß mit gelbem Rand / Aktiv: Kräftig Sonnengelb mit schwarzer Schrift!) */
+body.theme-light .week-switch-btn {
+    background: rgba(255, 255, 255, 0.9) !important;
+    color: #4d3d00 !important;
+    border: 1.5px solid rgba(255, 204, 0, 0.65) !important;
+    box-shadow: 0 2px 8px rgba(153, 122, 0, 0.06) !important;
+    font-weight: 800 !important;
+}
+
+body.theme-light .week-switch-btn.active-food {
+    background: linear-gradient(135deg, #ffd633 0%, #ffcc00 100%) !important;
+    color: #000000 !important;
+    border: 1.5px solid #b38f00 !important;
+    box-shadow: 0 4px 15px rgba(255, 204, 0, 0.45) !important;
+    font-weight: 900 !important;
 }

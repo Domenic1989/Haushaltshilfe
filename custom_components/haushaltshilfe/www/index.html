@@ -177,19 +177,180 @@
 
     <!-- WOCHENPLAN TAB -->
     <div id="v-food" style="display:none;">
-        <header><h1>Wochenplan 🍽️</h1></header>
-        <div class="admin-row"><button class="admin-btn" onclick="addNewCat('food')">📂 + Kategorie</button><button class="admin-btn" onclick="addNewFav('food')">⭐️ + Favoriten</button></div>
-        <div class="cat-scroll" id="cats-food"></div>
-        <div class="fav-grid" id="favs-food"></div>
-        <div class="week-grid">
-             <div class="day-card" id="card-0"><div class="day-label"><span>🥣</span>MO</div><input type="text" id="plan-0" class="day-input" placeholder="Planlos" onchange="saveFood(0)"><select id="cook-0" class="cook-select" onchange="saveFood(0)"></select></div>
-             <div class="day-card" id="card-1"><div class="day-label"><span>🥗</span>DI</div><input type="text" id="plan-1" class="day-input" placeholder="Planlos" onchange="saveFood(1)"><select id="cook-1" class="cook-select" onchange="saveFood(1)"></select></div>
-             <div class="day-card" id="card-2"><div class="day-label"><span>🍲</span>MI</div><input type="text" id="plan-2" class="day-input" placeholder="Planlos" onchange="saveFood(2)"><select id="cook-2" class="cook-select" onchange="saveFood(2)"></select></div>
-             <div class="day-card" id="card-3"><div class="day-label"><span>🍝</span>DO</div><input type="text" id="plan-3" class="day-input" placeholder="Planlos" onchange="saveFood(3)"><select id="cook-3" class="cook-select" onchange="saveFood(3)"></select></div>
-             <div class="day-card" id="card-4"><div class="day-label"><span>🍕</span>FR</div><input type="text" id="plan-4" class="day-input" placeholder="Planlos" onchange="saveFood(4)"><select id="cook-4" class="cook-select" onchange="saveFood(4)"></select></div>
-             <div class="day-card" id="card-5"><div class="day-label"><span>🍔</span>SA</div><input type="text" id="plan-5" class="day-input" placeholder="Planlos" onchange="saveFood(5)"><select id="cook-5" class="cook-select" onchange="saveFood(5)"></select></div>
-             <div class="day-card" id="card-6"><div class="day-label"><span>🍗</span>SO</div><input type="text" id="plan-6" class="day-input" placeholder="Planlos" onchange="saveFood(6)"><select id="cook-6" class="cook-select" onchange="saveFood(6)"></select></div>
+    <header><h1>Wochenplan 🍽️</h1></header>
+    <div class="admin-row">
+        <button class="admin-btn" onclick="addNewCat('food')">📂 + Kategorie</button>
+        <button class="admin-btn" onclick="addNewFav('food')">⭐️ + Favoriten</button>
+    </div>
+    <div class="cat-scroll" id="cats-food"></div>
+    <div class="fav-grid" id="favs-food"></div>
+
+    <!-- Wochen-Umschalter über dem Montag -->
+    <div class="week-switcher">
+        <button id="btn-week-0" class="week-switch-btn active-food" onclick="switchFoodWeek(0)">📅 Diese Woche</button>
+        <button id="btn-week-1" class="week-switch-btn" onclick="switchFoodWeek(1)">⏭️ Nächste Woche</button>
+        <button id="btn-week-shift" class="week-switch-btn reset-week-btn" onclick="executeFoodWeekShift(false)" title="Woche abschließen & vorrücken">🔄 Woche abschließen/verschieben</button>
+    </div>
+    
+    <!-- NEU: Info-Label für den automatischen Wochenwechsel -->
+    <div class="food-auto-info">
+        ✨ Automatischer Wochenwechsel Sonntags um 23:00 Uhr oder manuell über den Button
+    </div>
+
+    <div class="week-grid">
+        <!-- MONTAG -->
+        <div class="day-card" id="card-0">
+            <div class="day-label"><span>🥣</span>MO</div>
+            <div class="meal-inputs-inline">
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Frühstück</span>
+                    <input type="text" id="plan-0-bf" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(0)">
+                </div>
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Mittagessen</span>
+                    <input type="text" id="plan-0" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(0)">
+                </div>
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Abendessen</span>
+                    <input type="text" id="plan-0-dn" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(0)">
+                </div>
+            </div>
+            <select id="cook-0" class="cook-select" onchange="saveFood(0)"></select>
         </div>
+
+        <!-- DIENSTAG -->
+        <div class="day-card" id="card-1">
+            <div class="day-label"><span>🥗</span>DI</div>
+            <div class="meal-inputs-inline">
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Frühstück</span>
+                    <input type="text" id="plan-1-bf" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(1)">
+                </div>
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Mittagessen</span>
+                    <input type="text" id="plan-1" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(1)">
+                </div>
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Abendessen</span>
+                    <input type="text" id="plan-1-dn" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(1)">
+                </div>
+            </div>
+            <select id="cook-1" class="cook-select" onchange="saveFood(1)"></select>
+        </div>
+
+        <!-- MITTWOCH -->
+        <div class="day-card" id="card-2">
+            <div class="day-label"><span>🍲</span>MI</div>
+            <div class="meal-inputs-inline">
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Frühstück</span>
+                    <input type="text" id="plan-2-bf" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(2)">
+                </div>
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Mittagessen</span>
+                    <input type="text" id="plan-2" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(2)">
+                </div>
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Abendessen</span>
+                    <input type="text" id="plan-2-dn" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(2)">
+                </div>
+            </div>
+            <select id="cook-2" class="cook-select" onchange="saveFood(2)"></select>
+        </div>
+
+        <!-- DONNERSTAG -->
+        <div class="day-card" id="card-3">
+            <div class="day-label"><span>🍝</span>DO</div>
+            <div class="meal-inputs-inline">
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Frühstück</span>
+                    <input type="text" id="plan-3-bf" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(3)">
+                </div>
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Mittagessen</span>
+                    <input type="text" id="plan-3" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(3)">
+                </div>
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Abendessen</span>
+                    <input type="text" id="plan-3-dn" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(3)">
+                </div>
+            </div>
+            <select id="cook-3" class="cook-select" onchange="saveFood(3)"></select>
+        </div>
+
+        <!-- FREITAG -->
+        <div class="day-card" id="card-4">
+            <div class="day-label"><span>🍕</span>FR</div>
+            <div class="meal-inputs-inline">
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Frühstück</span>
+                    <input type="text" id="plan-4-bf" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(4)">
+                </div>
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Mittagessen</span>
+                    <input type="text" id="plan-4" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(4)">
+                </div>
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Abendessen</span>
+                    <input type="text" id="plan-4-dn" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(4)">
+                </div>
+            </div>
+            <select id="cook-4" class="cook-select" onchange="saveFood(4)"></select>
+        </div>
+
+        <!-- SAMSTAG -->
+        <div class="day-card" id="card-5">
+            <div class="day-label"><span>🍔</span>SA</div>
+            <div class="meal-inputs-inline">
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Frühstück</span>
+                    <input type="text" id="plan-5-bf" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(5)">
+                </div>
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Mittagessen</span>
+                    <input type="text" id="plan-5" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(5)">
+                </div>
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Abendessen</span>
+                    <input type="text" id="plan-5-dn" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(5)">
+                </div>
+            </div>
+            <select id="cook-5" class="cook-select" onchange="saveFood(5)"></select>
+        </div>
+
+        <!-- SONNTAG -->
+        <div class="day-card" id="card-6">
+            <div class="day-label"><span>🍗</span>SO</div>
+            <div class="meal-inputs-inline">
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Frühstück</span>
+                    <input type="text" id="plan-6-bf" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(6)">
+                </div>
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Mittagessen</span>
+                    <input type="text" id="plan-6" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(6)">
+                </div>
+                <div class="meal-field-group">
+                    <span class="meal-mini-label">Abendessen</span>
+                    <input type="text" id="plan-6-dn" class="day-input" placeholder="Gericht..." onfocus="setActiveMealInput(this)" onchange="saveFood(6)">
+                </div>
+            </div>
+            <select id="cook-6" class="cook-select" onchange="saveFood(6)"></select>
+        </div>
+
+        <!-- ESSEN GEHEN -->
+        <div class="day-card eating-out-card" id="card-7">
+            <div class="day-label"><span>🍽️</span>Auswärts</div>
+            <div class="meal-inputs-inline">
+                <div class="meal-field-group" style="width: 100%;">
+                    <span class="meal-mini-label">Wann & Wo?</span>
+                    <input type="text" id="plan-7" class="day-input" placeholder="z.B. Fr beim Italiener..." onfocus="setActiveMealInput(this)" onchange="saveFood(7)">
+                </div>
+            </div>
+            <select id="cook-7" class="cook-select" onchange="saveFood(7)"></select>
+        </div>
+    </div>
+
         <button class="admin-btn" style="margin-top:25px; width:100%; border-style:solid; color:var(--danger); background:#fff5f5; padding: 15px;" onclick="clearWeek()">Woche zurücksetzen 🧹</button>
     </div>
 
@@ -580,7 +741,7 @@
         <p id="customDeleteMessage" style="margin-bottom:20px; font-size:1rem; opacity:0.9;"></p>
         <div style="display:flex; gap:10px;">
             <button type="button" onclick="resolveDelete(false)" style="flex:1; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:inherit; cursor:pointer; font-weight:800;">Abbrechen</button>
-            <button type="button" onclick="resolveDelete(true)" style="flex:1; padding:12px; border-radius:12px; border:none; background:#ff3b30; color:#fff; cursor:pointer; font-weight:800;">Löschen</button>
+            <button type="button" id="customDeleteConfirmBtn" onclick="resolveDelete(true)" style="flex:1; padding:12px; border-radius:12px; border:none; background:#ff3b30; color:#fff; cursor:pointer; font-weight:800;">Löschen</button>
         </div>
     </div>
 </div>
@@ -618,8 +779,8 @@
     </div>
 </div>
 <!-- SKRIPTE WITH CACHE-BUSTING -->
-<script src="config.js?v=1.1.4"></script>
-<script src="script.js?v=1.1.4"></script>
-<script src="finance.js?v=1.1.4"></script>
+<script src="config.js?v=1.1.5"></script>
+<script src="script.js?v=1.1.5"></script>
+<script src="finance.js?v=1.1.5"></script>
 </body>
 </html>

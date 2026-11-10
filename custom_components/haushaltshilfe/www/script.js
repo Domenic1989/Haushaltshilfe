@@ -8,19 +8,19 @@
     
     let curCat = "Alle", lastActivity = Date.now(), isUpdatingFood = false;
     let activeStore = "Aldi", activeRoom = "Küche";
-    let stores = ["Aldi", "Lidl", "Rewe"], rooms = ["Küche", "Bad", "Wohnen"], todoDb = [];
+    let stores = [], rooms = [], todoDb = [];
     let tempTodoName = ""; 
 
     let db = { 
-        shop: { cats: ["Alle", "Gemüse", "Fleisch", "Vorrat", "Haus"], favs: [] }, 
-        food: { cats: ["Alle", "Schnell", "Italienisch", "Leicht"], favs: [] }, 
-        todo: { cats: ["Alle", "Haus", "Bad", "Wohnen", "Küche", "Garten"], favs: [] } 
+        shop: { cats: ["Alle",], favs: [] }, 
+        food: { cats: ["Alle"], favs: [] }, 
+        todo: { cats: ["Alle"], favs: [] } 
     };
 
     const staticFavs = {
-        shop: [{n:"🍎 Äpfel",c:"Gemüse"},{n:"🍌 Bananen",c:"Gemüse"},{n:"🥒 Gurke",c:"Gemüse"},{n:"🥩 Hack",c:"Fleisch"},{n:"🍗 Hähnchen",c:"Fleisch"},{n:"🥛 Milch",c:"Vorrat"},{n:"🥚 Eier",c:"Vorrat"},{n:"🍞 Brot",c:"Vorrat"},{n:"🧀 Käse",c:"Vorrat"},{n:"🧻 WC-Papier",c:"Haus"},{n:"🧼 Spüli",c:"Haus"}],
-        food: [{n:"🍕 Pizza",c:"Schnell"},{n:"🍝 Pasta",c:"Italienisch"},{n:"🥙 Döner",c:"Schnell"},{n:"🍔 Burger",c:"Schnell"},{n:"🍚 Reis-Pfanne",c:"Leicht"},{n:"🥗 Salat",c:"Leicht"}],
-        todo: [{n:"🗑️ Müll raus",c:"Haus"},{n:"🧺 Wäsche",c:"Haus"},{n:"🧼 Bad putzen",c:"Bad"},{n:"🧹 Saugen",c:"Wohnen"},{n:"🪴 Blumen",c:"Garten"},{n:"🍽️ Spüler",c:"Küche"}]
+        shop: [],
+        food: [],
+        todo: []
     };
 
 // ---- MASTER-PASSWORT DYNAMISCH HOLEN ----
@@ -39,8 +39,6 @@ function getBaseUrl() {
     return baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
 }
 
-// Passwörter werden nur noch am Server geprüft. Ein bestätigtes Passwort bleibt
-// für diese Sitzung im Speicher (nicht im localStorage), damit man im
 // Admin-Modus nicht für jede Aktion neu tippen muss.
 let verifiedMasterPw = null;
 let verifiedAdminPw = null;
@@ -223,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // --- 1. Für normale Hinweise / Fehler (wie "Passwort falsch") ---
 let deleteResolver = null;
 
-function showDeleteModal(message, title = "Benutzer löschen") {
+function showDeleteModal(message, title = "Benutzer löschen", confirmButtonText = "Löschen") {
     return new Promise((resolve) => {
         deleteResolver = resolve;
         const modal = document.getElementById('customDeleteModal');
@@ -232,6 +230,12 @@ function showDeleteModal(message, title = "Benutzer löschen") {
         
         if (titleEl) titleEl.innerText = title;
         if (msgEl) msgEl.innerText = message;
+        
+        // Optional: Wenn dein Bestätigungs-Button im HTML eine ID hat (z.B. id="customDeleteConfirmBtn"),
+        // können wir den Text hier dynamisch anpassen:
+        const confirmBtn = document.getElementById('customDeleteConfirmBtn');
+        if (confirmBtn) confirmBtn.innerText = confirmButtonText;
+
         if (modal) modal.style.display = 'flex';
     });
 }
@@ -257,6 +261,7 @@ function showAlert(message, title = "Hinweis") {
         
         if (titleEl) titleEl.innerText = title;
         if (msgEl) msgEl.innerText = message;
+        
         if (modal) modal.style.display = 'flex';
     });
 }
@@ -1920,10 +1925,10 @@ function renderTodoList() {
             statusColor = "var(--danger)"; 
             timeText = "ÜBERFÄLLIG";
         } else if (diffMins < 60) {
-            statusColor = "var(--accent)"; 
+            statusColor = "#f39c12"; 
             timeText = `In ${diffMins} Min.`;
         } else if (diffDays === 0) {
-            statusColor = "var(--accent)"; 
+            statusColor = "#f39c12"; 
             timeText = (t.intervalHours && t.intervalHours < 24) ? `In ${diffHours} Std.` : "Heute";
         } else if (diffDays === 1) {
             statusColor = "#f39c12"; 
@@ -2065,20 +2070,388 @@ async function syncUp() {
     } 
 }
 
+// --- GLOBALE VARIABLEN FÜR DEN ERWEITERTEN WOCHENPLAN ---
+let activeFoodWeek = 0; // 0 = Diese Woche, 1 = Nächste Woche
+let activeMealInput = null; // Merkt sich das zuletzt angeklickte Feld für Favoriten-Chips
+let isShiftingWeek = false; // Schutz vor doppeltem Ausführen beim Wochenwechsel
+
+// --- EINSTELLUNGEN FÜR DEN AUTOMATISCHEN WOCHENWECHSEL ---
+// Aktuell: Sonntag 23:00 Uhr.
+// Zum Testen z. B.: SHIFT_DAY = 6, SHIFT_HOUR = 6, SHIFT_MINUTE = 5 (Samstag 06:05)
+const SHIFT_DAY = 0;    // 0 = Sonntag, 1 = Montag, ..., 6 = Samstag
+const SHIFT_HOUR = 23;  // Stunde (0 bis 23)
+const SHIFT_MINUTE = 0; // Minute (0 bis 59)
+
+function setActiveMealInput(el) {
+    activeMealInput = el;
+}
+
+async function switchFoodWeek(weekIdx) {
+    activeFoodWeek = weekIdx;
+    const btn0 = document.getElementById("btn-week-0");
+    const btn1 = document.getElementById("btn-week-1");
+    if (btn0) btn0.classList.toggle("active-food", weekIdx === 0);
+    if (btn1) btn1.classList.toggle("active-food", weekIdx === 1);
+    
+    highlightToday();
+    await load();
+}
+
+// Hilfsfunktion: Zerlegt den gespeicherten String einer Woche (Abwärtskompatibel!)
+function parseFoodWeekStr(str, isSunday = false) {
+    if (!str || str === 'unknown' || str === '---') {
+        return { bf: "", lunch: "", dn: "", cook: "", out: "", outCook: "" };
+    }
+    const parts = str.split('|');
+    if (parts.length >= 4) {
+        return {
+            bf: (parts[0] || "").trim(),
+            lunch: (parts[1] || "").trim(),
+            dn: (parts[2] || "").trim(),
+            cook: (parts[3] || "").trim(),
+            out: isSunday ? (parts[4] || "").trim() : "",
+            outCook: isSunday ? (parts[5] || "").trim() : ""
+        };
+    }
+    if (str.includes(' | ')) {
+        const oldParts = str.split(' | ');
+        return { bf: "", lunch: oldParts[0].trim(), dn: "", cook: (oldParts[1] || "").trim(), out: "", outCook: "" };
+    }
+    return { bf: "", lunch: str.trim(), dn: "", cook: "", out: "", outCook: "" };
+}
+
+function serializeFoodWeekObj(obj, isSunday = false) {
+    const clean = (val) => (val || "").replace(/\|/g, "/").replace(/~/g, "-").trim();
+    if (isSunday) {
+        return `${clean(obj.bf)}|${clean(obj.lunch)}|${clean(obj.dn)}|${clean(obj.cook)}|${clean(obj.out)}|${clean(obj.outCook)}`;
+    }
+    return `${clean(obj.bf)}|${clean(obj.lunch)}|${clean(obj.dn)}|${clean(obj.cook)}`;
+}
+
+// --- WOCHENWECHSEL LOGIK (AUTOMATISCH & MANUELL PER BUTTON) ---
+function formatStamp(d) {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    // Hängt Tag/Stunde/Minute an, damit Änderungen im Code sofort als neuer Test erkannt werden!
+    return `${year}-${month}-${day}_${SHIFT_DAY}-${SHIFT_HOUR}-${SHIFT_MINUTE}`;
+}
+
+function getCurrentCycleStamp() {
+    const now = new Date();
+    const day = now.getDay();
+    const hour = now.getHours();
+    const min = now.getMinutes();
+    const target = new Date(now);
+
+    if (day === SHIFT_DAY) {
+        // Vor der eingestellten Uhrzeit gilt noch der Stempel von letzter Woche (-7 Tage)
+        if (hour < SHIFT_HOUR || (hour === SHIFT_HOUR && min < SHIFT_MINUTE)) {
+            target.setDate(now.getDate() - 7);
+        }
+    } else {
+        const diff = (day - SHIFT_DAY + 7) % 7;
+        target.setDate(now.getDate() - diff);
+    }
+    return formatStamp(target);
+}
+
+function getManualAdvanceCycleStamp() {
+    const now = new Date();
+    const day = now.getDay();
+    const target = new Date(now);
+
+    if (day !== SHIFT_DAY) {
+        const diff = (SHIFT_DAY - day + 7) % 7;
+        target.setDate(now.getDate() + diff);
+    }
+    return formatStamp(target);
+}
+
+// ✅ NEU: Stempel ("2026-11-08_0-23-0") -> fortlaufende Tageszahl (sommerzeit-sicher, zum Vergleichen/Zählen)
+function stampToDayNumber(stamp) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(stamp || "");
+    if (!m) return null;
+    return Math.round(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) / 86400000);
+}
+
+// ✅ NEU: Liest einen Essensplan-Helper.
+// Leer / unknown = "" (ist völlig okay und KEIN Grund mehr, den Wechsel zu überspringen!).
+// Nur wenn Home Assistant wirklich nicht antwortet, gibt es einen Fehler -> dann wird nichts überschrieben.
+async function readFoodRaw(entityId) {
+    const d = await haGetState(entityId);
+    if (!d || d.state === 'unavailable') {
+        throw new Error(`Home Assistant: ${entityId} nicht lesbar`);
+    }
+    return (d.state && d.state !== 'unknown' && d.state !== '---') ? d.state : '';
+}
+
+// ✅ NEU: Schreiben mit bis zu 3 Versuchen (falls HA kurz nicht erreichbar ist)
+async function setInputTextWithRetry(entityId, value, tries = 3) {
+    for (let t = 1; t <= tries; t++) {
+        try {
+            await haSetInputText(entityId, value);
+            return;
+        } catch (e) {
+            if (t === tries) throw e;
+            await new Promise(r => setTimeout(r, 1000 * t));
+        }
+    }
+}
+
+// ✅ GEÄNDERT: Schaltet IMMER um, egal ob Daten drin sind oder nicht
+async function checkAndAutoAdvanceFoodWeek() {
+    if (isShiftingWeek || isUpdatingFood) return;
+    try {
+        const raw = await readFoodRaw(FOOD_ENTITIES[0]); // leer ist okay!
+        const weekParts = raw.split('~');
+        const savedStamp = (weekParts[2] || "").trim();
+        const currentStamp = getCurrentCycleStamp();
+        const configSuffix = `_${SHIFT_DAY}-${SHIFT_HOUR}-${SHIFT_MINUTE}`;
+
+        const savedDay = stampToDayNumber(savedStamp);
+        const currentDay = stampToDayNumber(currentStamp);
+
+        // Noch kein (gültiger) Stempel ODER Tag/Uhrzeit im Code geändert:
+        // Einmalig auf den aktuellen Startwert eichen, ohne Daten zu löschen!
+        if (savedDay === null || !savedStamp.endsWith(configSuffix)) {
+            const w0 = weekParts[0] || serializeFoodWeekObj({}, false);
+            const w1 = weekParts[1] || serializeFoodWeekObj({}, false);
+            await haSetInputText(FOOD_ENTITIES[0], `${w0}~${w1}~${currentStamp}`);
+            console.log("Wochenwechsel-Timer neu geeicht auf Startwert:", currentStamp);
+            return;
+        }
+
+        // Sobald die Uhrzeit erreicht ist, wird currentStamp größer als savedStamp -> Vorrücken!
+        if (currentDay > savedDay) {
+            // Falls die App länger zu war: so viele Wochen wie verpasst wurden (mind. 1)
+            const cyclesMissed = Math.max(1, Math.round((currentDay - savedDay) / 7));
+            console.log(`Automatischer Wochenwechsel ausgelöst: ${savedStamp.split('_')[0]} -> ${currentStamp.split('_')[0]} (${cyclesMissed} Woche(n))`);
+            await executeFoodWeekShift(true, cyclesMissed);
+        }
+    } catch (e) {
+        console.error("Fehler beim Prüfen des automatischen Wochenwechsels:", e);
+    }
+}
+
+// Eigenen Hintergrund-Timer starten (prüft alle 15 Sekunden, auch wenn man nichts klickt!)
+if (!window._foodShiftInterval) {
+    window._foodShiftInterval = setInterval(checkAndAutoAdvanceFoodWeek, 15000);
+}
+
+// ✅ NEU: Handy/Tablet pausieren Timer im Hintergrund -> sofort prüfen, sobald die Seite wieder aktiv wird
+if (!window._foodShiftListeners) {
+    window._foodShiftListeners = true;
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) checkAndAutoAdvanceFoodWeek();
+    });
+    window.addEventListener("focus", () => checkAndAutoAdvanceFoodWeek());
+    window.addEventListener("online", () => checkAndAutoAdvanceFoodWeek());
+}
+
+// ✅ GEÄNDERT: erst alles lesen, dann schreiben; mit Doppelschutz für mehrere Geräte
+async function executeFoodWeekShift(isAutomatic = false, cyclesMissed = 1) {
+    if (isShiftingWeek) return;
+
+    if (!isAutomatic) {
+        const confirmed = await showDeleteModal(
+            "Möchtest du die aktuelle Woche abschließen? Die Gerichte von 'Nächste Woche' rücken nach vorne in 'Diese Woche' und die nächste Woche wird geleert.",
+            "Woche verschieben 🔄",
+            "Woche abschließen" // <-- Hier steht jetzt exakt der Text, der auf dem Button stehen soll!
+        );
+        if (!confirmed) return;
+    }
+
+    isShiftingWeek = true;
+    isUpdatingFood = true;
+
+    try {
+        // Automatisch: kurze Zufallspause + erneute Prüfung, falls ein anderes Gerät schneller war
+        // (verhindert, dass zwei Geräte gleichzeitig verschieben und "Diese Woche" dadurch leer wird)
+        if (isAutomatic) {
+            await new Promise(r => setTimeout(r, Math.random() * 3000));
+            const freshRaw = await readFoodRaw(FOOD_ENTITIES[0]);
+            const freshDay = stampToDayNumber((freshRaw.split('~')[2] || "").trim());
+            const currentDay = stampToDayNumber(getCurrentCycleStamp());
+            if (freshDay !== null && currentDay !== null && freshDay >= currentDay) {
+                console.log("Wochenwechsel wurde bereits von einem anderen Gerät erledigt.");
+                return;
+            }
+        }
+
+        const newStamp = isAutomatic ? getCurrentCycleStamp() : getManualAdvanceCycleStamp();
+
+        // 1) Erst ALLES lesen. Schlägt das fehl, wird noch nichts überschrieben und beim nächsten Tick neu versucht.
+        const rawList = [];
+        for (let i = 0; i < 7; i++) {
+            rawList.push(await readFoodRaw(FOOD_ENTITIES[i]));
+        }
+
+        // 2) Dann schreiben (Montags-Helper zuerst, weil dort der Stempel liegt)
+        for (let i = 0; i < 7; i++) {
+            const entityId = FOOD_ENTITIES[i];
+            const weekParts = rawList[i].split('~');
+            const isSunday = (i === 6);
+
+            // Eine Woche verpasst: Woche 1 (Nächste Woche) -> wird zu Woche 0 (Diese Woche)
+            // Mehrere Wochen verpasst: auch die ehemals "nächste" Woche ist schon vorbei -> alles leer
+            const newWeek0Str = (cyclesMissed >= 2)
+                ? serializeFoodWeekObj({}, isSunday)
+                : serializeFoodWeekObj(parseFoodWeekStr(weekParts[1] || "", isSunday), isSunday);
+
+            // Neue Woche 1 wird komplett geleert
+            const emptyWeek1Str = serializeFoodWeekObj({}, isSunday);
+
+            // Im Montags-Helper (i === 0) speichern wir den Stempel als 3. Teil mit ab
+            const finalValue = (i === 0)
+                ? `${newWeek0Str}~${emptyWeek1Str}~${newStamp}`
+                : `${newWeek0Str}~${emptyWeek1Str}`;
+
+            await setInputTextWithRetry(entityId, finalValue);
+        }
+
+        // Nach dem Vorrücken immer automatisch auf den Tab "Diese Woche" (0) wechseln
+        activeFoodWeek = 0;
+        const btn0 = document.getElementById("btn-week-0");
+        const btn1 = document.getElementById("btn-week-1");
+        if (btn0) btn0.classList.add("active-food");
+        if (btn1) btn1.classList.remove("active-food");
+
+        highlightToday();
+        if (isAutomatic) {
+            console.log("Woche wurde automatisch übertragen.");
+        }
+    } catch (e) {
+        console.error("Fehler beim Vorrücken der Woche:", e);
+    } finally {
+        isUpdatingFood = false;
+        isShiftingWeek = false;
+        await load();
+    }
+}
+
+function upgradeCookSelect(sel, idx, defaultLabel) {
+    if (!sel) return;
+    sel.style.setProperty("display", "none", "important");
+
+    let wrapper = document.getElementById(`custom-cook-wrap-${idx}`);
+    if (!wrapper) {
+        wrapper = document.createElement("div");
+        wrapper.id = `custom-cook-wrap-${idx}`;
+        wrapper.className = "custom-cook-wrapper";
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.id = `custom-cook-btn-${idx}`;
+        btn.className = "cook-select custom-cook-btn";
+        btn.setAttribute("onclick", `openCookModal(${idx}, event)`);
+
+        wrapper.appendChild(btn);
+        
+        if (sel.nextSibling) {
+            sel.parentNode.insertBefore(wrapper, sel.nextSibling);
+        } else {
+            sel.parentNode.appendChild(wrapper);
+        }
+    }
+
+    const btn = document.getElementById(`custom-cook-btn-${idx}`);
+    if (btn) {
+        const val = sel.value;
+        btn.innerHTML = `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${val ? "👨‍🍳 " + val : defaultLabel}</span> <span class="cook-arrow">▾</span>`;
+    }
+}
+
+// Öffnet das Menü als zentriertes Popup auf dem Bildschirm
+window.openCookModal = function(idx, ev) {
+    if (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+    }
+    const sel = document.getElementById(`cook-${idx}`);
+    if (!sel) return;
+
+    const defaultLabel = idx === 7 ? '👨‍🍳 Wer Zahlt/Plant?' : '👨‍🍳 Wer kocht?';
+
+    let modal = document.getElementById("customCookModalOverlay");
+    if (modal) modal.remove();
+
+    modal = document.createElement("div");
+    modal.id = "customCookModalOverlay";
+    modal.className = "cook-modal-overlay";
+    modal.onclick = () => modal.remove();
+
+    const card = document.createElement("div");
+    card.className = "modal-card cook-modal-card";
+    card.onclick = (e) => e.stopPropagation();
+
+    const title = document.createElement("h3");
+    title.id = "customConfirmTitle";
+    title.style.margin = "0 0 6px 0";
+    title.style.textAlign = "center";
+    title.textContent = defaultLabel;
+    card.appendChild(title);
+
+    const list = document.createElement("div");
+    list.className = "cook-modal-list";
+
+    // Option: Niemand / Zurücksetzen
+    const noneBtn = document.createElement("button");
+    noneBtn.type = "button";
+    noneBtn.className = "cat-btn cook-modal-option" + (!sel.value ? " active-food" : "");
+    noneBtn.textContent = "✖ " + defaultLabel + " (Keiner)";
+    noneBtn.onclick = () => {
+        sel.value = "";
+        upgradeCookSelect(sel, idx, defaultLabel);
+        modal.remove();
+        sel.dispatchEvent(new Event("change", { bubbles: true }));
+        if (typeof sel.onchange === "function") sel.onchange();
+    };
+    list.appendChild(noneBtn);
+
+    // Alle echten Benutzer einfügen
+    Array.from(sel.options).forEach(opt => {
+        if (!opt.value) return;
+        const itemBtn = document.createElement("button");
+        itemBtn.type = "button";
+        const isSelected = sel.value === opt.value;
+        itemBtn.className = "cat-btn cook-modal-option" + (isSelected ? " active-food" : "");
+        itemBtn.textContent = "👨‍🍳 " + opt.textContent;
+
+        itemBtn.onclick = () => {
+            sel.value = opt.value;
+            upgradeCookSelect(sel, idx, defaultLabel);
+            modal.remove();
+            sel.dispatchEvent(new Event("change", { bubbles: true }));
+            if (typeof sel.onchange === "function") sel.onchange();
+        };
+        list.appendChild(itemBtn);
+    });
+
+    card.appendChild(list);
+    modal.appendChild(card);
+    document.body.appendChild(modal);
+};
+
+// Schließt das Menü, wenn man irgendwo daneben tippt
+document.addEventListener("click", () => {
+    document.querySelectorAll(".custom-cook-menu.open").forEach(m => m.classList.remove("open"));
+});
+
 async function load() {
+    await checkAndAutoAdvanceFoodWeek();
+
     if (typeof renderSidebars === "function") await renderSidebars();
     if (curTab === 'trash' || isUpdatingFood) return;
     if (curTab === 'todo') { renderTodoList(); return; }
 
     if (curTab === 'food') {
-        for(let i=0; i<7; i++) {
-            try {
-                const d = await haGetState(FOOD_ENTITIES[i]); 
-                const inp = document.getElementById(`plan-${i}`);
-                const sel = document.getElementById(`cook-${i}`);
-
-                if (sel && sel.options.length <= 1) {
-                    sel.innerHTML = '<option value="">👨‍🍳 Wer kocht?</option>';
+        for (let j = 0; j <= 7; j++) {
+            const sel = document.getElementById(`cook-${j}`);
+            if (sel) {
+                const defaultLabel = j === 7 ? '👨‍🍳 Wer Zahlt/Plant?' : '👨‍🍳 Wer kocht?';
+                if (sel.options.length <= 1) {
+                    sel.innerHTML = `<option value="">${defaultLabel}</option>`;
                     users.forEach(uStr => {
                         const uName = uStr.split(':')[0];
                         const opt = document.createElement("option");
@@ -2087,27 +2460,52 @@ async function load() {
                         sel.appendChild(opt);
                     });
                 }
+                upgradeCookSelect(sel, j, defaultLabel);
+            }
+        }
 
-                // --- HIER IST DER SCHUTZ: Wenn du im Feld tippst, wird dieser Tag übersprungen ---
-                if (inp && document.activeElement === inp) {
+        for (let i = 0; i < 7; i++) {
+            try {
+                const d = await haGetState(FOOD_ENTITIES[i]);
+                const inpBf = document.getElementById(`plan-${i}-bf`);
+                const inpLunch = document.getElementById(`plan-${i}`);
+                const inpDn = document.getElementById(`plan-${i}-dn`);
+                const sel = document.getElementById(`cook-${i}`);
+
+                if ([inpBf, inpLunch, inpDn].includes(document.activeElement)) {
                     continue;
                 }
 
-                if (inp && !isUpdatingFood) {
+                if (!isUpdatingFood && d) {
                     const raw = (d.state === 'unknown' || d.state === '---') ? '' : d.state;
-                    if (raw.includes(' | ')) {
-                        const parts = raw.split(' | ');
-                        inp.value = parts[0].trim();
-                        if (sel) sel.value = parts[1].trim();
-                    } else {
-                        inp.value = raw;
-                        if (sel) sel.value = ""; 
+                    const weekParts = raw.split('~');
+                    const currentWeekRaw = activeFoodWeek === 0 ? (weekParts[0] || "") : (weekParts[1] || "");
+                    const parsed = parseFoodWeekStr(currentWeekRaw, i === 6);
+
+                    if (inpBf) inpBf.value = parsed.bf;
+                    if (inpLunch) inpLunch.value = parsed.lunch;
+                    if (inpDn) inpDn.value = parsed.dn;
+                    if (sel) {
+                        sel.value = parsed.cook;
+                        upgradeCookSelect(sel, i, '👨‍🍳 Wer kocht?'); // Aktualisiert den Button sofort mit dem geladenen Namen!
+                    }
+
+                    if (i === 6) {
+                        const inpOut = document.getElementById("plan-7");
+                        const selOut = document.getElementById("cook-7");
+                        if (inpOut && document.activeElement !== inpOut) {
+                            inpOut.value = parsed.out;
+                            if (selOut) {
+                                selOut.value = parsed.outCook;
+                                upgradeCookSelect(selOut, 7, '👨‍🍳 Wer Zahlt/Plant?'); // Aktualisiert auch den Out-Button sofort!
+                            }
+                        }
                     }
                 }
-            } catch(e) { console.error("Fehler beim Laden des Essensplans Tag " + i, e); }
+            } catch (e) { console.error("Fehler beim Laden des Essensplans Tag " + i, e); }
         }
         if (typeof updateAppBadges === "function") updateAppBadges();
-        return; 
+        return;
     }
 
     if (curTab === 'shop') {
@@ -2115,7 +2513,7 @@ async function load() {
         if (!listEl) return;
         try {
             const cfg = SYNC_CONFIG.shopping;
-            const d = await haGetState(cfg.entity); 
+            const d = await haGetState(cfg.entity);
 
             let fullList = [];
             if (d && d.attributes && d.attributes[cfg.attr]) {
@@ -2149,7 +2547,7 @@ async function load() {
                     listEl.appendChild(li);
                 });
             }
-        } catch(e) {
+        } catch (e) {
             listEl.replaceChildren();
             const errLi = document.createElement("li");
             errLi.textContent = "Fehler beim Laden ⚠️";
@@ -2160,8 +2558,99 @@ async function load() {
     if (typeof updateAppBadges === "function") updateAppBadges();
 }
 
+async function saveFood(idx) {
+    isUpdatingFood = true;
 
+    const entityIdx = (idx === 7) ? 6 : idx;
+    const isSunday = (entityIdx === 6);
 
+    const bfElem = document.getElementById(`plan-${entityIdx}-bf`);
+    const lunchElem = document.getElementById(`plan-${entityIdx}`);
+    const dnElem = document.getElementById(`plan-${entityIdx}-dn`);
+    const cookElem = document.getElementById(`cook-${entityIdx}`);
+
+    const outElem = document.getElementById("plan-7");
+    const outCookElem = document.getElementById("cook-7");
+
+    if (!lunchElem && !bfElem && !dnElem) {
+        isUpdatingFood = false;
+        return;
+    }
+
+    const editedWeekObj = {
+        bf: bfElem ? bfElem.value.trim() : "",
+        lunch: lunchElem ? lunchElem.value.trim() : "",
+        dn: dnElem ? dnElem.value.trim() : "",
+        cook: cookElem ? cookElem.value : "",
+        out: isSunday && outElem ? outElem.value.trim() : "",
+        outCook: isSunday && outCookElem ? outCookElem.value : ""
+    };
+
+    try {
+        const d = await haGetState(FOOD_ENTITIES[entityIdx]);
+        const raw = (d && d.state && d.state !== 'unknown' && d.state !== '---') ? d.state : '';
+        const weekParts = raw.split('~');
+
+        let week0Str = weekParts[0] ? serializeFoodWeekObj(parseFoodWeekStr(weekParts[0], isSunday), isSunday) : serializeFoodWeekObj({}, isSunday);
+        let week1Str = weekParts[1] ? serializeFoodWeekObj(parseFoodWeekStr(weekParts[1], isSunday), isSunday) : serializeFoodWeekObj({}, isSunday);
+
+        if (activeFoodWeek === 0) {
+            week0Str = serializeFoodWeekObj(editedWeekObj, isSunday);
+        } else {
+            week1Str = serializeFoodWeekObj(editedWeekObj, isSunday);
+        }
+
+        const configSuffix = `_${SHIFT_DAY}-${SHIFT_HOUR}-${SHIFT_MINUTE}`;
+        const savedStamp = (weekParts[2] || "").trim();
+        const stampToKeep = (savedStamp && savedStamp.endsWith(configSuffix)) ? savedStamp : getCurrentCycleStamp();
+
+        const existingStamp = (entityIdx === 0) ? `~${stampToKeep}` : '';
+        const finalValue = `${week0Str}~${week1Str}${existingStamp}`;
+        await haSetInputText(FOOD_ENTITIES[entityIdx], finalValue);
+    } catch (e) {
+        console.error("Fehler beim Speichern des Essensplans:", e);
+    }
+
+    setTimeout(() => { isUpdatingFood = false; }, 2000);
+}
+
+function highlightToday() {
+    let d = new Date().getDay();
+    let idx = d === 0 ? 6 : d - 1;
+    document.querySelectorAll('.day-card').forEach(c => c.classList.remove('today'));
+    if (activeFoodWeek === 0 && document.getElementById('card-' + idx)) {
+        document.getElementById('card-' + idx).classList.add('today');
+    }
+}
+
+async function clearWeek() {
+    const weekLabel = activeFoodWeek === 0 ? "diese Woche" : "nächste Woche";
+    const confirmed = await showDeleteModal(
+        `Möchtest du wirklich den gesamten Essensplan für ${weekLabel} löschen?`,
+        "Woche zurücksetzen 🧹"
+    );
+
+    if (confirmed) {
+        for (let i = 0; i < 7; i++) {
+            const elBf = document.getElementById(`plan-${i}-bf`);
+            const elLunch = document.getElementById(`plan-${i}`);
+            const elDn = document.getElementById(`plan-${i}-dn`);
+            const elCook = document.getElementById(`cook-${i}`);
+            if (elBf) elBf.value = '';
+            if (elLunch) elLunch.value = '';
+            if (elDn) elDn.value = '';
+            if (elCook) elCook.value = '';
+
+            if (i === 6) {
+                const elOut = document.getElementById("plan-7");
+                const elOutCook = document.getElementById("cook-7");
+                if (elOut) elOut.value = '';
+                if (elOutCook) elOutCook.value = '';
+            }
+            await saveFood(i);
+        }
+    }
+}
 async function delItem(t) {
     try {
         const cfg = SYNC_CONFIG.shopping;
@@ -2357,21 +2846,53 @@ function createFavChip(f, isCustom, idx) {
         if (curTab === 'shop') {
             addShop(f.n); 
         } else if (curTab === 'food') {
-            // Nutzt das eigene Wochentag-Modal
+            // 1. Wenn der Nutzer gerade in ein bestimmtes Feld geklickt hat -> Direkt eintragen!
+            if (activeMealInput && document.body.contains(activeMealInput)) {
+                activeMealInput.value = f.n;
+                const idParts = activeMealInput.id.split('-');
+                const dayIdx = parseInt(idParts[1], 10);
+                if (!isNaN(dayIdx) && dayIdx >= 0 && dayIdx <= 6) {
+                    saveFood(dayIdx);
+                    return;
+                }
+            }
+
+            // 2. Ansonsten: Erst Wochentag abfragen (0-6)
             const d = await showFoodDayPrompt(
-                `Für welchen Tag?\n(0 = Mo, 1 = Di, 2 = Mi, 3 = Do, 4 = Fr, 5 = Sa, 6 = So)`, 
+                `Für welchen Wochentag?\n(0 = Mo, 1 = Di, 2 = Mi, 3 = Do, 4 = Fr, 5 = Sa, 6 = So)`, 
                 `Essen planen: ${f.n}`
             );
             
-            if (d !== null && d !== "") {
-                const dayIdx = parseInt(d);
-                if (dayIdx >= 0 && dayIdx <= 6) {
-                    document.getElementById('plan-' + dayIdx).value = f.n;
-                    saveFood(dayIdx); 
-                } else {
-                    await showAlert("Bitte eine Zahl zwischen 0 und 6 eingeben.", "Ungültige Eingabe ❌");
-                }
+            if (d === null || d === "") return;
+            const dayIdx = parseInt(d.trim(), 10);
+
+            if (isNaN(dayIdx) || dayIdx < 0 || dayIdx > 6) {
+                await showAlert("Bitte eine Zahl zwischen 0 und 6 eingeben.", "Ungültige Eingabe ❌");
+                return;
             }
+
+            // 3. Dann Mahlzeit abfragen (Frühstück, Mittag oder Abend)
+            const m = await showFoodDayPrompt(
+                `Welche Mahlzeit für Tag ${dayIdx}?\n\n1 = 🥐 Frühstück\n2 = ☀️ Mittagessen\n3 = 🌙 Abendessen`, 
+                `Mahlzeit wählen`
+            );
+
+            if (m === null || m === "") return;
+            const mealChoice = m.trim();
+
+            let targetInputId = 'plan-' + dayIdx; // Standard: Mittag
+            if (mealChoice === '1' || mealChoice.toLowerCase().startsWith('f')) {
+                targetInputId = 'plan-' + dayIdx + '-bf'; // Frühstück
+            } else if (mealChoice === '3' || mealChoice.toLowerCase().startsWith('a')) {
+                targetInputId = 'plan-' + dayIdx + '-dn'; // Abendessen
+            }
+
+            const targetInput = document.getElementById(targetInputId);
+            if (targetInput) {
+                targetInput.value = f.n;
+                saveFood(dayIdx); 
+            }
+
         } else { 
             addTodo(f.n); 
         }
@@ -2447,46 +2968,6 @@ async function confirmShopAdd() {
     }
 }
 
-async function saveFood(idx) {
-    isUpdatingFood = true;
-    const dishElem = document.getElementById(`plan-${idx}`);
-    const cookElem = document.getElementById(`cook-${idx}`);
-    if (!dishElem) return;
-
-    const dish = dishElem.value.trim();
-    const cook = cookElem ? cookElem.value : "";
-    const finalValue = cook ? `${dish} | ${cook}` : dish;
-
-    try {
-        await haSetInputText(FOOD_ENTITIES[idx], finalValue);
-    } catch (e) {
-        console.error("Fehler beim Speichern des Essensplans:", e);
-    }
-
-    setTimeout(() => { isUpdatingFood = false; }, 2000);
-}
-
-function highlightToday() { 
-    let d = new Date().getDay(); 
-    let idx = d === 0 ? 6 : d - 1; 
-    document.querySelectorAll('.day-card').forEach(c => c.classList.remove('today')); 
-    if(document.getElementById('card-'+idx)) document.getElementById('card-'+idx).classList.add('today'); 
-}
-
-async function clearWeek() {
-    const confirmed = await showDeleteModal(
-        "Möchtest du wirklich den gesamten Essensplan für diese Woche löschen?",
-        "Woche zurücksetzen 🧹"
-    );
-
-    if (confirmed) {
-        for (let i = 0; i < 7; i++) {
-            const el = document.getElementById('plan-' + i);
-            if (el) el.value = '';
-            await saveFood(i);
-        }
-    }
-}
 
 async function loadTrash() {
     const container = document.getElementById("trash-content");

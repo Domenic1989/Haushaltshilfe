@@ -551,7 +551,7 @@ window.loadFinance = async function(isBackgroundSync = false) {
             const delBtn = document.createElement("button");
             delBtn.type = "button";
             delBtn.className = "del-finance-btn";
-            delBtn.style.cssText = "position:relative; z-index:50; background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; font-size:1.3rem; padding:15px 18px; margin:-8px -8px -8px 0; border-radius:10px;";
+            delBtn.style.cssText = "position:relative; top:6px; z-index:50; background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; font-size:1.3rem; padding:15px 18px; margin:0px -8px -8px 0; border-radius:10px;";
             delBtn.textContent = "🗑️";
             delBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
@@ -646,7 +646,7 @@ window.loadFinance = async function(isBackgroundSync = false) {
 
                 // Sicherer DOM-Aufbau für Monatskarten (Freitext ${m.month_name} geschützt)
                 const monthTitle = document.createElement("h3");
-                monthTitle.style.cssText = "color:var(--primary); margin: 0 0 10px 0; pointer-events:none;";
+                monthTitle.style.cssText = "color:var(--primary); margin: 0 0 10px 0; text-align:left; display:flex; align-items:center; pointer-events:none;";
                 monthTitle.textContent = m.month_name;
 
                 const infoBox = document.createElement("div");
@@ -1180,6 +1180,98 @@ window.deleteMonth = async function(mIdx) {
         closeFinanceModal();
     }
 };
+
+function upgradeIntervalSelect() {
+    const sel = document.getElementById("tpl_months");
+    if (!sel) return;
+    
+    // Falls der Button noch nicht existiert, einmalig anlegen
+    let wrapper = document.getElementById("custom-interval-wrapper");
+    if (!wrapper) {
+        sel.style.setProperty("display", "none", "important");
+
+        wrapper = document.createElement("div");
+        wrapper.id = "custom-interval-wrapper";
+        wrapper.className = "custom-cook-wrapper";
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.id = "custom-interval-btn";
+        btn.className = "cook-select custom-cook-btn";
+        btn.setAttribute("onclick", "openIntervalModal(event)");
+
+        wrapper.appendChild(btn);
+        sel.parentNode.insertBefore(wrapper, sel.nextSibling);
+    }
+
+    const btn = document.getElementById("custom-interval-btn");
+    if (btn) {
+        // Holt sich exakt den Text der aktuell ausgewählten Option aus dem <select>
+        const selectedOpt = sel.options[sel.selectedIndex];
+        btn.innerHTML = `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">📅 ${selectedOpt ? selectedOpt.textContent : 'Intervall wählen'}</span> <span class="cook-arrow">▾</span>`;
+    }
+}
+
+// Öffnet das Auswahlsfenster zentriert in der Bildschirmmitte
+window.openIntervalModal = function(ev) {
+    if (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+    }
+    const sel = document.getElementById("tpl_months");
+    if (!sel) return;
+
+    let modal = document.getElementById("customIntervalModalOverlay");
+    if (modal) modal.remove();
+
+    modal = document.createElement("div");
+    modal.id = "customIntervalModalOverlay";
+    modal.className = "cook-modal-overlay";
+    modal.onclick = () => modal.remove();
+
+    const card = document.createElement("div");
+    card.className = "modal-card cook-modal-card";
+    card.onclick = (e) => e.stopPropagation();
+
+    const title = document.createElement("h3");
+    title.id = "customConfirmTitle";
+    title.style.margin = "0 0 6px 0";
+    title.style.textAlign = "center";
+    title.textContent = "ANFALLES-INTERVALL";
+    card.appendChild(title);
+
+    const list = document.createElement("div");
+    list.className = "cook-modal-list";
+
+    Array.from(sel.options).forEach(opt => {
+        const itemBtn = document.createElement("button");
+        itemBtn.type = "button";
+        const isSelected = sel.value === opt.value;
+        // Nutzt deine gewohnten Klassen für den aktiven Zustand
+        itemBtn.className = "cat-btn cook-modal-option" + (isSelected ? " active-food" : "");
+        itemBtn.textContent = opt.textContent;
+
+        itemBtn.onclick = () => {
+            sel.value = opt.value;
+            // Aktualisiert den Button-Text SOFORT, bevor das Popup schließt
+            upgradeIntervalSelect();
+            modal.remove();
+            // Löst das originale change-Event aus
+            sel.dispatchEvent(new Event("change", { bubbles: true }));
+            if (typeof sel.onchange === "function") sel.onchange();
+        };
+        list.appendChild(itemBtn);
+    });
+
+    card.appendChild(list);
+    modal.appendChild(card);
+    document.body.appendChild(modal);
+};
+
+// Beim Laden der Seite und bei Bedarf aufrufen
+document.addEventListener("DOMContentLoaded", () => {
+    upgradeIntervalSelect();
+});
 
 // --- EIGENER AUTO-SYNC NUR FÜR DAS FINANZ-SKRIPT (ALLE 2 SEKUNDEN) ---
 if (window.financeDedicatedSync) clearInterval(window.financeDedicatedSync);
