@@ -765,3 +765,55 @@ body.theme-royal .week-switch-btn.active-food {
     box-shadow: 0 4px 15px rgba(0, 85, 179, 0.5) !important;
     font-weight: 900 !important;
 }
+
+/* ========================================================
+   --- ESSENSWAHL, ZUTATEN & REZEPTE (ROYAL (KÖNIGSBLAU & FLUTLICHT) - body.theme-royal) ---
+   Farben für die Fenster "Essen auswählen", "Zutaten" und "Rezepte"
+   (Knöpfe, Felder, Karte, Hinweis). Aufbau steht in home.css.
+   ======================================================== */
+
+body.theme-royal {
+    --hh-themed: 1;
+    /* Fenster-Karte */
+    --hh-card-bg: rgba(242, 247, 255, 0.96);
+    --hh-card-border: 2px solid #0055b3;
+    --hh-card-radius: 20px;
+    --hh-card-shadow: 0 20px 60px rgba(0, 15, 40, 0.45), inset 0 0 15px rgba(56, 189, 248, 0.15);
+    --hh-card-blur: blur(30px) saturate(180%);
+    /* Schrift */
+    --hh-text: #001f4d;
+    --hh-head: #004494;
+    /* Hauptknopf (z. B. "Auf die Liste", "Übernehmen") */
+    --hh-btn-bg: linear-gradient(135deg, #0055b3 0%, #00337c 100%);
+    --hh-btn-fg: #ffffff;
+    --hh-btn-border: 1.5px solid #38bdf8;
+    --hh-btn-shadow: 0 4px 15px rgba(0, 85, 179, 0.45);
+    /* Nebenknopf (z. B. "Abbrechen", "Schließen") und runde +/- Knöpfe */
+    --hh-sec-bg: rgba(255, 255, 255, 0.85);
+    --hh-sec-fg: #001f4d;
+    --hh-sec-border: 1.5px solid #0055b3;
+    --hh-ghost-border: 1.5px solid rgba(0, 85, 179, 0.55);
+    /* Eingabe- und Auswahlfelder */
+    --hh-field-bg: rgba(255, 255, 255, 0.96);
+    --hh-field-fg: #001f4d;
+    --hh-field-border: 2px solid #004494;
+    --hh-field-ph: rgba(0, 31, 77, 0.45);
+    --hh-opt-bg: #ffffff;
+    --hh-opt-fg: #001f4d;
+    --hh-focus-ring: 0 0 12px rgba(0, 85, 179, 0.4);
+    /* Zeilen, Chips und Reiter */
+    --hh-row-bg: rgba(0, 85, 179, 0.1);
+    --hh-chip-line: rgba(0, 85, 179, 0.55);
+    --hh-chip-fg: #001f4d;
+    --hh-chip-on-bg: linear-gradient(135deg, #0055b3 0%, #00337c 100%);
+    --hh-chip-on-fg: #ffffff;
+    --hh-chip-on-line: #38bdf8;
+    /* Rezept-Marker, Haken-Farbe */
+    --hh-badge-bg: rgba(0, 85, 179, 0.18);
+    --hh-badge-fg: #004494;
+    --hh-accent: #0055b3;
+    /* Hinweis-Meldung unten */
+    --hh-toast-bg: rgba(0, 24, 59, 0.97);
+    --hh-toast-fg: #ffffff;
+    --hh-toast-border: 1.5px solid #38bdf8;
+}

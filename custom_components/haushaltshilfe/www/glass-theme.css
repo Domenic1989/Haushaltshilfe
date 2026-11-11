@@ -726,3 +726,56 @@ body.theme-glass .week-switch-btn.active-food {
     box-shadow: 0 0 20px rgba(207, 0, 255, 0.6) !important;
     font-weight: 900 !important;
 }
+
+/* ========================================================
+   --- ESSENSWAHL, ZUTATEN & REZEPTE (GLASS (LILA & NEON-MAGENTA) - body.theme-glass) ---
+   Farben für die Fenster "Essen auswählen", "Zutaten" und "Rezepte"
+   (Knöpfe, Felder, Karte, Hinweis). Aufbau steht in home.css.
+   ======================================================== */
+
+body.theme-glass {
+    --hh-themed: 1;
+    /* Fenster-Karte */
+    --hh-card-bg: rgba(40, 30, 65, 0.88);
+    --hh-card-border: 2px solid rgba(207, 0, 255, 0.6);
+    --hh-card-radius: 20px;
+    --hh-card-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), inset 0 0 15px rgba(207, 0, 255, 0.15);
+    --hh-card-blur: blur(30px) saturate(180%);
+    /* Schrift */
+    --hh-text: #ffffff;
+    --hh-head: #e879f9;
+    --hh-head-shadow: 0 0 10px rgba(207, 0, 255, 0.35);
+    /* Hauptknopf (z. B. "Auf die Liste", "Übernehmen") */
+    --hh-btn-bg: linear-gradient(135deg, #5856d6 0%, #9b00e8 100%);
+    --hh-btn-fg: #ffffff;
+    --hh-btn-border: 1px solid rgba(255, 255, 255, 0.6);
+    --hh-btn-shadow: 0 4px 15px rgba(88, 86, 214, 0.6);
+    /* Nebenknopf (z. B. "Abbrechen", "Schließen") und runde +/- Knöpfe */
+    --hh-sec-bg: rgba(255, 255, 255, 0.1);
+    --hh-sec-fg: #f0abfc;
+    --hh-sec-border: 1.5px solid rgba(207, 0, 255, 0.55);
+    --hh-ghost-border: 1.5px solid rgba(207, 0, 255, 0.45);
+    /* Eingabe- und Auswahlfelder */
+    --hh-field-bg: rgba(255, 255, 255, 0.15);
+    --hh-field-fg: #ffffff;
+    --hh-field-border: 2px solid #cf00ff;
+    --hh-field-ph: rgba(255, 255, 255, 0.5);
+    --hh-opt-bg: #281e41;
+    --hh-opt-fg: #ffffff;
+    --hh-focus-ring: 0 0 15px rgba(207, 0, 255, 0.4);
+    /* Zeilen, Chips und Reiter */
+    --hh-row-bg: rgba(255, 255, 255, 0.1);
+    --hh-chip-line: rgba(207, 0, 255, 0.55);
+    --hh-chip-fg: #ffffff;
+    --hh-chip-on-bg: linear-gradient(135deg, #5856d6 0%, #cf00ff 100%);
+    --hh-chip-on-fg: #ffffff;
+    --hh-chip-on-line: #ffffff;
+    /* Rezept-Marker, Haken-Farbe */
+    --hh-badge-bg: rgba(207, 0, 255, 0.35);
+    --hh-badge-fg: #ffffff;
+    --hh-accent: #cf00ff;
+    /* Hinweis-Meldung unten */
+    --hh-toast-bg: rgba(40, 25, 70, 0.96);
+    --hh-toast-fg: #ffffff;
+    --hh-toast-border: 1.5px solid rgba(207, 0, 255, 0.6);
+}

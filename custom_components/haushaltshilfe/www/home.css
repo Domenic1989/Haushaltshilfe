@@ -1,0 +1,448 @@
+/* ==========================================================================
+   HAUS-ZENTRALE · home.css  –  Startseite (Willkommen, heute fällig, Einkauf, Ausgaben)
+   Eigene Datei, damit style.css unberührt bleibt. Die Karten sind <li> – dadurch
+   übernehmen alle Themes automatisch ihren Karten-Look (Glas, Farben, Rahmen).
+   ========================================================================== */
+
+#v-home .home-sub {
+    margin: -0.6rem 0 1rem;
+    font-weight: 700;
+    opacity: 0.8;
+}
+
+/* Raster: Handy 1 Spalte, Tablet 2, PC 3 – je nach Breite */
+#home-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr)) !important;
+    gap: 12px !important;
+    align-items: start !important;
+}
+#home-grid > li.home-card {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    gap: 0.6rem;
+    padding: 1rem !important;
+    min-width: 0;
+}
+
+.home-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+.home-head h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.home-count {
+    flex: 0 0 auto;
+    min-width: 1.6rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: var(--danger, #ff3b30);
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.8rem;
+    text-align: center;
+    box-sizing: border-box;
+}
+.home-count.is-zero { background: var(--primary, #34c759); }
+
+.home-body { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+.home-empty { text-align: center; padding: 0.6rem 0.2rem; font-weight: 700; opacity: 0.8; }
+
+/* Aufgaben */
+.home-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: 14px;
+    background: rgba(128, 128, 128, 0.12);
+    min-width: 0;
+    flex-wrap: wrap;             /* bei hohem Zoom rutschen Zeit + Haken in die nächste Zeile */
+}
+.home-row-main { flex: 1 1 8rem; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.home-row-title { font-size: 1rem; overflow-wrap: break-word; }
+.home-row-sub { font-size: 0.72rem; font-weight: 700; }
+.home-pill {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-weight: 800;
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    border-radius: 8px;
+    margin-left: auto;
+}
+.home-done {
+    flex: 0 0 auto;
+    width: 2.4rem;
+    height: 2.4rem;
+    padding: 0;
+    border-radius: 12px;
+    border: none;
+    background: rgba(52, 199, 89, 0.22);
+    cursor: pointer;
+    font-size: 1.1rem;
+}
+.home-done:disabled { opacity: 0.4; cursor: default; }
+
+/* Einkauf */
+.home-store {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border-radius: 14px;
+    border: none;
+    background: rgba(128, 128, 128, 0.12);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+.home-store-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.home-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.home-chip {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(128, 128, 128, 0.2);
+    overflow-wrap: anywhere;
+}
+.home-chip-more { opacity: 0.75; }
+
+/* Ausgaben */
+.home-money-row,
+.home-money-total { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+.home-money-row > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.home-money-row > b, .home-money-row > span:last-child { flex: 0 0 auto; white-space: nowrap; }
+.home-money-total {
+    margin-top: 0.1rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(128, 128, 128, 0.3);
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+.home-money-last-title { margin-top: 0.3rem; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; opacity: 0.7; }
+.home-money-last { font-size: 0.9rem; font-weight: 600; }
+
+/* Links unten in den Karten */
+.home-link,
+.home-more {
+    background: none;
+    border: none;
+    color: var(--primary, #34c759);
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 0.4rem;
+    text-align: center;
+}
+.home-link { margin-top: auto; }
+
+/* Essen diese Woche */
+.home-day {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.6rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 14px;
+    background: rgba(128, 128, 128, 0.12);
+    min-width: 0;
+}
+.home-day.is-today { box-shadow: inset 0 0 0 2px var(--primary, #34c759); background: rgba(52, 199, 89, 0.14); }
+.home-day.is-past { opacity: 0.6; }
+.home-day-label {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 2.2rem;
+    font-size: 0.65rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.home-day-label span { font-size: 1.2rem; margin-bottom: 3px; }
+.home-day-main { flex: 1 1 8rem; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.home-meal { font-size: 0.9rem; font-weight: 600; overflow-wrap: break-word; }
+.home-meal em { font-style: normal; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; opacity: 0.65; margin-right: 0.2rem; }
+.home-meal-empty { font-size: 0.8rem; font-weight: 700; }
+.home-cook {
+    flex: 0 0 auto;
+    margin-left: auto;
+    white-space: nowrap;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: rgba(128, 128, 128, 0.2);
+}
+
+/* PC: Essens-Karte reicht über zwei Zeilen, die anderen Karten rücken darunter nach (keine Lücken) */
+:where(html:where([data-bp="l"])) #home-card-food { grid-row: span 2; }
+
+
+/* ==========================================================================
+   Zutaten-Dialog (Wochenplan -> Einkaufsliste) + Hinweis-Toast
+   ========================================================================== */
+.week-switch-btn.ing-week-btn { flex: 1 1 14rem !important; }
+
+#ingModal > .win-card {
+    text-align: left;
+    gap: 0.7rem;
+    justify-content: flex-start;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+#ingModal > .win-card > * { flex: 0 0 auto; min-width: 0; }
+.ing-title { margin: 0; font-size: 1.3rem; font-weight: 900; line-height: 1.2; overflow-wrap: anywhere; }
+.ing-sub { margin: 0; font-size: 0.85rem; font-weight: 600; opacity: 0.7; }
+.ing-sub:empty { display: none; }
+
+/* Nur die Liste scrollt – Knöpfe bleiben immer sichtbar */
+#ingModal > .win-card > .ing-list {
+    flex: 1 1 auto;
+    min-height: 7rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    -webkit-overflow-scrolling: touch;
+}
+.ing-empty { padding: 0.8rem; border-radius: 12px; background: rgba(128, 128, 128, 0.12); font-size: 0.9rem; font-weight: 600; opacity: 0.85; }
+
+.ing-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 12px;
+    background: rgba(128, 128, 128, 0.13);
+    flex: 0 0 auto;
+}
+.ing-row.is-dup { opacity: 0.6; }
+.ing-row input[type="checkbox"] { width: 1.25rem; height: 1.25rem; flex: 0 0 auto; margin: 0; accent-color: var(--primary, #007aff); }
+.ing-name { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.05rem; cursor: pointer; font-weight: 700; overflow-wrap: anywhere; }
+.ing-name small { font-size: 0.72rem; font-weight: 600; opacity: 0.65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ing-qty { display: flex; align-items: center; gap: 0.35rem; flex: 0 0 auto; }
+.ing-qty b { min-width: 1.3rem; text-align: center; font-weight: 900; }
+
+.ing-label { font-size: 0.75rem; font-weight: 700; opacity: 0.75; cursor: pointer; }
+.ing-dishes { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; max-height: 7.5rem; overflow-y: auto; }
+
+/* Dunkle Karte mit dunkler Standardschrift (Glass-Theme): Schrift im Dialog hell erzwingen */
+#ingModal[data-tone="dark"] .win-card,
+#ingModal[data-tone="dark"] .win-card *,
+#recipesModal[data-tone="dark"] .win-card,
+#recipesModal[data-tone="dark"] .win-card *,
+#mealPickModal[data-tone="dark"] .win-card,
+#mealPickModal[data-tone="dark"] .win-card *,
+#mealAskModal[data-tone="dark"] .win-card,
+#mealAskModal[data-tone="dark"] .win-card *,
+#ingAskModal[data-tone="dark"] .win-card,
+#ingAskModal[data-tone="dark"] .win-card * { color: #fff !important; }
+#ingModal[data-tone="dark"] .ing-add input::placeholder { color: rgba(255, 255, 255, 0.55) !important; }
+#ingModal[data-tone="dark"] select option,
+#mealPickModal[data-tone="dark"] select option { color: #1c1c1e !important; }
+#mealPickModal[data-tone="dark"] .pick-type input::placeholder { color: rgba(255, 255, 255, 0.55) !important; }
+.ing-dish {
+    max-width: 100%;
+    border: 1px solid rgba(128, 128, 128, 0.5);
+    background: transparent;
+    color: inherit;
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ing-dish.is-new { border-style: dashed; }
+
+.ing-add { display: flex; gap: 0.5rem; }
+.ing-add input { flex: 1 1 auto; min-width: 0; padding: 0.65rem 0.8rem; border-radius: 12px; font-size: 0.95rem; outline: none; box-sizing: border-box; }
+.ing-add button { flex: 0 0 auto; width: 3rem; border-radius: 12px; font-size: 1.3rem; font-weight: 900; cursor: pointer; margin: 0; padding: 0; }
+
+.ing-store { display: flex; align-items: center; gap: 0.6rem; }
+.ing-store label { font-weight: 800; font-size: 0.9rem; flex: 0 0 auto; }
+.ing-store select { flex: 1 1 auto; min-width: 0; padding: 0.55rem 0.7rem; border-radius: 12px; font-size: 0.95rem; font-weight: 700; outline: none; }
+
+.ing-mode { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.ing-mode label { font-size: 0.8rem; font-weight: 700; opacity: 0.8; flex: 1 1 auto; }
+.ing-mode select { flex: 1 1 11rem; min-width: 0; padding: 0.5rem 0.7rem; border-radius: 12px; font-size: 0.9rem; font-weight: 700; outline: none; }
+
+#ingAskModal > .win-card { text-align: center; }
+.ing-ask-remember { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin: 0 0 1rem; font-size: 0.85rem; font-weight: 700; opacity: 0.85; cursor: pointer; text-align: left; }
+.ing-ask-remember input { margin: 0; flex: 0 0 auto; width: 1.15rem; height: 1.15rem; accent-color: var(--primary, #007aff); }
+
+.ing-actions { display: flex; gap: 0.6rem; }
+.ing-actions button { flex: 1 1 0; min-height: 3rem; border-radius: 14px; font-size: 1rem; font-weight: 800; cursor: pointer; margin: 0; padding: 0.4rem 0.6rem; }
+.ing-actions #ingYes { flex: 1.6 1 0; }
+
+.hh-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 6rem;
+    transform: translateX(-50%);
+    max-width: min(90vw, 28rem);
+    z-index: 60000;
+    padding: 0.8rem 1.2rem;
+    border-radius: 999px;
+    background: rgba(25, 25, 28, 0.94);
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.95rem;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    animation: hh-toast-in 0.2s ease-out;
+    pointer-events: none;
+}
+@keyframes hh-toast-in { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) { .hh-toast { animation: none; } }
+
+/* ----- Rezepte-Seite ----- */
+#recipesModal > .win-card { text-align: left; gap: 0.7rem; justify-content: flex-start; overflow-x: hidden; overflow-y: auto; }
+#recipesModal > .win-card > * { flex: 0 0 auto; min-width: 0; }
+#recipesModal > .win-card > .rec-list { flex: 1 1 auto; min-height: 8rem; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 0.5rem; -webkit-overflow-scrolling: touch; }
+.rec-search { width: 100%; box-sizing: border-box; padding: 0.65rem 0.8rem; border-radius: 12px; font-size: 0.95rem; outline: none; }
+.rec-item { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.6rem 0.75rem; border-radius: 12px; background: rgba(128, 128, 128, 0.13); flex: 0 0 auto; }
+.rec-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.rec-name { font-weight: 800; font-size: 1rem; overflow-wrap: anywhere; }
+.rec-badge { font-size: 0.65rem; font-weight: 800; padding: 0.1rem 0.55rem; border-radius: 999px; background: rgba(128, 128, 128, 0.35); }
+.rec-ing { font-size: 0.82rem; opacity: 0.85; line-height: 1.35; overflow-wrap: anywhere; }
+.rec-alias { font-size: 0.72rem; opacity: 0.6; overflow-wrap: anywhere; }
+.rec-btns { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.2rem; }
+
+/* ----- Essen auswählen (Tipp auf ein Essensfeld) ----- */
+input.day-input.is-pick { cursor: pointer; }
+#mealAskModal > .win-card { text-align: center; }
+
+#mealPickModal > .win-card { text-align: left; gap: 0.7rem; justify-content: flex-start; overflow-x: hidden; overflow-y: auto; }
+#mealPickModal > .win-card > * { flex: 0 0 auto; min-width: 0; }
+#mealPickModal > .win-card > .pick-list { flex: 1 1 auto; min-height: 8rem; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 0.4rem; -webkit-overflow-scrolling: touch; }
+.pick-type { display: flex; gap: 0.5rem; }
+.pick-type input { flex: 1 1 auto; min-width: 0; padding: 0.65rem 0.8rem; border-radius: 12px; font-size: 0.95rem; outline: none; box-sizing: border-box; }
+.pick-type button { flex: 0 0 auto; padding: 0 0.9rem; border-radius: 12px; font-size: 0.9rem; font-weight: 800; cursor: pointer; margin: 0; min-height: 2.6rem; white-space: nowrap; }
+.pick-tabs { display: flex; gap: 0.5rem; }
+#pickCats { margin-top: 0; }
+.ing-dish.is-active { background: rgba(128, 128, 128, 0.4); border-color: rgba(128, 128, 128, 0.9); font-weight: 900; }
+
+/* ==========================================================================
+   Theme-Anbindung der Fenster "Essen auswählen", "Zutaten" und "Rezepte"
+   Alle Farben kommen aus --hh-* Variablen. Jede Theme-Datei (…-theme.css)
+   setzt sie am Ende im Block "ESSENSWAHL, ZUTATEN & REZEPTE". Ohne diese
+   Variablen gilt das neutrale Standard-Aussehen (Fallbacks unten).
+   ========================================================================== */
+.hh-dlg > .win-card {
+    background: var(--hh-card-bg, var(--card));
+    color: var(--hh-text, var(--text));
+    border: var(--hh-card-border, 0 none);
+    border-radius: var(--hh-card-radius, 26px);
+    box-shadow: var(--hh-card-shadow, 0 20px 50px rgba(0, 0, 0, 0.3));
+    -webkit-backdrop-filter: var(--hh-card-blur, none);
+    backdrop-filter: var(--hh-card-blur, none);
+}
+.hh-dlg .win-card h3 { color: var(--hh-head, inherit); text-shadow: var(--hh-head-shadow, none); }
+.hh-dlg.win-small > .win-card > p { color: var(--hh-text, var(--text)) !important; }
+.hh-dlg button { cursor: pointer; }
+.hh-dlg button:disabled { cursor: default; }
+
+/* Knöpfe: Hauptaktion, Nebenaktion, Abbrechen */
+.hh-dlg .win-card button.hh-btn-primary {
+    background: var(--hh-btn-bg, #007aff) !important;
+    color: var(--hh-btn-fg, #fff) !important;
+    border: var(--hh-btn-border, none) !important;
+    box-shadow: var(--hh-btn-shadow, none) !important;
+}
+.hh-dlg .win-card button.hh-btn-secondary,
+.hh-dlg .win-card button.hh-round {
+    background: var(--hh-sec-bg, rgba(128, 128, 128, 0.28)) !important;
+    color: var(--hh-sec-fg, var(--hh-text, var(--text))) !important;
+    border: var(--hh-sec-border, none) !important;
+    box-shadow: none !important;
+}
+.hh-dlg .win-card button.hh-btn-ghost {
+    background: transparent !important;
+    color: var(--hh-sec-fg, var(--hh-text, var(--text))) !important;
+    border: var(--hh-ghost-border, 1px solid rgba(128, 128, 128, 0.45)) !important;
+    box-shadow: none !important;
+}
+/* Runde + / − Knöpfe bei den Zutaten */
+.hh-dlg .win-card button.hh-round {
+    width: 2rem; height: 2rem; min-height: 0; padding: 0; margin: 0;
+    border-radius: 50%; font-weight: 900; font-size: 1.1rem; line-height: 1;
+}
+.hh-dlg .win-card button.hh-btn-primary:disabled { filter: saturate(0.5); }
+
+/* Eingabefelder und Auswahlfelder */
+.hh-dlg .hh-field {
+    background: var(--hh-field-bg, var(--bg));
+    color: var(--hh-field-fg, var(--text));
+    border: var(--hh-field-border, 1px solid rgba(128, 128, 128, 0.4));
+    -webkit-text-fill-color: var(--hh-field-fg, var(--text));
+}
+.hh-dlg .hh-field:focus { box-shadow: var(--hh-focus-ring, 0 0 0 2px rgba(0, 122, 255, 0.3)); }
+.hh-dlg .hh-field::placeholder { color: var(--hh-field-ph, rgba(128, 128, 128, 0.85)); -webkit-text-fill-color: var(--hh-field-ph, rgba(128, 128, 128, 0.85)); opacity: 1; }
+.hh-dlg .hh-field option { background: var(--hh-opt-bg, var(--bg)); color: var(--hh-opt-fg, var(--text)); }
+
+/* Zeilen, Hinweise, Merker */
+.hh-dlg .ing-row, .hh-dlg .rec-item, .hh-dlg .ing-empty, .hh-dlg .hh-pickrow { background: var(--hh-row-bg, rgba(128, 128, 128, 0.13)); }
+.hh-dlg .rec-badge { background: var(--hh-badge-bg, rgba(128, 128, 128, 0.35)); color: var(--hh-badge-fg, inherit); }
+.hh-dlg .ing-row input[type="checkbox"], .hh-dlg .ing-ask-remember input { accent-color: var(--hh-accent, var(--primary, #007aff)); }
+
+/* Auswahl-Zeilen im Essen-Fenster */
+.hh-dlg .win-card button.hh-pickrow {
+    display: flex; justify-content: space-between; align-items: center; gap: 0.6rem;
+    width: 100%; text-align: left; padding: 0.7rem 0.85rem; min-height: 0; margin: 0;
+    border-radius: 12px; border: none; box-shadow: none; flex: 0 0 auto;
+    color: var(--hh-text, var(--text)); font-weight: 700; font-size: 0.98rem;
+}
+.hh-dlg .hh-pickrow small { opacity: 0.6; font-weight: 600; flex: 0 0 auto; }
+
+/* Chips (Gerichte, Kategorien, Rezept-Knöpfe) und Reiter */
+.hh-dlg .ing-dish, .hh-dlg .win-card button.hh-pill, .hh-dlg .win-card button.hh-tab {
+    border: 1px solid var(--hh-chip-line, rgba(128, 128, 128, 0.5));
+    background: transparent;
+    color: var(--hh-chip-fg, inherit);
+    box-shadow: none;
+}
+.hh-dlg .ing-dish.is-new { border-style: dashed; }
+.hh-dlg .win-card button.hh-pill {
+    padding: 0.35rem 0.75rem; min-height: 0; margin: 0; width: auto;
+    border-radius: 999px; font-weight: 700; font-size: 0.78rem;
+}
+.hh-dlg .win-card button.hh-tab {
+    flex: 1 1 0; width: auto; padding: 0.5rem 0.4rem; min-height: 0; margin: 0;
+    border-radius: 12px; font-weight: 700; font-size: 0.9rem;
+}
+.hh-dlg .ing-dish.is-active, .hh-dlg .win-card button.hh-tab.is-on {
+    background: var(--hh-chip-on-bg, rgba(128, 128, 128, 0.4));
+    color: var(--hh-chip-on-fg, inherit);
+    border-color: var(--hh-chip-on-line, rgba(128, 128, 128, 0.9));
+    font-weight: 900;
+}
+
+/* Hinweis-Toast */
+.hh-toast {
+    background: var(--hh-toast-bg, rgba(25, 25, 28, 0.94));
+    color: var(--hh-toast-fg, #fff);
+    border: var(--hh-toast-border, 0 none);
+}
+
+/* Laden-Auswahl in der Zutaten-Frage */
+#ingAskModal .ing-ask-store { justify-content: center; text-align: left; margin: -0.6rem 0 0.9rem; }
+#ingAskModal .ing-ask-store select { flex: 0 1 12rem; }

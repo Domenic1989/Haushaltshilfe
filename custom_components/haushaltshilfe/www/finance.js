@@ -163,10 +163,12 @@ function renderFixkostenList() {
 
     fixkostenTemplates.forEach((tpl, index) => {
         const div = document.createElement("div");
-        div.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:12px 15px; border-radius:12px; cursor:pointer;";
+        div.className = "fix-tpl-row";
+        div.style.cssText = "background:var(--bg); cursor:pointer;";
         div.addEventListener("click", () => editFixkostenTemplate(index));
 
         const infoDiv = document.createElement("div");
+        infoDiv.className = "fix-tpl-info";
 
         const strongEl = document.createElement("strong");
         strongEl.style.cssText = "color:var(--text); font-size:0.95rem;";
@@ -189,12 +191,13 @@ function renderFixkostenList() {
         infoDiv.appendChild(subDiv);
 
         const actionsDiv = document.createElement("div");
-        actionsDiv.style.cssText = "display:flex; align-items:center; gap:4px;";
+        actionsDiv.className = "fix-tpl-actions";
 
         const btnDel = document.createElement("button");
         btnDel.type = "button";
         btnDel.title = "Löschen";
-        btnDel.style.cssText = "position:relative; z-index:50; background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; font-size:1.3rem; padding:12px 10px; margin:-8px -8px -8px 0; border-radius:10px;";
+        btnDel.className = "fix-tpl-del";
+        btnDel.style.cssText = "background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; padding:0 !important; margin:0 !important; width:2.5rem; height:2.5rem; min-width:0; display:flex; align-items:center; justify-content:center; font-size:1.2rem; border-radius:50%;";
         btnDel.textContent = "🗑️";
         btnDel.addEventListener("click", (e) => {
             e.stopPropagation();
@@ -453,12 +456,13 @@ function renderFinanceItems(items, mIdx, type) {
     items.forEach((i, iIdx) => {
         const itemDiv = document.createElement("div");
         itemDiv.className = "finance-item";
-        itemDiv.style.cssText = "display:flex; justify-content:space-between; background:rgba(0,0,0,0.03); margin:3px 0; padding:6px 10px; border-radius:8px; font-size:0.85rem;";
 
         const nameSpan = document.createElement("span");
+        nameSpan.className = "fi-name";
         nameSpan.textContent = i.name;
 
         const deleteBtn = document.createElement("b");
+        deleteBtn.className = "fi-amount";
         deleteBtn.style.cssText = "cursor:pointer; color:var(--danger);";
         deleteBtn.textContent = `${parseFloat(i.amount).toFixed(2)}€ ✕`;
         
@@ -523,8 +527,8 @@ window.loadFinance = async function(isBackgroundSync = false) {
             });
 
             const card = document.createElement('div');
-            card.className = "month-card";
-            card.style.cssText = "position:relative; padding: 20px; border-radius: 20px; cursor:grab; user-select:none; -webkit-user-select:none;";
+            card.className = "month-card year-card";
+            card.style.cssText = "cursor:grab; user-select:none; -webkit-user-select:none;";
             card.dataset.index = yIdx;
             card.dataset.type = 'year';
 
@@ -535,23 +539,22 @@ window.loadFinance = async function(isBackgroundSync = false) {
 
             // Sicherer DOM-Aufbau der Jahreskarte gegen XSS (inkl. 4-Digits-Prüfung)
             const topRow = document.createElement("div");
-            topRow.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;";
+            topRow.className = "year-card-top";
 
             const h3 = document.createElement("h3");
-            h3.style.cssText = "color:var(--primary); margin: 0; font-size:1.4rem; cursor:pointer; flex:1;";
+            h3.className = "year-card-title";
+            h3.style.cssText = "color:var(--primary); cursor:pointer;";
             h3.textContent = `📅 Jahr ${yearStr}`;
 
-            const badgeWrapper = document.createElement("div");
-            badgeWrapper.style.cssText = "display:flex; align-items:center; gap:8px;";
-
             const countBadge = document.createElement("span");
-            countBadge.style.cssText = "font-size:0.8rem; opacity:0.7; font-weight:bold; background:rgba(0,0,0,0.06); padding:4px 10px; border-radius:10px; cursor:pointer;";
+            countBadge.className = "year-card-count";
+            countBadge.style.cssText = "cursor:pointer;";
             countBadge.textContent = `${monthsInYear.length} Monate`;
 
             const delBtn = document.createElement("button");
             delBtn.type = "button";
-            delBtn.className = "del-finance-btn";
-            delBtn.style.cssText = "position:relative; top:6px; z-index:50; background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; font-size:1.3rem; padding:15px 18px; margin:0px -8px -8px 0; border-radius:10px;";
+            delBtn.className = "del-finance-btn year-card-del";
+            delBtn.style.cssText = "background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; padding:0 !important; margin:0 !important; width:2.4rem; height:2.4rem; min-width:0; display:flex; align-items:center; justify-content:center; font-size:1.2rem; border-radius:50%;";
             delBtn.textContent = "🗑️";
             delBtn.addEventListener("click", (e) => {
                 e.stopPropagation();
@@ -559,16 +562,16 @@ window.loadFinance = async function(isBackgroundSync = false) {
                 deleteFinanceYear(yearStr, e);
             });
 
-            badgeWrapper.appendChild(countBadge);
-            badgeWrapper.appendChild(delBtn);
             topRow.appendChild(h3);
-            topRow.appendChild(badgeWrapper);
+            topRow.appendChild(countBadge);
+            topRow.appendChild(delBtn);
 
             const infoBox = document.createElement("div");
-            infoBox.style.cssText = "font-size:0.9rem; opacity:0.85; cursor:pointer; pointer-events:none;";
+            infoBox.className = "year-card-info";
+            infoBox.style.cssText = "cursor:pointer; pointer-events:none;";
 
             const fixRow = document.createElement("div");
-            fixRow.style.cssText = "display:flex; justify-content:space-between; margin-bottom:4px;";
+            fixRow.className = "mc-row";
             const fixLabel = document.createElement("span");
             fixLabel.textContent = "Fixkosten (Jahr):";
             const fixVal = document.createElement("b");
@@ -577,7 +580,7 @@ window.loadFinance = async function(isBackgroundSync = false) {
             fixRow.appendChild(fixVal);
 
             const varRow = document.createElement("div");
-            varRow.style.cssText = "display:flex; justify-content:space-between;";
+            varRow.className = "mc-row";
             const varLabel = document.createElement("span");
             varLabel.textContent = "Ausgaben (Jahr):";
             const varVal = document.createElement("b");
@@ -586,11 +589,10 @@ window.loadFinance = async function(isBackgroundSync = false) {
             varRow.appendChild(varVal);
 
             const hr = document.createElement("hr");
-            hr.style.cssText = "border:0; border-top:1px solid rgba(0,0,0,0.1); margin:10px 0;";
+            hr.className = "mc-hr";
 
             const totalRow = document.createElement("div");
             totalRow.className = "summary-total";
-            totalRow.style.cssText = "display:flex; justify-content:space-between; font-weight:bold; font-size:1.05rem; padding-top:4px;";
             const totalLabel = document.createElement("span");
             totalLabel.textContent = "Jahresgesamt:";
             const totalVal = document.createElement("span");
@@ -646,26 +648,28 @@ window.loadFinance = async function(isBackgroundSync = false) {
 
                 // Sicherer DOM-Aufbau für Monatskarten (Freitext ${m.month_name} geschützt)
                 const monthTitle = document.createElement("h3");
-                monthTitle.style.cssText = "color:var(--primary); margin: 0 0 10px 0; text-align:left; display:flex; align-items:center; pointer-events:none;";
+                monthTitle.className = "month-card-title";
+                monthTitle.style.cssText = "color:var(--primary); pointer-events:none;";
                 monthTitle.textContent = m.month_name;
 
                 const infoBox = document.createElement("div");
-                infoBox.style.cssText = "font-size:0.85rem; opacity:0.8; pointer-events:none;";
+                infoBox.className = "month-card-info";
+                infoBox.style.cssText = "pointer-events:none;";
 
                 const fixRow = document.createElement("div");
-                fixRow.style.cssText = "display:flex; justify-content:space-between;";
+                fixRow.className = "mc-row";
                 fixRow.innerHTML = `<span>Fix:</span><b>${sumFix.toFixed(2)}€</b>`;
 
                 const varRow = document.createElement("div");
-                varRow.style.cssText = "display:flex; justify-content:space-between;";
+                varRow.className = "mc-row";
                 varRow.innerHTML = `<span>Ausg:</span><b>${sumVar.toFixed(2)}€</b>`;
 
                 const hr = document.createElement("hr");
-                hr.style.cssText = "border:0; border-top:1px solid rgba(0,0,0,0.1); margin:8px 0;";
+                hr.className = "mc-hr";
 
                 const totalRow = document.createElement("div");
                 totalRow.className = "summary-total";
-                totalRow.style.cssText = "display:flex; justify-content:space-between; font-weight:bold; color:var(--text);";
+                totalRow.style.cssText = "color:var(--text);";
                 totalRow.innerHTML = `<span>Gesamt:</span><span>${(sumFix+sumVar).toFixed(2)}€</span>`;
 
                 infoBox.appendChild(fixRow);
@@ -865,15 +869,15 @@ function updateOpenFinanceModalContent(root, mIdx) {
 
     // 1. Fixkosten Sektion
     const fixSection = document.createElement('div');
-    fixSection.style.cssText = "margin-bottom:20px; margin-top:20px;";
+    fixSection.className = "fin-section";
 
     const fixTitle = document.createElement('small');
-    fixTitle.style.cssText = "font-weight:bold; opacity:0.5; display:block;";
+    fixTitle.className = "fin-section-title";
     fixTitle.textContent = "📌 FIXKOSTEN";
     fixSection.appendChild(fixTitle);
 
     const fixBox = document.createElement('div');
-    fixBox.style.cssText = "margin-top:8px; display:flex; flex-direction:column; gap:8px;";
+    fixBox.className = "fin-section-box";
     const renderedFix = renderFinanceItems(m.fixum, mIdx, 'fixum');
     if (renderedFix) fixBox.appendChild(renderedFix);
     fixSection.appendChild(fixBox);
@@ -881,15 +885,15 @@ function updateOpenFinanceModalContent(root, mIdx) {
 
     // 2. Ausgaben Sektion
     const spendSection = document.createElement('div');
-    spendSection.style.cssText = "margin-bottom:20px;";
+    spendSection.className = "fin-section";
 
     const spendTitle = document.createElement('small');
-    spendTitle.style.cssText = "font-weight:bold; opacity:0.5; display:block;";
+    spendTitle.className = "fin-section-title";
     spendTitle.textContent = "🛒 AUSGABEN";
     spendSection.appendChild(spendTitle);
 
     const spendBox = document.createElement('div');
-    spendBox.style.cssText = "margin-top:8px; display:flex; flex-direction:column; gap:8px;";
+    spendBox.className = "fin-section-box";
     const renderedSpend = renderFinanceItems(m.spendings, mIdx, 'spendings');
     if (renderedSpend) spendBox.appendChild(renderedSpend);
     spendSection.appendChild(spendBox);
@@ -897,11 +901,12 @@ function updateOpenFinanceModalContent(root, mIdx) {
 
     // 3. Löschen-Button
     const deleteWrapper = document.createElement('div');
-    deleteWrapper.style.cssText = "text-align: center; margin-top: 30px;";
+    deleteWrapper.className = "fin-delete-wrap";
 
     const delMonthBtn = document.createElement('button');
     delMonthBtn.type = "button";
-    delMonthBtn.style.cssText = "position:relative; z-index:50; background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; font-size:1.3rem; padding:12px 20px; border-radius:10px;";
+    delMonthBtn.className = "fin-delete-month";
+    delMonthBtn.style.cssText = "background:transparent !important; border:none !important; box-shadow:none !important; outline:none !important; color:var(--danger); cursor:pointer; padding:0.7rem 1.2rem; font-size:1.1rem; border-radius:12px;";
     delMonthBtn.textContent = "🗑️ Gesamten Monat löschen";
     delMonthBtn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -1019,16 +1024,16 @@ window.openFinanceModal = async function(mIdx) {
     headerFixed.replaceChildren();
 
     const topHeaderRow = document.createElement("div");
-    topHeaderRow.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding-right:3.5rem; min-height:2.6rem;";
+    topHeaderRow.className = "fin-modal-head";
     
     const h2Title = document.createElement("h2");
-    h2Title.style.cssText = "margin:0; font-size:1.5rem; font-weight: 800; text-transform: uppercase;";
+    h2Title.className = "fin-modal-title";
     h2Title.textContent = m.month_name;
     topHeaderRow.appendChild(h2Title);
 
     const inputRow = document.createElement("div");
     inputRow.className = "finance-input-row";
-    inputRow.style.cssText = "display:flex; gap:8px; align-items:center; width:100%;";
+    
 
     const amtInput = document.createElement("input");
     amtInput.type = "number";

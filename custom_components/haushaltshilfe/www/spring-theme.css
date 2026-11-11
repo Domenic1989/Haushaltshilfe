@@ -730,3 +730,55 @@ body.theme-spring .week-switch-btn.active-food {
     box-shadow: 0 4px 15px rgba(236, 64, 122, 0.4) !important;
     font-weight: 900 !important;
 }
+
+/* ========================================================
+   --- ESSENSWAHL, ZUTATEN & REZEPTE (SPRING (KIRSCHBLÜTE & FRÜHLINGSGRÜN) - body.theme-spring) ---
+   Farben für die Fenster "Essen auswählen", "Zutaten" und "Rezepte"
+   (Knöpfe, Felder, Karte, Hinweis). Aufbau steht in home.css.
+   ======================================================== */
+
+body.theme-spring {
+    --hh-themed: 1;
+    /* Fenster-Karte */
+    --hh-card-bg: rgba(255, 250, 252, 0.96);
+    --hh-card-border: 2px solid #ec407a;
+    --hh-card-radius: 20px;
+    --hh-card-shadow: 0 20px 60px rgba(19, 78, 94, 0.35), inset 0 0 15px rgba(255, 183, 197, 0.25);
+    --hh-card-blur: blur(30px) saturate(180%);
+    /* Schrift */
+    --hh-text: #1b3b2b;
+    --hh-head: #c2185b;
+    /* Hauptknopf (z. B. "Auf die Liste", "Übernehmen") */
+    --hh-btn-bg: linear-gradient(135deg, #ec407a 0%, #ad1457 100%);
+    --hh-btn-fg: #ffffff;
+    --hh-btn-border: 1.5px solid #fff59d;
+    --hh-btn-shadow: 0 4px 15px rgba(216, 27, 96, 0.4);
+    /* Nebenknopf (z. B. "Abbrechen", "Schließen") und runde +/- Knöpfe */
+    --hh-sec-bg: rgba(255, 255, 255, 0.85);
+    --hh-sec-fg: #1b3b2b;
+    --hh-sec-border: 1.5px solid #ec407a;
+    --hh-ghost-border: 1.5px solid rgba(236, 64, 122, 0.55);
+    /* Eingabe- und Auswahlfelder */
+    --hh-field-bg: rgba(255, 255, 255, 0.96);
+    --hh-field-fg: #1b3b2b;
+    --hh-field-border: 2px solid #2e7d32;
+    --hh-field-ph: rgba(27, 59, 43, 0.45);
+    --hh-opt-bg: #ffffff;
+    --hh-opt-fg: #1b3b2b;
+    --hh-focus-ring: 0 0 12px rgba(236, 64, 122, 0.35);
+    /* Zeilen, Chips und Reiter */
+    --hh-row-bg: rgba(236, 64, 122, 0.1);
+    --hh-chip-line: rgba(236, 64, 122, 0.55);
+    --hh-chip-fg: #1b3b2b;
+    --hh-chip-on-bg: linear-gradient(135deg, #ec407a 0%, #ad1457 100%);
+    --hh-chip-on-fg: #ffffff;
+    --hh-chip-on-line: #fff59d;
+    /* Rezept-Marker, Haken-Farbe */
+    --hh-badge-bg: rgba(236, 64, 122, 0.2);
+    --hh-badge-fg: #c2185b;
+    --hh-accent: #ec407a;
+    /* Hinweis-Meldung unten */
+    --hh-toast-bg: rgba(19, 78, 94, 0.97);
+    --hh-toast-fg: #ffffff;
+    --hh-toast-border: 1.5px solid #f48fb1;
+}

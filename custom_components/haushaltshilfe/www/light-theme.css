@@ -728,3 +728,55 @@ body.theme-light .week-switch-btn.active-food {
     box-shadow: 0 4px 15px rgba(255, 204, 0, 0.45) !important;
     font-weight: 900 !important;
 }
+
+/* ========================================================
+   --- ESSENSWAHL, ZUTATEN & REZEPTE (LIGHT (SONNENGELB) - body.theme-light) ---
+   Farben für die Fenster "Essen auswählen", "Zutaten" und "Rezepte"
+   (Knöpfe, Felder, Karte, Hinweis). Aufbau steht in home.css.
+   ======================================================== */
+
+body.theme-light {
+    --hh-themed: 1;
+    /* Fenster-Karte */
+    --hh-card-bg: rgba(255, 251, 235, 0.97);
+    --hh-card-border: 2px solid #ffcc00;
+    --hh-card-radius: 20px;
+    --hh-card-shadow: 0 20px 60px rgba(153, 122, 0, 0.2);
+    --hh-card-blur: blur(25px) saturate(180%);
+    /* Schrift */
+    --hh-text: #1c1c1e;
+    --hh-head: #665200;
+    /* Hauptknopf (z. B. "Auf die Liste", "Übernehmen") */
+    --hh-btn-bg: linear-gradient(135deg, #ffd633 0%, #ffcc00 100%);
+    --hh-btn-fg: #000000;
+    --hh-btn-border: 1.5px solid #b38f00;
+    --hh-btn-shadow: 0 4px 15px rgba(255, 204, 0, 0.4);
+    /* Nebenknopf (z. B. "Abbrechen", "Schließen") und runde +/- Knöpfe */
+    --hh-sec-bg: rgba(255, 255, 255, 0.9);
+    --hh-sec-fg: #4d3d00;
+    --hh-sec-border: 1.5px solid #ffcc00;
+    --hh-ghost-border: 1.5px solid rgba(179, 143, 0, 0.6);
+    /* Eingabe- und Auswahlfelder */
+    --hh-field-bg: #ffffff;
+    --hh-field-fg: #1c1c1e;
+    --hh-field-border: 2px solid #ffcc00;
+    --hh-field-ph: rgba(128, 102, 0, 0.55);
+    --hh-opt-bg: #ffffff;
+    --hh-opt-fg: #1c1c1e;
+    --hh-focus-ring: 0 0 10px rgba(255, 204, 0, 0.5);
+    /* Zeilen, Chips und Reiter */
+    --hh-row-bg: rgba(255, 204, 0, 0.18);
+    --hh-chip-line: rgba(179, 143, 0, 0.6);
+    --hh-chip-fg: #4d3d00;
+    --hh-chip-on-bg: linear-gradient(135deg, #ffd633 0%, #ffcc00 100%);
+    --hh-chip-on-fg: #000000;
+    --hh-chip-on-line: #b38f00;
+    /* Rezept-Marker, Haken-Farbe */
+    --hh-badge-bg: rgba(255, 204, 0, 0.45);
+    --hh-badge-fg: #4d3d00;
+    --hh-accent: #e6b800;
+    /* Hinweis-Meldung unten */
+    --hh-toast-bg: rgba(77, 61, 0, 0.97);
+    --hh-toast-fg: #ffffff;
+    --hh-toast-border: 1.5px solid #ffcc00;
+}

@@ -708,3 +708,55 @@ body.theme-bayern .week-switch-btn.active-food {
     box-shadow: 0 4px 15px rgba(220, 5, 45, 0.45) !important;
     font-weight: 900 !important;
 }
+
+/* ========================================================
+   --- ESSENSWAHL, ZUTATEN & REZEPTE (BAYERN (ROT, WEISS & GOLD) - body.theme-bayern) ---
+   Farben für die Fenster "Essen auswählen", "Zutaten" und "Rezepte"
+   (Knöpfe, Felder, Karte, Hinweis). Aufbau steht in home.css.
+   ======================================================== */
+
+body.theme-bayern {
+    --hh-themed: 1;
+    /* Fenster-Karte */
+    --hh-card-bg: rgba(255, 245, 247, 0.96);
+    --hh-card-border: 2px solid #dc052d;
+    --hh-card-radius: 20px;
+    --hh-card-shadow: 0 20px 60px rgba(80, 0, 14, 0.5), inset 0 0 15px rgba(220, 5, 45, 0.1);
+    --hh-card-blur: blur(30px) saturate(180%);
+    /* Schrift */
+    --hh-text: #50000e;
+    --hh-head: #b90022;
+    /* Hauptknopf (z. B. "Auf die Liste", "Übernehmen") */
+    --hh-btn-bg: linear-gradient(135deg, #dc052d 0%, #90001f 100%);
+    --hh-btn-fg: #ffffff;
+    --hh-btn-border: 1.5px solid #ffd700;
+    --hh-btn-shadow: 0 4px 15px rgba(220, 5, 45, 0.45);
+    /* Nebenknopf (z. B. "Abbrechen", "Schließen") und runde +/- Knöpfe */
+    --hh-sec-bg: rgba(255, 255, 255, 0.9);
+    --hh-sec-fg: #50000e;
+    --hh-sec-border: 1.5px solid #dc052d;
+    --hh-ghost-border: 1.5px solid rgba(220, 5, 45, 0.5);
+    /* Eingabe- und Auswahlfelder */
+    --hh-field-bg: rgba(255, 255, 255, 0.96);
+    --hh-field-fg: #50000e;
+    --hh-field-border: 2px solid #b90022;
+    --hh-field-ph: rgba(80, 0, 14, 0.45);
+    --hh-opt-bg: #ffffff;
+    --hh-opt-fg: #50000e;
+    --hh-focus-ring: 0 0 12px rgba(220, 5, 45, 0.35);
+    /* Zeilen, Chips und Reiter */
+    --hh-row-bg: rgba(220, 5, 45, 0.08);
+    --hh-chip-line: rgba(220, 5, 45, 0.5);
+    --hh-chip-fg: #50000e;
+    --hh-chip-on-bg: linear-gradient(135deg, #dc052d 0%, #90001f 100%);
+    --hh-chip-on-fg: #ffffff;
+    --hh-chip-on-line: #ffd700;
+    /* Rezept-Marker, Haken-Farbe */
+    --hh-badge-bg: rgba(220, 5, 45, 0.15);
+    --hh-badge-fg: #90001f;
+    --hh-accent: #dc052d;
+    /* Hinweis-Meldung unten */
+    --hh-toast-bg: rgba(80, 0, 14, 0.97);
+    --hh-toast-fg: #ffffff;
+    --hh-toast-border: 1.5px solid #ffd700;
+}

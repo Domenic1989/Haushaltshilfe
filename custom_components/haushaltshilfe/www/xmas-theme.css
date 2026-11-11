@@ -756,3 +756,55 @@ body.theme-xmas .week-switch-btn.active-food {
     box-shadow: 0 4px 15px rgba(198, 40, 40, 0.45) !important;
     font-weight: 900 !important;
 }
+
+/* ========================================================
+   --- ESSENSWAHL, ZUTATEN & REZEPTE (CHRISTMAS (TANNENGRÜN, ROT & GOLD) - body.theme-xmas) ---
+   Farben für die Fenster "Essen auswählen", "Zutaten" und "Rezepte"
+   (Knöpfe, Felder, Karte, Hinweis). Aufbau steht in home.css.
+   ======================================================== */
+
+body.theme-xmas {
+    --hh-themed: 1;
+    /* Fenster-Karte */
+    --hh-card-bg: rgba(255, 250, 240, 0.96);
+    --hh-card-border: 2px solid #d4af37;
+    --hh-card-radius: 20px;
+    --hh-card-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), inset 0 0 15px rgba(255, 215, 0, 0.15);
+    --hh-card-blur: blur(30px) saturate(180%);
+    /* Schrift */
+    --hh-text: #1b2e22;
+    --hh-head: #b71c1c;
+    /* Hauptknopf (z. B. "Auf die Liste", "Übernehmen") */
+    --hh-btn-bg: linear-gradient(135deg, #c62828 0%, #8e0000 100%);
+    --hh-btn-fg: #ffffff;
+    --hh-btn-border: 1.5px solid #ffd700;
+    --hh-btn-shadow: 0 4px 15px rgba(198, 40, 40, 0.45);
+    /* Nebenknopf (z. B. "Abbrechen", "Schließen") und runde +/- Knöpfe */
+    --hh-sec-bg: rgba(255, 255, 255, 0.85);
+    --hh-sec-fg: #1b2e22;
+    --hh-sec-border: 1.5px solid #d4af37;
+    --hh-ghost-border: 1.5px solid rgba(212, 175, 55, 0.7);
+    /* Eingabe- und Auswahlfelder */
+    --hh-field-bg: rgba(255, 255, 255, 0.96);
+    --hh-field-fg: #1b2e22;
+    --hh-field-border: 2px solid #1a5235;
+    --hh-field-ph: rgba(27, 46, 34, 0.45);
+    --hh-opt-bg: #ffffff;
+    --hh-opt-fg: #1b2e22;
+    --hh-focus-ring: 0 0 12px rgba(198, 40, 40, 0.35);
+    /* Zeilen, Chips und Reiter */
+    --hh-row-bg: rgba(26, 82, 53, 0.1);
+    --hh-chip-line: rgba(212, 175, 55, 0.8);
+    --hh-chip-fg: #1b2e22;
+    --hh-chip-on-bg: linear-gradient(135deg, #c62828 0%, #8e0000 100%);
+    --hh-chip-on-fg: #ffffff;
+    --hh-chip-on-line: #ffd700;
+    /* Rezept-Marker, Haken-Farbe */
+    --hh-badge-bg: rgba(198, 40, 40, 0.15);
+    --hh-badge-fg: #b71c1c;
+    --hh-accent: #c62828;
+    /* Hinweis-Meldung unten */
+    --hh-toast-bg: rgba(15, 56, 34, 0.97);
+    --hh-toast-fg: #fffaf0;
+    --hh-toast-border: 1.5px solid #d4af37;
+}

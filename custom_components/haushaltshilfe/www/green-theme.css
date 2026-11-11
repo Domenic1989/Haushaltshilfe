@@ -765,3 +765,55 @@ body.theme-green .week-switch-btn.active-food {
     box-shadow: 0 4px 15px rgba(0, 184, 148, 0.45) !important;
     font-weight: 900 !important;
 }
+
+/* ========================================================
+   --- ESSENSWAHL, ZUTATEN & REZEPTE (GREEN (SMARAGD & MINT) - body.theme-green) ---
+   Farben für die Fenster "Essen auswählen", "Zutaten" und "Rezepte"
+   (Knöpfe, Felder, Karte, Hinweis). Aufbau steht in home.css.
+   ======================================================== */
+
+body.theme-green {
+    --hh-themed: 1;
+    /* Fenster-Karte */
+    --hh-card-bg: rgba(235, 255, 250, 0.94);
+    --hh-card-border: 2px solid #00b894;
+    --hh-card-radius: 20px;
+    --hh-card-shadow: 0 20px 60px rgba(0, 61, 51, 0.3), inset 0 0 15px rgba(85, 239, 196, 0.25);
+    --hh-card-blur: blur(30px) saturate(180%);
+    /* Schrift */
+    --hh-text: #003d33;
+    --hh-head: #003d33;
+    /* Hauptknopf (z. B. "Auf die Liste", "Übernehmen") */
+    --hh-btn-bg: linear-gradient(135deg, #00a383 0%, #006653 100%);
+    --hh-btn-fg: #ffffff;
+    --hh-btn-border: 1.5px solid #ffffff;
+    --hh-btn-shadow: 0 4px 15px rgba(0, 184, 148, 0.45);
+    /* Nebenknopf (z. B. "Abbrechen", "Schließen") und runde +/- Knöpfe */
+    --hh-sec-bg: rgba(255, 255, 255, 0.8);
+    --hh-sec-fg: #003d33;
+    --hh-sec-border: 1.5px solid #00997a;
+    --hh-ghost-border: 1.5px solid rgba(0, 153, 122, 0.55);
+    /* Eingabe- und Auswahlfelder */
+    --hh-field-bg: rgba(255, 255, 255, 0.95);
+    --hh-field-fg: #003d33;
+    --hh-field-border: 2px solid #00997a;
+    --hh-field-ph: rgba(0, 61, 51, 0.45);
+    --hh-opt-bg: #ffffff;
+    --hh-opt-fg: #003d33;
+    --hh-focus-ring: 0 0 12px rgba(0, 184, 148, 0.4);
+    /* Zeilen, Chips und Reiter */
+    --hh-row-bg: rgba(0, 184, 148, 0.12);
+    --hh-chip-line: rgba(0, 153, 122, 0.6);
+    --hh-chip-fg: #003d33;
+    --hh-chip-on-bg: linear-gradient(135deg, #00a383 0%, #006653 100%);
+    --hh-chip-on-fg: #ffffff;
+    --hh-chip-on-line: #ffffff;
+    /* Rezept-Marker, Haken-Farbe */
+    --hh-badge-bg: rgba(0, 184, 148, 0.22);
+    --hh-badge-fg: #003d33;
+    --hh-accent: #00b894;
+    /* Hinweis-Meldung unten */
+    --hh-toast-bg: rgba(0, 61, 51, 0.96);
+    --hh-toast-fg: #ffffff;
+    --hh-toast-border: 1.5px solid #55efc4;
+}

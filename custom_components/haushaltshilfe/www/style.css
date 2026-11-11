@@ -1,64 +1,320 @@
-:root { 
-    --primary: #34c759; 
-    --accent: rgba(255, 102, 0, 0.2); 
-    --danger: #ff3b30; 
-    --todo: #007aff; 
-    --trash: #5856d6; 
-    --bg: #f2f2f7; 
-    --card: #ffffff; 
-    --text: #1c1c1e; 
-    --gray: #8e8e93; 
-    --app-zoom: 1; 
+/* ==========================================================================
+   HAUS-ZENTRALE · style.css  (Gerüst neu aufgebaut)
+
+   Aufbau der Datei
+     1  Variablen & Zoom-Helfer
+     2  Basis
+     3  App-Gerüst:  Navigation (Handy: unten · Tablet/PC: links), Kopfzeile, Inhalt
+     4  Bausteine:   Eingaben, Buttons, Listen, Karten
+     5  Ansichten:   Einkauf/Haus, Wochenplan, Finanzen, Müll
+     6  Anmeldung
+     7  Fenster:     immer mittig (Handy, Tablet, PC)
+     8  Sonder-Popups: Theme-Menü, "Wer kocht?"
+
+   Layout-Stufen (setzt das Skript im <head> als data-bp am <html>-Tag,
+   bereits mit Integrations-/App-Zoom verrechnet):
+     s  = Handy    (Breite / Zoom  <  768 px)
+     m  = Tablet   (768 – 900 px)
+     l  = PC       (> 900 px)
+   Die Themes (*-theme.css) ändern nur Farben/Optik und bleiben unberührt.
+   ========================================================================== */
+
+/* ==========================================================================
+   1  VARIABLEN & ZOOM-HELFER
+   ========================================================================== */
+:root {
+    /* ★ EINSTELLUNG – Finanzen: so viele Jahre bzw. Monate stehen höchstens nebeneinander
+       (passt es nicht in die Breite, werden es automatisch weniger) */
+    --fin-cols-s: 2;        /* Handy  */
+    --fin-cols-m: 4;        /* Tablet */
+    --fin-cols-l: 4;        /* PC     */
+    --fin-min-s: 8.5rem;    /* Mindestbreite einer Karte am Handy  */
+    --fin-min-ml: 9.5rem;   /* Mindestbreite einer Karte am Tablet/PC */
+
+    /* ★ EINSTELLUNG – Aufgaben (Haus): so viele Aufgaben stehen höchstens nebeneinander */
+    --todo-cols-s: 2;       /* Handy  */
+    --todo-cols-m: 4;       /* Tablet */
+    --todo-cols-l: 4;       /* PC     */
+    --todo-min-s: 8rem;     /* Mindestbreite einer Aufgabe am Handy  */
+    --todo-min-ml: 9.5rem;  /* Mindestbreite einer Aufgabe am Tablet/PC */
+
+    /* ★ EINSTELLUNG – Wochenplan am Tablet/PC: Mindestbreite einer Tageskarte.
+       Kleiner = mehr Tage nebeneinander = weniger Scrollen (Handy bleibt einspaltig) */
+    --week-card-min: 35rem;
+
+    --primary: #34c759;
+    --accent: rgba(255, 102, 0, 0.2);
+    --danger: #ff3b30;
+    --todo: #007aff;
+    --trash: #5856d6;
+    --bg: #f2f2f7;
+    --card: #ffffff;
+    --text: #1c1c1e;
+    --gray: #8e8e93;
+    --app-zoom: 1;                       /* wird vom Zoom-Regler (JS) gesetzt */
     --primary-color: #34c759;
     --card-background-color: rgba(255, 255, 255, 0.9);
     --primary-text-color: #1c1c1e;
+
+    /* Fensterbreiten (zum Anpassen hier ändern) – gelten für Handy UND Tablet gleich
+       und werden automatisch auf die Bildschirmbreite begrenzt.
+       KLEIN  = Löschen, Bestätigen, Eingabe, Essen, Raum, Passwort, User, Menge, "Wer kocht?", Theme-Menü
+       MITTEL = Bearbeiten, Intervall, Einstellungen, Login-Karte
+       GROSS  = Finanz-Monat & Fixkosten */
+    --win-small: 29rem;
+    --win-medium: 38rem;
+    --win-large: 100%;
+
+    /* Gerüst */
+    --rail-w: 0px;                       /* Breite der Seitenleiste (nur Tablet/PC) */
+    --content-max: 100%;
 }
 
-/* --- BASIS SETUP --- */
-/* WICHTIG: Kein calc(16px * var(--app-zoom)) mehr hier, da document.body.style.zoom bereits alles skaliert! */
-html { 
-    font-size: 16px !important; 
-    -webkit-text-size-adjust: 100%;
-} 
+/* Tablet/PC: 1rem = 20px statt 14.5px → gleiche Pixelbreite, daher kleinere rem-Werte */
+:root:where([data-bp="m"], [data-bp="l"]) {
+    --win-small: 21rem;
+    --win-medium: 27.5rem;
+    --win-large: 50rem;
+    --rail-w: 6.6rem;
+    --content-max: 84rem;
+}
 
-body { 
-    font-family: -apple-system, system-ui, sans-serif; 
-    background-color: var(--bg); 
-    margin: 0; 
-    padding: calc(env(safe-area-inset-top) + 10px) 20px calc(8.5rem + env(safe-area-inset-bottom)) 20px; 
-    color: var(--text); 
-    -webkit-tap-highlight-color: transparent; 
-    overflow-x: hidden; 
-    transition: background 0.3s ease; 
+/* Zoom-Helfer: "ganzer Bildschirm" und "Randabstand" in Einheiten, die trotz body-zoom
+   exakt der echten Bildschirmgröße entsprechen (100vw wird von zoom mitskaliert →
+   darum durch --app-zoom teilen). Browser- und App-Zoom ändern den Viewport direkt
+   und wirken dadurch automatisch. */
+body {
+    --z-vw: calc(100vw / var(--app-zoom, 1));
+    --z-vh: calc(100vh / var(--app-zoom, 1));
+    --z-edge: calc(16px / var(--app-zoom, 1));
+}
+
+/* dvh = echte sichtbare Höhe am Handy (ohne Browser-Leisten) */
+@supports (height: 100dvh) {
+    body {
+        --z-vh: calc(100dvh / var(--app-zoom, 1));
+    }
+}
+
+/* ==========================================================================
+   2  BASIS
+   (Zoom steckt in document.body.style.zoom – daher hier kein calc mit --app-zoom)
+   ========================================================================== */
+html {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100%;
+}
+html:where([data-bp="s"]) { font-size: 14.5px !important; }
+html:where([data-bp="m"], [data-bp="l"]) { font-size: 20px !important; }
+
+body {
+    font-family: -apple-system, system-ui, sans-serif;
+    background-color: var(--bg);
+    margin: 0;
+    padding: 0;                          /* Abstände macht das Gerüst (.app-body) */
+    color: var(--text);
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+    transition: background 0.3s ease;
     width: 100%;
     box-sizing: border-box;
 }
 
-/* ========================================================
-   --- SIDEBAR DRAG & DROP STYLING ---
-   ======================================================== */
-.side-btn {
-    user-select: none !important;
-    -webkit-user-select: none !important;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease !important;
+/* ==========================================================================
+   3  APP-GERÜST
+   #app > .app-shell > ( #mainNav  +  .app-body > ( .app-topbar + main.app-main ) )
+   ========================================================================== */
+.app-shell {
+    position: relative;
+    width: 100%;
 }
 
-/* Element, das gerade gezogen wird */
-.side-btn.dragging-side-btn {
-    opacity: 0.65 !important;
-    transform: scale(0.96) !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35) !important;
-    z-index: 100 !important;
-    cursor: grabbing !important;
+.app-body {
+    box-sizing: border-box;
+    width: 100%;
+    /* Handy: Platz oben für die Statuszeile, unten für die schwebende Leiste */
+    padding: calc(env(safe-area-inset-top) + 8px) 12px calc(7.5rem + env(safe-area-inset-bottom)) 12px;
 }
 
-/* Ziel-Position (wohin verschoben wird) */
-.side-btn.drag-over-side-btn {
-    transform: scale(1.04) !important;
-    border: 2px dashed var(--primary, #0984e3) !important;
-    box-shadow: 0 0 15px rgba(9, 132, 227, 0.5) !important;
+.app-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 2.6rem;
+    padding-right: 5.8rem;               /* Platz für den Theme-Button oben rechts */
+    box-sizing: border-box;
 }
 
+.app-main {
+    width: 100%;
+    max-width: var(--content-max);
+    margin: 0 auto;
+}
+
+.app-main > .view { min-width: 0; }
+
+.status-bar {
+    position: static;
+    text-align: left;
+    font-size: 0.7rem;
+    color: var(--gray);
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+/* ----- 3.1 Navigation ----------------------------------------------------
+   Die Themes färben .tab-bar/.tab-item und setzen dabei Höhe/Ausrichtung mit
+   !important. Über die ID #mainNav gewinnen die Regeln hier trotzdem – die
+   Farben/Verläufe der Themes bleiben dabei erhalten.                        */
+.tab-bar {
+    display: flex;
+    background: var(--card);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid #d1d1d6;
+}
+
+#mainNav.tab-bar {
+    position: fixed !important;
+    z-index: 1000 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+
+#mainNav .nav-brand { display: none; }
+
+/* Handy: schwebende Leiste unten */
+:where(html:where([data-bp="s"])) #mainNav.tab-bar {
+    top: auto !important;
+    right: auto !important;
+    left: var(--z-edge, 16px) !important;
+    bottom: calc(var(--z-edge, 16px) * 0.6 + env(safe-area-inset-bottom)) !important;
+    width: calc(var(--z-vw, 100vw) - 2 * var(--z-edge, 16px)) !important;
+    height: 5rem !important;
+    padding: 0 !important;
+    flex-direction: row !important;
+    border-radius: 1.7rem !important;
+    overflow: hidden !important;
+}
+
+/* Tablet/PC: Seitenleiste links über die volle Höhe */
+:where(html:where([data-bp="m"], [data-bp="l"])) #mainNav.tab-bar {
+    top: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: var(--rail-w) !important;
+    height: var(--z-vh, 100vh) !important;
+    padding: 0.7rem 0.5rem 4.6rem 0.5rem !important;   /* unten Platz für den Theme-Button */
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    gap: 0.35rem !important;
+    border-radius: 0 !important;
+    border-top: none !important;
+    border-right: 1.5px solid rgba(128, 128, 128, 0.25) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+}
+
+:where(html:where([data-bp="m"], [data-bp="l"])) #mainNav .nav-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.2rem 0 0.7rem 0;
+    color: var(--text);
+    flex: 0 1 auto;                 /* wird bei wenig Höhe (großer Zoom) zuerst eingespart */
+    min-height: 0;
+    overflow: hidden;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) #mainNav .nav-brand-icon { font-size: 2.1rem; line-height: 1; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #mainNav .nav-brand-name {
+    font-size: 0.55rem;
+    font-weight: 900;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    opacity: 0.75;
+    white-space: nowrap;
+}
+
+/* Reiter teilen sich die Höhe: bis 4.8rem hoch, bei großem Zoom/niedrigem Bildschirm schrumpfen sie mit */
+:where(html:where([data-bp="m"], [data-bp="l"])) #mainNav .tab-item {
+    flex: 1 1 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 2.2rem !important;
+    max-height: 4.8rem !important;
+    padding: 0.2rem 0.1rem !important;
+    border-radius: 1.1rem !important;
+    transform: none !important;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) #mainNav .tab-item .icon {
+    font-size: clamp(1.2rem, calc((var(--z-vh, 100vh) - 10rem) / 12), 1.9rem) !important;
+    margin-bottom: 0.1rem !important;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) #mainNav .tab-item .badge { font-size: 0.6rem !important; top: 0.35rem !important; right: 1.15rem !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #mainNav #t-logout { margin-top: auto !important; }
+
+/* Zeilen-Badges (kleine rote Zahl) liegen oben rechts am Symbol */
+:where(html:where([data-bp="s"])) #mainNav .tab-item .badge { top: 0.3rem !important; right: 6% !important; }
+
+/* Bei sehr hohem Zoom (schmaler Bildschirm) werden Symbole/Beschriftung mit kleiner statt abgeschnitten */
+:where(html:where([data-bp="s"])) #mainNav .tab-item { min-width: 0 !important; font-size: clamp(0.5rem, calc(var(--z-vw, 100vw) / 36), 0.75rem) !important; }
+:where(html:where([data-bp="s"])) #mainNav .tab-item .icon { font-size: clamp(1.1rem, calc(var(--z-vw, 100vw) / 14), 1.6rem) !important; }
+
+/* ----- 3.2 Theme-Button ---------------------------------------------------- */
+.theme-toggle-top {
+    position: absolute;
+    top: calc(env(safe-area-inset-top) + 6px);
+    right: 12px;
+    left: auto;
+    transform: none;
+    background: var(--card);
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 0.4rem 0.8rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    z-index: 1500;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Tablet/PC: Button sitzt unten in der Seitenleiste */
+:where(html:where([data-bp="m"], [data-bp="l"])) .theme-toggle-top {
+    position: fixed !important;
+    top: auto !important;
+    right: auto !important;
+    left: 0.7rem !important;
+    bottom: 0.9rem !important;
+    width: calc(var(--rail-w) - 1.4rem) !important;
+    box-sizing: border-box !important;
+    padding: 0.5rem 0 !important;
+    font-size: 1.25rem !important;
+    border-radius: 16px !important;
+    border-width: 2px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important;
+    z-index: 1500 !important;
+}
+
+/* Tablet/PC: Kopfzeile rechtsbündig, Inhalt rückt neben die Seitenleiste */
+:where(html:where([data-bp="m"], [data-bp="l"])) .app-body {
+    padding: 1rem 1.75rem 2.5rem calc(var(--rail-w) + 1.75rem);
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) .app-topbar {
+    justify-content: flex-end;
+    min-height: 2.2rem;
+    padding-right: 0;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) .status-bar { text-align: right; font-size: 0.85rem; }
+
+/* ==========================================================================
+   4  BAUSTEINE
+   ========================================================================== */
 /* ========================================================
    --- SIDEBAR & FINANCE DRAG & DROP STYLING ---
    ======================================================== */
@@ -133,97 +389,6 @@ body {
     text-align: center;
     flex: 1;
     white-space: nowrap !important;
-}
-
-/* --- Z-INDEX FIX: LÖSCH-MODAL IMMER ÜBER DEM MONATS-MODAL --- */
-body #customDeleteModal,
-body #deleteModal {
-    z-index: 999999 !important;
-}
-
-/* --- EXTRA MOBILE VERKLEINERUNG (NUR FÜRS HANDY & HA APP) --- */
-@media (max-width: 767px) {
-    html {
-        font-size: 14.5px !important;
-    }
-    body {
-        padding: calc(env(safe-area-inset-top) + 10px) 12px calc(7.5rem + env(safe-area-inset-bottom)) 12px !important;
-    }
-    .split-container {
-        gap: 10px !important;
-    }
-    .sidebar {
-        width: max-content !important;
-        flex-shrink: 0 !important;
-    }
-    .side-btn { 
-        background: var(--card); 
-        border: 1px solid #ddd; 
-        padding: 0.75rem 0.65rem !important; 
-        border-radius: 18px; 
-        font-weight: 800; 
-        font-size: 0.75rem !important; 
-        text-align: center; 
-        cursor: pointer; 
-        color: var(--gray); 
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
-        white-space: nowrap !important;
-    }
-    ul {
-        display: grid !important;
-        grid-template-columns: 1fr !important;
-        gap: 12px !important;
-    }
-}
-
-/* --- FINALES THEME-POPUP: HANDY & DESKTOP FIX --- */
-.theme-dropdown {
-    display: none !important;
-    visibility: hidden;
-    opacity: 0;
-    position: fixed; 
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.9);
-    background: var(--card) !important; 
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
-    min-width: 25rem;
-    border-radius: 25px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    z-index: 1000000 !important;
-    border: 1px solid rgba(120, 120, 120, 0.2);
-    overflow: hidden;
-    transition: transform 0.2s ease, opacity 0.2s ease;
-}
-
-.theme-dropdown.show {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    transform: translate(-50%, -50%) scale(1) !important;
-}
-
-.theme-dropdown div {
-    padding: 1.35rem;
-    text-align: center;
-    font-weight: bold;
-    font-size: 1.5rem !important;
-    min-height: 2.3rem;
-    cursor: pointer;
-    color: var(--text) !important; 
-    border-bottom: 1px solid rgba(120, 120, 120, 0.1);
-    -webkit-tap-highlight-color: transparent;
-    white-space: nowrap;
-}
-
-
-.theme-dropdown div:active {
-    background: rgba(120, 120, 120, 0.2);
-}
-
-.theme-dropdown div:last-child {
-    border-bottom: none;
 }
 
 .tab-item { position: relative; }
@@ -360,7 +525,7 @@ body #deleteModal {
 
 body.theme-dark #editModal input { border-color: rgba(255,255,255,0.1); }
 
-button[onclick^="openEdit"] { display: flex; align-items: center; justify-content: center; transition: transform 0.1s active; }
+button[onclick^="openEdit"] { display: flex; align-items: center; justify-content: center; transition: transform 0.1s; }
 button[onclick^="openEdit"]:active { transform: scale(0.9); background: #e5e5ea; }
 
 /* --- GEZIELTER FIX FÜR UHRZEIT-FELDER --- */
@@ -391,28 +556,9 @@ button[onclick^="openEdit"]:active { transform: scale(0.9); background: #e5e5ea;
     border: 0; 
     border-top: 1px solid rgba(255,255,255,0.1); 
     margin: 15px 0; 
-}  
-
-.theme-toggle-top { 
-    position: absolute; 
-    top: calc(env(safe-area-inset-top) + 2.2rem);
-    right: 20px; 
-    left: auto; 
-    transform: none; 
-    background: var(--card); 
-    border: 1px solid #ddd; 
-    border-radius: 12px; 
-    padding: 0.4rem 0.8rem; 
-    font-size: 1.1rem; 
-    cursor: pointer; 
-    z-index: 1500; 
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-    color: var(--text); 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
 }
 
+/* ----- Karten, Seitenleiste, Eingaben ----- */
 .split-container { display: flex; gap: 15px; width: 100%; box-sizing: border-box; align-items: flex-start; }
 .sidebar { display: flex; flex-direction: column; gap: 10px; width: max-content; flex-shrink: 0; }
 .side-btn { 
@@ -436,32 +582,6 @@ button[onclick^="openEdit"]:active { transform: scale(0.9); background: #e5e5ea;
 .side-btn-add { border: 2px dashed var(--accent); color: var(--accent); background: transparent; }
 .main-content { flex: 1; min-width: 0; }
 
-#loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 0; }
-
-.login-card { 
-    background: var(--card); 
-    padding: 1.8rem; 
-    border-radius: 26px; 
-    box-shadow: 0 20px 50px rgba(0,0,0,0.1); 
-    text-align: center; 
-    position: relative; 
-    color: var(--text); 
-    box-sizing: border-box; 
-}
-
-.user-grid-login { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
-.user-btn { width: 100%; padding: 0.75rem; border-radius: 18px; border: 1px solid #ddd; background: var(--card); font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.95rem; position: relative; color: var(--text); white-space: nowrap !important; }
-.user-btn.selected { background: #d1ffd1 !important; border-color: var(--primary) !important; border-width: 2.5px; transform: scale(1.03); }
-.status-bar { 
-    position: absolute; 
-    top: calc(env(safe-area-inset-top) + 10px); 
-    right: 20px; 
-    text-align: right; 
-    font-size: 0.7rem; 
-    color: var(--gray); 
-    font-weight: 600; 
-    line-height: 1.3; 
-}
 header { margin-bottom: 20px; margin-top: 20px; }
 h1 { font-size: 2rem; font-weight: 800; margin: 0; color: var(--text); white-space: nowrap; }
 
@@ -489,21 +609,7 @@ li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: co
 .day-label span { font-size: 1.5rem; margin-bottom: 5px; }
 .day-input { flex: 2 1 120px; min-width: 80px; border: none; font-size: 1rem; outline: none; color: var(--text); background: transparent; font-weight: 500; pointer-events: auto !important; user-select: text !important; -webkit-user-select: text !important; box-sizing: border-box; }
 
-/* Tab-Bar skaliert durch Zoom ebenfalls sauber über die volle Breite */
-.tab-bar { 
-    position: fixed; 
-    bottom: 0; 
-    left: 0; 
-    right: 0; 
-    width: calc(100vw / var(--app-zoom, 1));
-    background: var(--card); 
-    backdrop-filter: blur(20px); 
-    -webkit-backdrop-filter: blur(20px); 
-    display: flex; 
-    padding: 0.9rem 0 calc(1.25rem + env(safe-area-inset-bottom)); 
-    border-top: 1px solid #d1d1d6; 
-    z-index: 1000; 
-}
+/* ----- Navigations-Elemente (Farben je Reiter) ----- */
 .tab-item { border: none; background: none; color: var(--gray); font-size: 0.75rem; font-weight: 700; display: flex; flex-direction: column; align-items: center; flex: 1; cursor: pointer; white-space: nowrap !important; }
 .tab-item.active-shop { color: var(--primary); }
 .tab-item.active-food { color: var(--accent); }
@@ -512,6 +618,96 @@ li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: co
 .tab-item.active-finance { color: var(--primary); }
 .tab-item .icon { font-size: 1.6rem; margin-bottom: 5px; }
 
+
+/* ----- Handy (s): kompaktere Bausteine ------------------------------------ */
+:where(html:where([data-bp="s"])) .split-container { gap: 10px !important; }
+:where(html:where([data-bp="s"])) .sidebar { width: max-content !important; flex-shrink: 0 !important; }
+:where(html:where([data-bp="s"])) .side-btn {
+    background: var(--card);
+    border: 1px solid #ddd;
+    padding: 0.75rem 0.65rem !important;
+    border-radius: 18px;
+    font-weight: 800;
+    font-size: 0.75rem !important;
+    text-align: center;
+    cursor: pointer;
+    color: var(--gray);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    white-space: nowrap !important;
+}
+:where(html:where([data-bp="s"])) ul {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+}
+:where(html:where([data-bp="s"])) .app-main header { margin-top: 6px; }
+:where(html:where([data-bp="s"])) h1 { white-space: normal; overflow-wrap: anywhere; }
+
+/* ----- Tablet/PC (m, l): größere Bausteine, Listen als Kachel-Raster ------ */
+:where(html:where([data-bp="m"], [data-bp="l"])) .input-card {
+    background: var(--card);
+    padding: 0.75rem 1.25rem !important;
+    border-radius: 20px;
+    display: flex !important;
+    align-items: center !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    margin-bottom: 1.25rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    gap: 15px !important;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) .main-input {
+    font-size: 1.5rem !important;
+    height: 3.5rem !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text);
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) .btn-add {
+    flex-shrink: 0 !important;
+    width: 4.25rem !important;
+    height: 4.25rem !important;
+    font-size: 2.2rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) .sidebar { width: max-content !important; gap: 0.8rem !important; flex-shrink: 0 !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) .side-btn {
+    width: 100% !important;
+    min-height: 4.25rem !important;
+    padding: 0.75rem 1.25rem !important;
+    font-size: 0.9rem !important;
+    border-radius: 28px !important;
+    white-space: nowrap !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) ul {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)) !important;
+    gap: 15px !important;
+    align-items: stretch !important;
+    width: 100% !important;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) li { width: auto !important; max-width: 100% !important; min-width: 0 !important; margin: 0 !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) .week-grid { display: grid !important; grid-template-columns: 1fr !important; gap: 15px !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) .admin-btn { padding: 0.9rem !important; font-size: 0.9rem !important; border-radius: 15px !important; margin-bottom: 15px !important; white-space: nowrap !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) .cat-btn { padding: 1rem 1.4rem !important; font-size: 0.85rem !important; border-radius: 20px !important; margin-right: 10px !important; margin-bottom: 10px !important; white-space: nowrap !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) .fav-chip { padding: 1rem 1.4rem !important; font-size: 0.85rem !important; border-radius: 25px !important; box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important; min-height: 0.5rem; white-space: nowrap !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) .del-fav { font-size: 1.5rem !important; margin-left: 1rem !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) .user-btn { padding: 1rem !important; font-size: 1.1rem !important; white-space: nowrap !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) .user-del-x, :where(html:where([data-bp="m"], [data-bp="l"])) .user-edit-pen { width: 1.8rem !important; height: 1.8rem !important; font-size: 0.9rem !important; }
+
+
+/* ==========================================================================
+   5  ANSICHTEN
+   ========================================================================== */
 .trash-row { display: flex; flex-direction: column; padding: 0.95rem 0; border-bottom: 1px solid #f2f2f7; color: var(--text); }
 .trash-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .trash-name { font-weight: 700; font-size: 1.1rem; white-space: nowrap !important; }
@@ -519,7 +715,7 @@ li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: co
 .trash-date { font-size: 0.85rem; color: var(--gray); margin-top: 5px; font-weight: 600; }
 
 /* --- MONATE & JAHRE BASIS --- */
-#months-container, #years-container { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+#months-container, #years-container { display: grid; gap: 10px; width: 100%; margin: 0 auto; box-sizing: border-box; }
 .month-card { background: var(--card); border-radius: 25px; padding: 1rem; margin-bottom: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.1s; cursor: pointer; display: flex; flex-direction: column; width: 100%; min-width: 0; box-sizing: border-box; }
 .month-card:active { transform: scale(0.96); }
 .month-card h2 { margin: 0 0 12px 0; font-size: 1.1rem; color: var(--primary); border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; white-space: nowrap !important; gap: 5px; }
@@ -638,673 +834,131 @@ li { background: var(--card); padding: 1.1rem; display: flex; flex-direction: co
     font-size: 0.9rem;
 }
 
-/* --- TABLET / PC / LAPTOP OPTIMIERUNG --- */
-@media (min-width: 768px) {
-    html { 
-        font-size: 20px !important; 
-    }
-    
-    body { 
-        padding: 1.75rem !important; 
-        padding-bottom: 11rem !important; 
-        margin: 0; 
-        width: 100%; 
-        box-sizing: border-box; 
-    }
 
-    .input-card { 
-        background: var(--card); 
-        padding: 0.75rem 1.25rem !important; 
-        border-radius: 20px; 
-        display: flex !important; 
-        align-items: center !important; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
-        margin-bottom: 1.25rem !important; 
-        width: 100% !important; 
-        box-sizing: border-box !important; 
-        gap: 15px !important; 
-    }
+/* ----- Wochenplan: bricht um statt aus dem Bild zu laufen ------------------ */
+.week-switcher { flex-wrap: wrap; }
+.week-switch-btn { min-width: 0; }
+.week-switch-btn:not(.reset-week-btn) { flex: 1 1 8rem; }
+.week-switch-btn.reset-week-btn { flex: 1 1 auto; white-space: normal; text-align: center; }
+:where(html:where([data-bp="s"])) .week-switch-btn.reset-week-btn { flex-basis: 100%; }
 
-    .main-input { 
-        font-size: 1.5rem !important; 
-        height: 3.5rem !important; 
-        flex: 1 !important; 
-        min-width: 0 !important; 
-        border: none; 
-        outline: none; 
-        background: transparent; 
-        color: var(--text); 
-    }
+/* Handy: Tag-Karte als Raster – links der Tag, rechts Gerichte, darunter "Wer kocht?" */
+:where(html:where([data-bp="s"])) .day-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px 12px;
+    align-items: center;
+}
+:where(html:where([data-bp="s"])) .meal-inputs-inline { flex-wrap: wrap; }
+:where(html:where([data-bp="s"])) .meal-field-group { flex: 1 1 5.5rem; }
+:where(html:where([data-bp="s"])) .day-card > .day-label { grid-column: 1; grid-row: 1 / span 2; }
+:where(html:where([data-bp="s"])) .day-card > .meal-inputs-inline,
+:where(html:where([data-bp="s"])) .day-card > .cook-select,
+:where(html:where([data-bp="s"])) .day-card > .custom-cook-wrapper { grid-column: 2; min-width: 0; }
+:where(html:where([data-bp="s"])) .day-card > .cook-select { width: 100% !important; max-width: none; }
+:where(html:where([data-bp="s"])) .day-card > .custom-cook-wrapper { width: 100%; margin-left: 0 !important; justify-content: stretch !important; }
+:where(html:where([data-bp="s"])) .day-card .custom-cook-btn { width: 100% !important; min-width: 0 !important; max-width: 100% !important; }
 
-    .btn-add { 
-        flex-shrink: 0 !important; 
-        width: 4.25rem !important; 
-        height: 4.25rem !important; 
-        font-size: 2.2rem !important; 
-        display: flex !important; 
-        align-items: center !important; 
-        justify-content: center !important; 
-    }
 
-    .sidebar { 
-        width: max-content !important; 
-        gap: 0.8rem !important; 
-        flex-shrink: 0 !important; 
-    }
-    
-    .side-btn { 
-        width: 100% !important; 
-        min-height: 4.25rem !important; 
-        padding: 0.75rem 1.25rem !important; 
-        font-size: 0.9rem !important; 
-        border-radius: 28px !important; 
-        white-space: nowrap !important; 
-        display: flex !important; 
-        align-items: center !important; 
-        justify-content: center !important; 
-        box-sizing: border-box !important;
-    }
+/* ----- Finanzen: Kopf, Bedienleiste, Jahres-/Monatskarten ------------------ */
+.finance-head-back { display: flex; align-items: center; gap: 12px; }
 
-    ul {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        gap: 15px !important;
-        align-items: stretch !important;
-        width: 100% !important;
-    }
-
-    li {
-        flex: 1 1 max(10rem, calc((100% - 75px) / 6)) !important;
-        width: auto !important;
-        max-width: 100% !important;
-        min-width: 0 !important;
-        margin: 0 !important;
-    }
-
-    .week-grid { display: grid !important; grid-template-columns: 1fr !important; gap: 15px !important; }
-    .admin-btn { padding: 0.9rem !important; font-size: 0.9rem !important; border-radius: 15px !important; margin-bottom: 15px !important; white-space: nowrap !important; }
-    .cat-btn { padding: 1rem 1.4rem !important; font-size: 0.85rem !important; border-radius: 20px !important; margin-right: 10px !important; margin-bottom: 10px !important; white-space: nowrap !important; }
-    .fav-chip { padding: 1rem 1.4rem !important; font-size: 0.85rem !important; border-radius: 25px !important; box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important; min-height: 0.5rem; white-space: nowrap !important; }
-    .del-fav { font-size: 1.5rem !important; margin-left: 1rem !important; }
-    
-    .tab-bar { min-height: 5.5rem !important; height: auto !important; padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !important; }
-    .tab-item .icon { font-size: 2.2rem !important; }
-    .user-btn { padding: 1rem !important; font-size: 1.1rem !important; white-space: nowrap !important; }
-    .user-del-x, .user-edit-pen { width: 1.8rem !important; height: 1.8rem !important; font-size: 0.9rem !important; }
-
-    .theme-toggle-top { 
-        position: absolute !important; 
-        top: calc(env(safe-area-inset-top) + 2.5rem) !important; 
-        right: 1.75rem !important; 
-        left: auto !important; 
-        transform: none !important; 
-        padding: 0.4rem 1rem !important; 
-        font-size: 1.5rem !important; 
-        border-radius: 16px !important; 
-        border-width: 2px !important; 
-        box-shadow: 0 4px 15px rgba(0,0,0,0.15) !important; 
-        z-index: 1000 !important; 
-        display: flex !important; 
-        justify-content: center !important; 
-        align-items: center !important; 
-    }
-    
-    .status-bar {
-        right: 1.75rem !important;
-        font-size: 0.85rem !important;
-    }
-
-    #months-container, #years-container { 
-        display: grid !important; 
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important; 
-        gap: 1rem !important; 
-        margin: 0 !important;
-        width: 100% !important;
-    }
-
-    .month-card, #years-container .month-card { 
-        padding: 1.1rem !important; 
-        margin-bottom: 0 !important; 
-        border-radius: 26px !important; 
-        min-width: 0 !important;
-        box-sizing: border-box !important;
-    }
-    
-    .month-card h2, #years-container .month-card h3 { 
-        font-size: 1.4rem !important; 
-        margin-bottom: 0.75rem !important; 
-        white-space: nowrap !important;
-    }
-    
-    .month-card .finance-item { 
-        font-size: 1.1rem !important; 
-        padding: 0.6rem 0.7rem !important; 
-        margin-bottom: 0.4rem !important; 
-        border-radius: 14px !important; 
-    }
-    
-    #years-container .month-card div { 
-        font-size: 1rem !important; 
-    }
-    
-    #years-container .month-card .summary-total, .summary-total { 
-        font-size: 1.25rem !important; 
-        margin-top: 0.6rem !important; 
-        padding-top: 0.6rem !important; 
-        border-top: 2px solid rgba(0,0,0,0.1) !important; 
-    }
-
-    .finance-summary { 
-        font-size: 1rem !important; 
-        padding-top: 0.75rem !important; 
-        margin-top: 0.75rem !important; 
-    }
-    
-    .summary-line { 
-        display: flex !important; 
-        justify-content: space-between !important; 
-        margin-bottom: 0.3rem !important; 
-    }
+.finance-controls {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    margin: 10px 0 20px 0;
+    box-sizing: border-box;
 }
 
-@media (hover: none), (pointer: coarse), (max-device-width: 900px) {
-    body #months-container, body #years-container { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; width: 100% !important; max-width: 100% !important; margin: 0 auto !important; justify-content: center !important; box-sizing: border-box !important; }
-    body #months-container .month-card, body #years-container .month-card { display: flex !important; flex-direction: column !important; width: 100% !important; min-width: 0 !important; max-width: 100% !important; flex: unset !important; padding: 12px !important; margin: 0 !important; box-sizing: border-box !important; overflow: hidden !important; }
-    body #months-container .month-card h2, body #months-container .month-card h3, body #years-container .month-card h3, body .month-card .summary-total { white-space: normal !important; word-break: break-word !important; font-size: 0.95rem !important; }
-    body .input-card { padding: 0.65rem !important; margin-bottom: 15px !important; gap: 8px !important; }
-    body .main-input { font-size: 1.05rem !important; height: 2.5rem !important; }
-    body .input-card .btn-add { width: 2.8rem !important; height: 2.8rem !important; font-size: 1.4rem !important; }
+/* Handy: 2 Karten pro Zeile · Tablet/PC: so viele wie passen */
+#months-container, #years-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(max(var(--fin-min-s), calc((100% - (var(--fin-cols-s) - 1) * 10px) / var(--fin-cols-s) - 1px)), 1fr));
+    gap: 10px;
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) #months-container, :where(html:where([data-bp="m"], [data-bp="l"])) #years-container {
+    grid-template-columns: repeat(auto-fill, minmax(max(var(--fin-min-ml), calc((100% - (var(--fin-cols-m) - 1) * 1rem) / var(--fin-cols-m) - 1px)), 1fr)) !important;
+    gap: 1rem !important;
+}
+:where(html:where([data-bp="l"])) #months-container, :where(html:where([data-bp="l"])) #years-container {
+    grid-template-columns: repeat(auto-fill, minmax(max(var(--fin-min-ml), calc((100% - (var(--fin-cols-l) - 1) * 1rem) / var(--fin-cols-l) - 1px)), 1fr)) !important;
 }
 
+:where(html:where([data-bp="s"])) #months-container .month-card, :where(html:where([data-bp="s"])) #years-container .month-card {
+    padding: 12px !important;
+    overflow: hidden !important;
+}
+:where(html:where([data-bp="s"])) #months-container .month-card h2, :where(html:where([data-bp="s"])) #months-container .month-card h3, :where(html:where([data-bp="s"])) #years-container .month-card h3 {
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+    font-size: 0.95rem !important;
+}
+:where(html:where([data-bp="s"])) .input-card { padding: 0.65rem !important; margin-bottom: 15px !important; gap: 8px !important; }
+:where(html:where([data-bp="s"])) .main-input { font-size: 1.05rem !important; height: 2.5rem !important; }
+:where(html:where([data-bp="s"])) .input-card .btn-add { width: 2.8rem !important; height: 2.8rem !important; font-size: 1.4rem !important; }
 
-/* ========================================================
-   --- 1. AUSNAHMEN: ZENTRIERTE FENSTER (LÖSCHEN, PASSWORT, FOOD, SHOPPING) ---
-   ======================================================== */
-body #deleteModal,
-body #customDeleteModal,
-body #customConfirmModal,
-body #customInputModal,
-body #customFoodModal,
-body #roomModal,
-body #passwordModal,
-body #userModal,
-body #shopQtyModal {
-    position: fixed !important;
-    inset: 0 !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: calc(100vw / var(--app-zoom, 1)) !important;
-    height: calc(100vh / var(--app-zoom, 1)) !important;
-    height: calc(100dvh / var(--app-zoom, 1)) !important;
-    background: rgba(0, 0, 0, 0.6) !important;
-    backdrop-filter: blur(5px) !important;
-    -webkit-backdrop-filter: blur(5px) !important;
-    /* WICHTIG: Hier KEIN display: none!, damit dein JavaScript das Modal normal steuern kann */
-    align-items: center !important;
-    justify-content: center !important;
-    z-index: 999999 !important;
-    padding: 20px !important;
+:where(html:where([data-bp="m"], [data-bp="l"])) .month-card, :where(html:where([data-bp="m"], [data-bp="l"])) #years-container .month-card {
+    padding: 1.1rem !important;
+    margin-bottom: 0 !important;
+    border-radius: 26px !important;
+    min-width: 0 !important;
     box-sizing: border-box !important;
 }
+:where(html:where([data-bp="m"], [data-bp="l"])) .month-card h2, :where(html:where([data-bp="m"], [data-bp="l"])) #years-container .month-card h3 { font-size: 1.4rem !important; margin-bottom: 0.75rem !important; white-space: nowrap !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) .month-card .finance-item { font-size: 1.1rem !important; padding: 0.6rem 0.7rem !important; margin-bottom: 0.4rem !important; border-radius: 14px !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #years-container .month-card div { font-size: 1rem !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #years-container .month-card .summary-total, :where(html:where([data-bp="m"], [data-bp="l"])) .summary-total {
+    font-size: 1.25rem !important;
+    margin-top: 0.6rem !important;
+    padding-top: 0.6rem !important;
+    border-top: 2px solid rgba(0,0,0,0.1) !important;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) .finance-summary { font-size: 1rem !important; padding-top: 0.75rem !important; margin-top: 0.75rem !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) .summary-line { display: flex !important; justify-content: space-between !important; margin-bottom: 0.3rem !important; }
 
-body #deleteModal > div,
-body #customDeleteModal > div,
-body #customConfirmModal > div,
-body #customInputModal > div,
-body #customFoodModal > div,
-body #roomModal > div,
-body #passwordModal > div,
-body #userModal > div,
-body #shopQtyModal > div {
-    position: relative !important;
-    width: 100% !important;
-    max-width: min(420px, 90vw) !important;
-    min-width: 280px !important;
-    height: auto !important;
-    max-height: 85vh !important;
-    margin: auto !important;
-    background: var(--card) !important;
-    border-radius: 26px !important;
-    padding: 24px !important;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important;
+
+/* ==========================================================================
+   6  ANMELDUNG  (Vollbild-Ebene, Karte immer mittig)
+   ========================================================================== */
+#loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 0; }
+
+.login-card { 
+    background: var(--card); 
+    padding: 1.8rem; 
+    border-radius: 26px; 
+    box-shadow: 0 20px 50px rgba(0,0,0,0.1); 
+    text-align: center; 
+    position: relative; 
+    color: var(--text); 
+    box-sizing: border-box; 
+}
+
+.user-grid-login { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+.user-btn { width: 100%; padding: 0.75rem; border-radius: 18px; border: 1px solid #ddd; background: var(--card); font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.95rem; position: relative; color: var(--text); white-space: nowrap !important; }
+.user-btn.selected { background: #d1ffd1 !important; border-color: var(--primary) !important; border-width: 2.5px; transform: scale(1.03); }
+
+#loginOverlay { padding: var(--z-edge, 16px); box-sizing: border-box; }
+
+body #loginOverlay .login-card {
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
     align-items: stretch !important;
-    text-align: center !important;
-    box-sizing: border-box !important;
-    overflow-y: auto !important;
-}
-
-body div[id*="Modal"]:not(#loginOverlay):not(#settingsOverlay):not(#intervalModal):not(#editModal):not(#finance-modal):not(#fixkostenModal):not(#deleteModal):not(#customDeleteModal):not(#customConfirmModal):not(#customInputModal):not(#customFoodModal):not(#passwordModal):not(#shopQtyModal):not(#roomModal):not(#userModal),
-body div[id*="modal"]:not(#loginOverlay):not(#settingsOverlay):not(#intervalModal):not(#editModal):not(#finance-modal):not(#fixkostenModal):not(#deleteModal):not(#customDeleteModal):not(#customConfirmModal):not(#customInputModal):not(#customFoodModal):not(#passwordModal):not(#shopQtyModal):not(#roomModal):not(#userModal):not(#modal-header-fixed):not(#modal-content),
-body div[id*="Overlay"]:not(#loginOverlay):not(#settingsOverlay):not(#toastOverlay),
-body .modal-overlay:not(#loginOverlay):not(#settingsOverlay) {
-    position: fixed !important;
-    inset: 0 !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: calc(100vw / var(--app-zoom, 1)) !important;
-    height: calc(100vh / var(--app-zoom, 1)) !important;
-    height: calc(100dvh / var(--app-zoom, 1)) !important;
-    padding: calc(15px / var(--app-zoom, 1)) !important;
-    margin: 0 !important;
-    box-sizing: border-box !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    overflow: hidden !important;
-    transform: none !important;
-}
-
-body div[id*="Modal"]:not(#intervalModal):not(#editModal):not(#finance-modal):not(#fixkostenModal):not(#deleteModal):not(#customDeleteModal):not(#customConfirmModal):not(#customInputModal):not(#customFoodModal):not(#passwordModal):not(#shopQtyModal):not(#roomModal):not(#userModal) > div,
-body div[id*="modal"]:not(#intervalModal):not(#editModal):not(#finance-modal):not(#fixkostenModal):not(#deleteModal):not(#customDeleteModal):not(#customConfirmModal):not(#customInputModal):not(#customFoodModal):not(#passwordModal):not(#shopQtyModal):not(#roomModal):not(#userModal):not(#modal-header-fixed):not(#modal-content) > div,
-body .modal-overlay > div,
-body .modal-card {
-    position: relative !important;
     width: 100% !important;
-    max-width: 100% !important;
-    height: 100% !important;
-    height: calc(100dvh / var(--app-zoom, 1) - 30px / var(--app-zoom, 1)) !important;
-    max-height: calc(100dvh / var(--app-zoom, 1) - 30px / var(--app-zoom, 1)) !important;
-    margin: auto !important;
-    border-radius: 20px !important;
-    padding: calc(20px / var(--app-zoom, 1)) !important;
-    box-sizing: border-box !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: flex-start !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-}
-/* ========================================================
-   --- 2. FINANZ- (MONAT) & FIXKOSTEN-MODALS (AUCH VOLLBILD) ---
-   ======================================================== */
-body #finance-modal,
-body #fixkostenModal {
-    position: fixed !important;
-    inset: 0 !important;
-    top: 0 !important;
-    left: 0 !important;
-    background: rgba(0, 0, 0, 0.8) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    z-index: 10002 !important;
-    align-items: center !important;     /* Zentriert das innere Fenster */
-    justify-content: center !important; /* Zentriert das innere Fenster */
-    padding: calc(15px / var(--app-zoom, 1)) !important; /* Gibt den Rand rundherum vor */
-    box-sizing: border-box !important;
-    width: calc(100vw / var(--app-zoom, 1)) !important;
-    height: calc(100vh / var(--app-zoom, 1)) !important;
-    height: calc(100dvh / var(--app-zoom, 1)) !important;
-}
-
-body #finance-modal > div,
-body #fixkostenModal > div {
-    position: relative !important;
-    background: var(--card) !important;
-    color: var(--text) !important;
-    width: 96% !important;
-    max-width: 100% !important;
-    height: 100% !important;
-    height: calc(100dvh / var(--app-zoom, 1) - 30px / var(--app-zoom, 1)) !important;
-    max-height: calc(100dvh / var(--app-zoom, 1) - 30px / var(--app-zoom, 1)) !important;
-    margin: auto !important;
-    border-radius: 10px !important; /* Schöne abgerundete Ecken */
-    padding: calc(20px / var(--app-zoom, 1)) !important;
-    box-sizing: border-box !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: flex-start !important;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important;
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-}
-
-body #finance-modal button[onclick="closeFinanceModal()"],
-body #fixkostenModal > div > button:first-of-type {
-    position: absolute !important;
-    top: 14px !important;
-    right: 14px !important;
-    left: auto !important;
-    bottom: auto !important;
-    width: 2.6rem !important;
-    height: 2.6rem !important;
-    min-height: unset !important;
-    font-size: 1.2rem !important;
-    border-radius: 50% !important;
-    background: rgba(255, 255, 255, 0.35) !important;
-    color: var(--text) !important;
-    border: 1px solid rgba(120, 120, 120, 0.2) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    cursor: pointer !important;
-    z-index: 10005 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-}
-
-body #fixkostenModal > div > button:last-of-type {
-    display: none !important;
-}
-
-body #finance-modal #modal-header-fixed {
-    position: relative !important;
-    flex: 0 0 auto !important;
-    width: 100% !important;
+    max-width: var(--win-medium) !important;   /* gleiche Breite auf Handy & Tablet, nie breiter als der Bildschirm */
     min-width: 0 !important;
     height: auto !important;
-    padding: 4px 0 14px 0 !important;
-    margin: 0 !important;
-    background: transparent !important;
-    border-bottom: 1px solid rgba(120, 120, 120, 0.2) !important;
-    box-sizing: border-box !important;
-    display: block !important;
-    z-index: 10 !important;
-}
-
-body #finance-modal #modal-header-fixed > div:first-child {
-    padding-right: 3.2rem !important;
-    margin-bottom: 12px !important;
-    height: auto !important;
-    background: transparent !important;
-}
-
-body #finance-modal #modal-header-fixed h2 {
-    font-size: 1.4rem !important;
-    margin: 0 !important;
-    text-align: left !important;
-    color: var(--text) !important;
-}
-
-body #finance-modal .finance-input-row {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    gap: 8px !important;
-    width: 100% !important;
-    height: auto !important;
-    margin: 0 !important;
-    align-items: center !important;
-    box-sizing: border-box !important;
-    background: transparent !important;
-}
-
-body #finance-modal .finance-input-row input[type="number"] {
-    width: 22% !important;
-    flex: 0 0 22% !important;
-    height: 3.2rem !important;
-    font-size: 1rem !important;
-    padding: 0 8px !important;
-    margin: 0 !important;
-    background: rgba(255, 255, 255, 0.85) !important;
-    color: #1c1c1e !important;
-    border: 2px solid var(--primary) !important;
-    border-radius: 12px !important;
-    box-sizing: border-box !important;
-}
-
-body #finance-modal .finance-input-row input[type="text"] {
-    flex: 1 1 auto !important;
-    width: auto !important;
-    height: 3.2rem !important;
-    font-size: 1rem !important;
-    padding: 0 10px !important;
-    margin: 0 !important;
-    background: rgba(255, 255, 255, 0.85) !important;
-    color: #1c1c1e !important;
-    border: 2px solid var(--primary) !important;
-    border-radius: 12px !important;
-    box-sizing: border-box !important;
-}
-
-body #finance-modal .finance-input-row select {
-    width: 3.4rem !important;
-    flex: 0 0 3.4rem !important;
-    height: 3.2rem !important;
-    font-size: 1.3rem !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    background: rgba(255, 255, 255, 0.85) !important;
-    color: #1c1c1e !important;
-    border: 2px solid var(--primary) !important;
-    border-radius: 12px !important;
-    text-align: center !important;
-    box-sizing: border-box !important;
-}
-
-body #finance-modal .finance-input-row .btn-add {
-    width: 3.8rem !important;
-    flex: 0 0 3.8rem !important;
-    height: 3.2rem !important;
-    font-size: 1rem !important;
-    margin: 0 !important;
-    background: var(--primary) !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: 12px !important;
-    font-weight: 800 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-body #finance-modal #modal-content {
-    position: relative !important;
-    background: transparent !important;
-    color: var(--text) !important;
-    overflow-y: auto !important;
-    flex: 1 1 auto !important;
-    width: 100% !important;
-    padding: 12px 4px !important;
-    margin: 0 !important;
-    display: block !important;
-    box-sizing: border-box !important;
-}
-
-body #finance-modal .finance-item {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 0.75rem 1rem !important;
-    font-size: 1rem !important;
-    font-weight: 600 !important;
-    border-radius: 12px !important;
-    margin-bottom: 8px !important;
-    background: rgba(255, 255, 255, 0.65) !important;
-    color: var(--text) !important;
-}
-
-body #fixkostenList {
-    overflow-y: auto !important;
-    flex: 1 1 auto !important;
-    width: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 8px !important;
-    box-sizing: border-box !important;
-    padding-right: 5px !important;
-    background: transparent !important;
-}
-
-/* ========================================================
-   --- 3. ZENTRIERTE AUSNAHMEN (LÖSCH-, PASSWORT-, FOOD- & SHOPPING-FENSTER) ---
-   ======================================================== */
-body #deleteModal,
-body #customDeleteModal,
-body #customConfirmModal,
-body #customInputModal,
-body #customFoodModal,
-body #roomModal,
-body #passwordModal,
-body #userModal,
-bovy .cook-modal-card
-body #shopQtyModal {
-    position: fixed !important;
-    inset: 0 !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: calc(100vw / var(--app-zoom, 1)) !important;
-    height: calc(100vh / var(--app-zoom, 1)) !important;
-    height: calc(100dvh / var(--app-zoom, 1)) !important;
-    background: rgba(0, 0, 0, 0.6) !important;
-    backdrop-filter: blur(5px) !important;
-    -webkit-backdrop-filter: blur(5px) !important;
-    display: none !important;
-    align-items: center !important;
-    justify-content: center !important;
-    z-index: 999999 !important;
-    padding: 20px !important;
-    box-sizing: border-box !important;
-}
-
-body #deleteModal.show, body #deleteModal[style*="display: flex"], body #deleteModal[style*="display:flex"],
-body #customDeleteModal.show, body #customDeleteModal[style*="display: flex"], body #customDeleteModal[style*="display:flex"],
-body #customConfirmModal.show, body #customConfirmModal[style*="display: flex"], body #customConfirmModal[style*="display:flex"],
-body #customInputModal.show, body #customInputModal[style*="display: flex"], body #customInputModal[style*="display:flex"],
-body #customFoodModal.show, body #customFoodModal[style*="display: flex"], body #customFoodModal[style*="display:flex"],
-body #roomModal.show, body #roomModal[style*="display: flex"], body #roomModal[style*="display:flex"],
-body #passwordModal.show, body #passwordModal[style*="display: flex"], body #passwordModal[style*="display:flex"],
-body #userModal.show, body #userModal[style*="display: flex"], body #userModal[style*="display:flex"],
-body.cook-modal-card body .cook-modal-card[style*="display: flex"], body .cook-modal-card[style*="display:flex"],
-body.custom-cook-wrapper body .custom-cook-wrapper[style*="display: flex"], body .custom-cook-wrapper[style*="display:flex"],
-body #shopQtyModal.show, body #shopQtyModal[style*="display: flex"], body #shopQtyModal[style*="display:flex"] {
-    display: flex !important;
-}
-
-body #deleteModal > div,
-body #customDeleteModal > div,
-body #customConfirmModal > div,
-body #customInputModal > div,
-body #customFoodModal > div,
-body #roomModal > div,
-body #passwordModal > div,
-body #userModal > div,
-body .cook-modal-card > div,
-body .custom-cook-wrapper > div,
-body #shopQtyModal > div {
-    position: relative !important;
-    width: 100% !important;
-    max-width: min(420px, 90vw) !important;
-    min-width: 280px !important;
-    height: auto !important;             /* HIER GEÄNDERT: Höhe passt sich dem Inhalt an */
-    max-height: 85vh !important;         /* Begrenzt, damit es nicht überläuft */
-    min-height: unset !important;        /* Keine erzwungene Mindesthöhe mehr */
+    max-height: calc(var(--z-vh, 100vh) - 2 * var(--z-edge, 16px)) !important;
     margin: auto !important;
-    background: var(--card) !important;
-    border-radius: 26px !important;
-    padding: 24px !important;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
-    align-items: stretch !important;
-    text-align: center !important;
-    box-sizing: border-box !important;
-    overflow-y: auto !important;
-}
-
-body #deleteModalTitle,
-body #customDeleteTitle,
-body #customConfirmTitle,
-body #customInputTitle,
-body #customFoodTitle,
-body #passwordModalTitle,
-body #userModalTitle,
-body #shopQtyTitle,
-body #roomModal h3 {
-    width: 100% !important;
-    max-width: 100% !important;
-    font-size: 1.5rem !important;
-    font-weight: 900 !important;
-    line-height: 1.2 !important;
-    text-align: center !important;
-    margin: 0 0 12px 0 !important;
-    word-break: break-word !important;
-}
-
-body #deleteModalText,
-body #customDeleteMessage,
-body #customConfirmMessage,
-body #customInputMessage,
-body #customFoodMessage {
-    width: 100% !important;
-    max-width: 100% !important;
-    font-size: 1.1rem !important;
-    font-weight: 600 !important;
-    line-height: 1.35 !important;
-    color: var(--text) !important;
-    text-align: center !important;
-    margin: 0 0 20px 0 !important;
-    word-break: break-word !important;
-}
-
-body #deleteModal > div > div:last-child,
-body #customDeleteModal > div > div:last-child,
-body #customConfirmModal > div > div:last-child,
-body #customInputModal > div > div:last-child,
-body #customFoodModal > div > div:last-child,
-body #roomModal > div > div:last-child,
-body #passwordModal > div > div:last-child,
-body #userModal > div > div:last-child,
-body .cook-modal-card > div > div:last-child,
-body .custom-cook-wrapper > div > div:last-child,
-body #shopQtyModal > div {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 10px !important;
-    width: 100% !important;
-    margin-top: auto !important;
-}
-
-body #deleteModal button,
-body #customDeleteModal button,
-body #customConfirmModal button,
-body #customInputModal button,
-body #customFoodModal button,
-body #roomModal button,
-body #passwordModal button,
-body #userModal button,
-body #shopQtyModal button {
-    width: 100% !important;
-    min-height: 3rem !important;
-    font-size: 1.05rem !important;
-    font-weight: 800 !important;
-    border-radius: 14px !important;
-    margin: 0 !important;
-}
-
-/* ========================================================
-   --- 4. LOGIN-KARTE & SYSTEM-EINSTELLUNGEN (FESTE GRÖSSE UNABHÄNGIG VOM ZOOM) ---
-   ======================================================== */
-body #loginOverlay .login-card,
-body #settingsOverlay .login-card {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
-    align-items: stretch !important;
-    width: 100% !important;
-    max-width: 550px !important; /* Bleibt auf allen Geräten immer gleich breit (max. 450px) */
-    min-width: 350px !important;
-    height: auto !important;
-    max-height: 85vh !important; /* Begrenzt, damit es auf kleinen Handy-Bildschirmen nicht überläuft */
-    margin: auto !important;     /* Sitzt perfekt zentriert in der Bildschirmmitte */
     border-radius: 26px !important;
     box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important;
     box-sizing: border-box !important;
     overflow-y: auto !important;
     padding: 24px !important;
-}
-
-/* Verteilt die Blöcke im inneren Bereich sauber */
-body #settingsOverlay .login-card > * {
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    flex: 0 1 auto !important;
 }
 
 body #loginOverlay .login-card > button[onclick="openSystemSettings()"] {
@@ -1343,20 +997,12 @@ body #loginOverlay .login-card > div[style*="display:flex"] {
     width: 100% !important;
 }
 
-body #settingsOverlay .login-card > div[style*="display:flex"]:not(.zoom-control-row) {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0.65rem !important;
-    width: 100% !important;
-}
-
 body #loginOverlay #admin-close-btn[style*="display: none"],
 body #loginOverlay #admin-close-btn[style*="display:none"] {
     display: none !important;
 }
 
-body #loginOverlay .login-card button:not([onclick="openSystemSettings()"]):not(.user-btn):not(.user-del-x):not(.user-edit-pen),
-body #settingsOverlay .login-card button:not(.zoom-btn) {
+body #loginOverlay .login-card button:not([onclick="openSystemSettings()"]):not(.user-btn):not(.user-del-x):not(.user-edit-pen) {
     width: 100% !important;
     flex: none !important;
     margin: 0 !important;
@@ -1364,78 +1010,130 @@ body #settingsOverlay .login-card button:not(.zoom-btn) {
     font-size: 1.1rem !important;
 }
 
-body #settingsOverlay label {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-}
 
-body #settingsOverlay input[type="checkbox"] {
-    width: 1.4rem !important;
-    height: 1.4rem !important;
-    min-height: unset !important;
-    margin: 0 !important;
-    flex-shrink: 0 !important;
-}
+/* ==========================================================================
+   7  FENSTER
+   Aufbau:  #overlays > .win.win-(small|medium|large) > .win-card
+   Alle Größen:    mittig – Handy, Tablet und PC (kleine Fenster nur so hoch wie nötig)
+   Auf/Zu macht das Skript über style.display ('flex' / 'none').
+   Stapel (unten → oben):  Navigation 1000 · Login 2000 · GROSS 10000 · MITTEL 20000
+                           · KLEIN 30000 · Theme-Menü 40000 · "Wer kocht?" 50000
+   Alle Maße hängen an --z-vw / --z-vh / --z-edge und bleiben bei jedem Zoom auf dem Bildschirm.
+   ========================================================================== */
 
-/* ========================================================
-   --- EDIT- & INTERVAL-MODAL (ZENTRIERT MIT RAND & ZOOM-SCHUTZ) ---
-   ======================================================== */
-#intervalModal,
-#editModal {
-    position: fixed !important;
-    inset: 0 !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: calc(100vw / var(--app-zoom, 1)) !important;
-    height: calc(100vh / var(--app-zoom, 1)) !important;
-    height: calc(100dvh / var(--app-zoom, 1)) !important;
-    background: rgba(0, 0, 0, 0.6) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-    display: none !important;
-    align-items: center !important;
-    justify-content: center !important;
-    z-index: 99999 !important;
-    padding: 20px !important;
-    box-sizing: border-box !important;
+/* ----- 7.1 Abdunklung (Wurzel) ------------------------------------------ */
+.win {
+    display: none;
+    position: fixed;
+    inset: 0;
+    width: var(--z-vw, 100vw);
+    height: var(--z-vh, 100vh);
+    box-sizing: border-box;
+    margin: 0;
+    padding: var(--z-edge, 16px);
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
+    z-index: 30000;
 }
+.win-large  { z-index: 10000; background: rgba(0, 0, 0, 0.8); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.win-medium { z-index: 20000; background: rgba(0, 0, 0, 0.7); -webkit-backdrop-filter: blur(8px);  backdrop-filter: blur(8px); }
+.win-small  { z-index: 30000; }
 
-/* Wenn sie geöffnet werden (egal ob per .show oder Inline-Style) */
-#intervalModal.show, 
-#intervalModal[style*="display: flex"], 
-#intervalModal[style*="display:flex"],
-#editModal.show, 
-#editModal[style*="display: flex"], 
-#editModal[style*="display:flex"] {
-    display: flex !important;
+/* Falls irgendwo display:block statt flex gesetzt wird */
+.win[style*="display: block"], .win[style*="display:block"] { display: flex !important; }
+
+/* Alle Fenster (auch am Handy) öffnen mittig */
+
+/* ----- 7.2 Karte ---------------------------------------------------------- */
+.win-card {
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--win-small);
+    min-width: 0;
+    height: auto;
+    max-height: calc(var(--z-vh, 100vh) - 2 * var(--z-edge, 16px));
+    margin: 0;
+    padding: 24px;
+    background: var(--card);
+    color: var(--text);
+    border-radius: 26px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    text-align: center;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    animation: win-pop 0.18s ease-out;
 }
+.win-medium > .win-card { max-width: var(--win-medium); }
 
-/* Innerer Inhalt der Modal-Karte */
-#intervalModal > div,
-#editModal > div {
-    position: relative !important;
-    background: var(--card) !important;
-    color: var(--text) !important;
-    width: 96% !important;
+/* (kein Griff mehr – Fenster sind mittig) */
+.win-card::before { content: none; }
+
+@keyframes win-pop   { from { opacity: 0; transform: scale(0.94); }      to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .win-card { animation: none; } }
+
+/* ----- 7.3 KLEINE Fenster: Löschen, Bestätigen, Eingabe, Essen, Raum, Passwort, User, Menge -- */
+.win-small > .win-card > h3 {
+    width: 100% !important;
     max-width: 100% !important;
-    min-width: 300px !important;
-    height: auto !important;
-    max-height: 85vh !important;
-    margin: auto !important;
-    border-radius: 26px !important;
-    padding: 25px !important;
+    font-size: 1.5rem !important;
+    font-weight: 900 !important;
+    line-height: 1.2 !important;
+    text-align: center !important;
+    margin: 0 0 12px 0 !important;
+    word-break: break-word !important;
+}
+
+.win-small > .win-card > p {
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    line-height: 1.35 !important;
+    color: var(--text) !important;
+    text-align: center !important;
+    margin: 0 0 20px 0 !important;
+    word-break: break-word !important;
+}
+
+/* Button-Block ganz unten im Fenster */
+.win-small:not(#shopQtyModal) > .win-card > div:last-child {
     display: flex !important;
     flex-direction: column !important;
-    box-sizing: border-box !important;
-    overflow-y: auto !important;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important;
-    text-align: left !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin-top: auto !important;
+}
+#shopQtyModal > .win-card { gap: 10px; }
+
+.win-small .win-card button {
+    width: 100% !important;
+    min-height: 3rem !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    border-radius: 14px !important;
+    margin: 0 !important;
 }
 
-/* Haupt-Überschriften (Ignoriert #modalTitle, damit es ein Feld bleibt) */
+/* ----- 7.4 MITTLERE Fenster: Bearbeiten & Intervall ---------------------- */
+.win-medium > .win-card { padding: 25px; }
+
+:is(#intervalModal, #editModal) > .win-card { text-align: left; }
+
+/* Button-Reihen (Minuten/Stunden/Tage, Abbrechen …) dürfen bei hohem Zoom umbrechen */
+:is(#intervalModal, #editModal) > .win-card > div:is([style*="display:flex"], [style*="display: flex"]):not(.weekday-row) {
+    flex-wrap: wrap !important;
+}
+
+/* Haupt-Überschriften (ohne #modalTitle – das bleibt ein Eingabefeld) */
 #intervalModal h3:not(#modalTitle),
 #editModal h3 {
     font-size: 1.5rem !important;
@@ -1445,7 +1143,6 @@ body #settingsOverlay input[type="checkbox"] {
     text-align: center !important;
 }
 
-/* Labels */
 #intervalModal label,
 #editModal label {
     font-size: 0.75rem !important;
@@ -1456,7 +1153,7 @@ body #settingsOverlay input[type="checkbox"] {
     margin-bottom: 5px !important;
 }
 
-/* Inputs, Selects, Datumsfelder UND #modalTitle bekommen exakt dieselben Box-Maße */
+/* Inputs, Selects, Datumsfelder UND #modalTitle bekommen dieselben Box-Maße */
 #modalTitle,
 #intervalModal input:not([type="time"]):not(.day-dot),
 #intervalModal select,
@@ -1477,7 +1174,6 @@ body #settingsOverlay input[type="checkbox"] {
     font-family: inherit !important;
 }
 
-/* Einheitliche Haupt-Zahlenfelder */
 #modalValue,
 #edit-interval-val {
     font-size: 1.8rem !important;
@@ -1502,8 +1198,8 @@ body #settingsOverlay input[type="checkbox"] {
 #intervalModal .weekday-row,
 #editModal .weekday-row {
     display: flex !important;
-    flex-wrap: nowrap !important; /* Verhindert das Umspringen/Überlappen */
-    gap: 22px !important;           /* Sauberer Abstand zwischen den Kreisen */
+    flex-wrap: nowrap !important;
+    gap: 0.4rem !important;
     justify-content: space-between !important;
     margin-bottom: 15px !important;
     width: 100% !important;
@@ -1512,7 +1208,7 @@ body #settingsOverlay input[type="checkbox"] {
 
 #intervalModal .day-dot,
 #editModal .day-dot {
-    flex: 1 1 0 !important;        /* Teilt den Platz gleichmäßig auf, ohne Überlappung */
+    flex: 1 1 0 !important;
     min-width: 0 !important;
     height: 2.8rem !important;
     font-size: 0.95rem !important;
@@ -1521,12 +1217,11 @@ body #settingsOverlay input[type="checkbox"] {
     justify-content: center !important;
     cursor: pointer !important;
     font-weight: 800 !important;
-    border-radius: 12px !important;      /* Übernimmt die Theme-Textfarbe (nicht mehr hart schwarz) */
+    border-radius: 12px !important;
     user-select: none !important;
     box-sizing: border-box !important;
 }
 
-/* Trennlinien */
 #intervalModal hr,
 #editModal hr {
     border: 0 !important;
@@ -1534,11 +1229,315 @@ body #settingsOverlay input[type="checkbox"] {
     width: 100% !important;
 }
 
-/* ========================================================
-   --- "WER KOCHT?" FELDER & ZENTRALES THEME-MODAL ---
-   ======================================================== */
+/* ----- 7.5 GROSSE Fenster: Finanz-Monat & Fixkosten ----------------------- */
+.win-large > .win-card {
+    max-width: var(--win-large);
+    height: calc(var(--z-vh, 100vh) - 2 * var(--z-edge, 16px));
+    padding: calc(20px / var(--app-zoom, 1));
+    border-radius: 14px;
+    justify-content: flex-start;
+    text-align: left;
+    color: var(--text);
+}
+/* Tablet/PC: nicht höher als nötig, damit es wie ein Fenster wirkt */
+:where(html:where([data-bp="m"], [data-bp="l"])) .win-large > .win-card { height: min(calc(var(--z-vh, 100vh) - 2 * var(--z-edge, 16px)), 58rem); border-radius: 26px; }
 
-/* 1. Die Essens-Felder nehmen sich den Platz links */
+/* Schließen-Kreis oben rechts */
+#finance-modal button[onclick="closeFinanceModal()"],
+#fixkostenModal > .win-card > button:first-of-type {
+    position: absolute !important;
+    top: 14px !important;
+    right: 14px !important;
+    left: auto !important;
+    bottom: auto !important;
+    width: 2.6rem !important;
+    height: 2.6rem !important;
+    min-height: unset !important;
+    font-size: 1.2rem !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.35) !important;
+    color: var(--text) !important;
+    border: 1px solid rgba(120, 120, 120, 0.2) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    z-index: 10005 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+/* Unten gibt es keinen zweiten "Schließen"-Button mehr – der Kreis oben reicht */
+#fixkostenModal > .win-card > button:last-of-type { display: none !important; }
+
+#finance-modal #modal-header-fixed {
+    position: relative !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    padding: 4px 0 14px 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border-bottom: 1px solid rgba(120, 120, 120, 0.2) !important;
+    box-sizing: border-box !important;
+    display: block !important;
+    z-index: 10 !important;
+}
+#finance-modal #modal-header-fixed > div:first-child {
+    padding-right: 3.2rem !important;
+    margin-bottom: 12px !important;
+    height: auto !important;
+    background: transparent !important;
+}
+#finance-modal #modal-header-fixed h2 {
+    font-size: 1.4rem !important;
+    margin: 0 !important;
+    text-align: left !important;
+    color: var(--text) !important;
+}
+
+#finance-modal .finance-input-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+    background: transparent !important;
+}
+#finance-modal .finance-input-row input[type="number"] {
+    width: 22% !important;
+    flex: 0 0 22% !important;
+    height: 3.2rem !important;
+    font-size: 1rem !important;
+    padding: 0 8px !important;
+    margin: 0 !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    color: #1c1c1e !important;
+    border: 2px solid var(--primary) !important;
+    border-radius: 12px !important;
+    box-sizing: border-box !important;
+}
+#finance-modal .finance-input-row input[type="text"] {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    height: 3.2rem !important;
+    font-size: 1rem !important;
+    padding: 0 10px !important;
+    margin: 0 !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    color: #1c1c1e !important;
+    border: 2px solid var(--primary) !important;
+    border-radius: 12px !important;
+    box-sizing: border-box !important;
+}
+#finance-modal .finance-input-row select {
+    width: 3.4rem !important;
+    flex: 0 0 3.4rem !important;
+    height: 3.2rem !important;
+    font-size: 1.3rem !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: rgba(255, 255, 255, 0.85) !important;
+    color: #1c1c1e !important;
+    border: 2px solid var(--primary) !important;
+    border-radius: 12px !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+}
+#finance-modal .finance-input-row .btn-add {
+    width: 3.8rem !important;
+    flex: 0 0 3.8rem !important;
+    height: 3.2rem !important;
+    font-size: 1rem !important;
+    margin: 0 !important;
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 12px !important;
+    font-weight: 800 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+#finance-modal #modal-content {
+    position: relative !important;
+    background: transparent !important;
+    color: var(--text) !important;
+    overflow-y: auto !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    padding: 12px 4px !important;
+    margin: 0 !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+#finance-modal .finance-item {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    border-radius: 12px !important;
+    margin-bottom: 8px !important;
+    background: rgba(255, 255, 255, 0.65) !important;
+    color: var(--text) !important;
+}
+
+#fixkostenList {
+    overflow-y: auto !important;
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+    padding-right: 5px !important;
+    background: transparent !important;
+}
+
+/* ----- 7.6 Einstellungen (mittel) ----------------------------------------- */
+#settingsOverlay > .win-card {
+    text-align: left;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Zoom-Schieberegler darf bei hohem Zoom schrumpfen statt die Karte zu sprengen */
+#settingsOverlay input[type="range"] { min-width: 0 !important; }
+
+/* Verteilt die Blöcke im inneren Bereich sauber */
+#settingsOverlay .login-card > * {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    flex: 0 1 auto !important;
+}
+
+#settingsOverlay .login-card > div[style*="display:flex"]:not(.zoom-control-row) {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.65rem !important;
+    width: 100% !important;
+}
+
+#settingsOverlay .login-card button:not(.zoom-btn) {
+    width: 100% !important;
+    flex: none !important;
+    margin: 0 !important;
+    min-height: 3.5rem !important;
+    font-size: 1.1rem !important;
+}
+
+#settingsOverlay label {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+}
+
+#settingsOverlay input[type="checkbox"] {
+    width: 1.4rem !important;
+    height: 1.4rem !important;
+    min-height: unset !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+}
+
+
+/* ==========================================================================
+   8  SONDER-POPUPS
+   ========================================================================== */
+
+/* ----- 8.1 Theme-Menü: kleines Fenster (Handy: von unten, Tablet/PC: mittig) ----- */
+.theme-dropdown {
+    display: none !important;
+    visibility: hidden;
+    opacity: 0;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: var(--card) !important;
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    width: var(--win-small) !important;
+    min-width: 0 !important;
+    max-width: calc(var(--z-vw, 100vw) - 2 * var(--z-edge, 16px)) !important;
+    max-height: calc(var(--z-vh, 100vh) - 2 * var(--z-edge, 16px)) !important;
+    overflow-x: hidden;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border-radius: 25px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    z-index: 40000 !important;
+    border: 1px solid rgba(120, 120, 120, 0.2);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.theme-dropdown.show {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) scale(1) !important;
+}
+
+/* Tablet/PC: Theme-Fenster breiter, damit lange Namen ("🎄 Weihnachten") in einer Zeile bleiben */
+:where(html:where([data-bp="m"], [data-bp="l"])) .theme-dropdown {
+    width: min(29rem, calc(var(--z-vw, 100vw) - 2 * var(--z-edge, 16px))) !important;
+}
+.theme-dropdown .theme-opt { white-space: nowrap; overflow-wrap: normal; }
+
+.theme-dropdown div {
+    padding: 1.1rem;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.25rem !important;
+    min-height: 2.3rem;
+    cursor: pointer;
+    color: var(--text) !important;
+    border-bottom: 1px solid rgba(120, 120, 120, 0.1);
+    -webkit-tap-highlight-color: transparent;
+    white-space: normal;                    /* bei hohem Zoom darf z.B. "Weihnachten" umbrechen */
+    overflow-wrap: anywhere;
+}
+.theme-dropdown div:active { background: rgba(120, 120, 120, 0.2); }
+.theme-dropdown div:last-child { border-bottom: none; }
+
+.theme-dropdown .theme-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    cursor: default;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+.theme-dropdown .theme-row-title { font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px; }
+.theme-dropdown .theme-mode-btn {
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.15);
+    min-height: 0;
+    white-space: nowrap;
+}
+.theme-dropdown .theme-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 0 6px;
+    margin-bottom: 6px;
+    min-height: 0;
+}
+.theme-dropdown .theme-opt { padding: 8px 6px; border-radius: 6px; min-height: 0; }
+
+/* ----- 8.2 "Wer kocht?" & Intervall-Auswahl (vom Skript erzeugt) -------------- */
 html body .day-card .meal-inputs-inline {
     flex: 1 1 auto !important;
     width: 100% !important;
@@ -1551,7 +1550,6 @@ html body .day-card .meal-inputs-inline {
     justify-content: flex-end !important;
 }
 
-/* 2. Der Button hat eine feste, saubere Größe (kein Ausreißen mehr) */
 .custom-cook-btn {
     display: inline-flex !important;
     align-items: center !important;
@@ -1563,43 +1561,89 @@ html body .day-card .meal-inputs-inline {
     font-size: 0.85rem !important;
     cursor: pointer !important;
     white-space: nowrap !important;
-    /* Feste Breite für den PC */
-    width: 400px !important;
+    width: 400px !important;             /* feste Breite am PC */
     min-width: 400px !important;
     max-width: 400px !important;
     transition: transform 0.15s ease, box-shadow 0.15s ease !important;
 }
+.custom-cook-btn:active { transform: scale(0.97) !important; }
+.custom-cook-btn .cook-arrow { font-size: 0.8rem !important; opacity: 0.8 !important; }
 
-.custom-cook-btn:active {
-    transform: scale(0.97) !important;
+/* Handy & Tablet: schmaler Button */
+:where(html:where([data-bp="s"], [data-bp="m"])) .custom-cook-btn {
+    width: 150px !important;
+    min-width: 150px !important;
+    max-width: 150px !important;
+    font-size: 0.73rem !important;
+    padding: 5px 8px !important;
 }
 
-.custom-cook-btn .cook-arrow {
-    font-size: 0.8rem !important;
-    opacity: 0.8 !important;
-}
-
-/* 3. Das zentrierte Modal in der Bildschirmmitte (Einheitliche Standard-Größe) */
+/* Popup selbst: .cook-modal-overlay > .modal-card.cook-modal-card > h3 + .cook-modal-list > Buttons
+   immer mittig (Handy, Tablet, PC) */
 .cook-modal-overlay {
     position: fixed !important;
     inset: 0 !important;
+    width: var(--z-vw, 100vw) !important;
+    height: var(--z-vh, 100vh) !important;
     background: rgba(0, 0, 0, 0.6) !important;
     backdrop-filter: blur(5px) !important;
     -webkit-backdrop-filter: blur(5px) !important;
-    z-index: 999999 !important;
+    z-index: 50000 !important;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
-    padding: 20px !important;
+    padding: var(--z-edge, 16px) !important;
+    margin: 0 !important;
     box-sizing: border-box !important;
     animation: cookModalFadeIn 0.18s ease-out !important;
+}
+:where(html:where([data-bp="s"])) .cook-modal-overlay {
+    align-items: center !important;
+}
+
+html body .cook-modal-overlay > .cook-modal-card {
+    position: relative !important;
+    width: 100% !important;
+    max-width: var(--win-small) !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: calc(var(--z-vh, 100vh) - 2 * var(--z-edge, 16px)) !important;
+    margin: 0 !important;
+    background: var(--card) !important;
+    color: var(--text) !important;
+    border-radius: 26px !important;
+    padding: 24px !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+html:where([data-bp="s"], [data-bp="m"]) body .cook-modal-overlay > .cook-modal-card { padding: 18px !important; }
+
+/* Lange Optionstexte (z.B. "Quartalsweise (Jan, Apr, Jul, Okt)") umbrechen statt überlaufen */
+.cook-modal-option {
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    text-align: center !important;
+    margin: 0 !important;
+}
+:where(html:where([data-bp="s"], [data-bp="m"])) .cook-modal-option {
+    font-size: 0.95rem !important;
+    min-height: 2.7rem !important;
+    padding: 10px 12px !important;
 }
 
 @keyframes cookModalFadeIn {
     from { opacity: 0; transform: scale(0.92); }
     to   { opacity: 1; transform: scale(1); }
 }
-
 
 .cook-modal-list {
     display: flex !important;
@@ -1610,31 +1654,7 @@ html body .day-card .meal-inputs-inline {
 }
 
 
-/* Handy- & Tablet-Optimierung (Max 900px) */
-@media (max-width: 900px) {
-    .custom-cook-btn {
-        /* Feste Breite für Handy und Tablet */
-        width: 150px !important;
-        min-width: 150px !important;
-        max-width: 150px !important;
-        font-size: 0.73rem !important;
-        padding: 5px 8px !important;
-    }
-    .cook-modal-card {
-        max-width: min(350px, 90vw) !important;
-        padding: 18px !important;
-    }
-    .cook-modal-option {
-        font-size: 0.95rem !important;
-        min-height: 2.7rem !important;
-        padding: 10px 12px !important;
-    }
-}
-
-/* ========================================================
-   --- INTERVALL-AUSWAHL BUTTON & MODAL ---
-   ======================================================== */
-
+/* ----- Intervall-Auswahl-Button (vom Skript erzeugt) & Scrollbalken ----- */
 #tpl_months + .custom-cook-wrapper {
     width: 100% !important;
     display: block !important;
@@ -1675,4 +1695,243 @@ div::-webkit-scrollbar,
 ul::-webkit-scrollbar,
 .modal-content::-webkit-scrollbar {
     display: none !important; /* Für Chrome, Safari und Opera */
+}
+
+/* ==========================================================================
+   9  VOM SKRIPT ERZEUGTE ELEMENTE (finance.js)
+      Das Skript setzt hier nur Klassen und Farben; das Layout steht in dieser Datei.
+   ========================================================================== */
+
+/* ----- 9.1 Jahreskarten: Titel + Papierkorb oben, Monats-Badge darunter ------ */
+#years-container .year-card { position: relative; overflow: hidden; }
+#years-container .year-card .year-card-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "title del" "count count";
+    align-items: start;
+    column-gap: 0.4rem;
+    row-gap: 0.3rem;
+    margin: 0 0 0.65rem 0;
+    min-width: 0;
+}
+#years-container .year-card .year-card-title {
+    grid-area: title;
+    margin: 0 !important;
+    min-width: 0;
+    line-height: 1.25;
+    font-size: 1.05rem !important;
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+}
+#years-container .year-card .year-card-count {
+    grid-area: count;
+    justify-self: start;
+    max-width: 100%;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    font-weight: 700;
+    opacity: 0.75;
+    background: rgba(0, 0, 0, 0.07);
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+}
+#years-container .year-card .year-card-del {
+    grid-area: del;
+    align-self: start;
+    justify-self: end;
+    position: relative;
+    z-index: 2;
+    flex: none;
+}
+#years-container .year-card .year-card-info { font-size: 0.9rem; opacity: 0.85; }
+#years-container .year-card .mc-row { margin-bottom: 0.25rem; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #years-container .year-card .year-card-title { font-size: 1.3rem !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #years-container .year-card .year-card-count { font-size: 0.75rem; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #years-container .year-card .year-card-info,
+:where(html:where([data-bp="m"], [data-bp="l"])) #years-container .year-card .year-card-info div { font-size: 0.85rem !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #years-container .year-card .year-card-info .summary-total { font-size: 0.95rem !important; margin-top: 0.4rem !important; padding-top: 0.4rem !important; }
+
+/* ----- 9.2 gemeinsame Zeilen in Jahres- und Monatskarten ----------------------- */
+.month-card .mc-row { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+.month-card .mc-row > b, .month-card .mc-row > :last-child { flex: 0 0 auto; white-space: nowrap; }
+.month-card .mc-hr { border: 0; border-top: 1px solid rgba(0, 0, 0, 0.1); margin: 0.6rem 0; }
+.month-card .summary-total {
+    flex-wrap: wrap;
+    white-space: normal;
+    column-gap: 0.5rem;
+    row-gap: 0;
+    word-break: normal !important;
+}
+.month-card .summary-total > :last-child { margin-left: auto; white-space: nowrap; }
+.month-card .month-card-title { margin: 0 0 0.6rem 0; text-align: left; display: flex; align-items: center; min-width: 0; }
+.month-card .month-card-info { font-size: 0.85rem; opacity: 0.8; }
+
+/* ----- 9.3 Monats-Popup (Einträge, Abschnitte, Kopfzeile) --------------------- */
+.finance-item .fi-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.finance-item .fi-amount { flex: 0 0 auto; white-space: nowrap; padding: 0.25rem 0 0.25rem 0.4rem; }
+.fin-section { margin: 1.2rem 0; }
+.fin-section-title { display: block; font-weight: 700; opacity: 0.5; font-size: 0.85rem; }
+.fin-section-box { margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.fin-delete-wrap { text-align: center; margin-top: 1.8rem; padding-bottom: 0.5rem; }
+.fin-delete-month { position: relative; z-index: 2; max-width: 100%; }
+.fin-modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-right: 3.5rem; min-height: 2.6rem; }
+.fin-modal-title { margin: 0; font-size: 1.5rem; font-weight: 800; text-transform: uppercase; line-height: 1.15; overflow-wrap: anywhere; min-width: 0; }
+
+/* ----- 9.4 Fixkosten-Vorlagen im Verwalten-Popup ------------------------------- */
+.fix-tpl-row { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.65rem 0.9rem; border-radius: 12px; min-width: 0; }
+.fix-tpl-info { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.fix-tpl-actions { display: flex; align-items: center; flex: 0 0 auto; }
+
+/* ==========================================================================
+   10  VOM SKRIPT ERZEUGTE ELEMENTE (script.js) · Aufgaben-Karten
+   ========================================================================== */
+
+/* ----- 10.1 Aufgaben-Karte (Inhalt kommt aus renderTodoList) ------------------ */
+#list-todo li .todo-body { margin-bottom: 10px; }
+#list-todo li .todo-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.4rem 0.6rem; flex-wrap: wrap; }
+#list-todo li .todo-title-col { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 auto; }
+#list-todo li .todo-title { font-size: 1.1rem; overflow-wrap: anywhere; }
+#list-todo li .todo-assigned { font-size: 0.75rem; font-weight: 700; }
+#list-todo li .todo-pill { flex: 0 0 auto; white-space: nowrap; font-weight: 800; font-size: 0.7rem; padding: 4px 8px; border-radius: 8px; }
+#list-todo li .todo-meta { font-size: 0.75rem; margin-top: 12px; display: flex; flex-direction: column; gap: 4px; }
+#list-todo li .todo-actions-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
+#list-todo li .todo-btn { border-radius: 12px; font-weight: 700; min-height: 2.6rem; min-width: 0; }
+#list-todo li .todo-btn-done { flex: 3 1 7.5rem; padding: 0.7rem 0.6rem; }
+#list-todo li .todo-btn-icon { flex: 1 1 2.4rem; padding: 0.5rem 0; font-size: 1.2rem; }
+
+/* Tablet/PC: wie bisher alles in einer Zeile */
+:where(html:where([data-bp="m"], [data-bp="l"])) #list-todo li .todo-actions-row { flex-wrap: nowrap; gap: 10px; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #list-todo li .todo-btn-done { flex: 3 1 0; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #list-todo li .todo-btn-icon { flex: 1 1 0; }
+
+/* ----- 10.2 Handy: Räume/Orte als Chip-Leiste oben, Aufgaben 2 pro Zeile --------- */
+:where(html:where([data-bp="s"])) .split-container { flex-direction: column !important; align-items: stretch !important; gap: 8px !important; }
+:where(html:where([data-bp="s"])) .split-container > .sidebar {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 8px !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 2px 8px;
+    margin: 0 -2px;
+    box-sizing: border-box;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.split-container > .sidebar::-webkit-scrollbar { display: none; }
+:where(html:where([data-bp="s"])) .split-container > .sidebar > .side-btn { flex: 0 0 auto !important; width: auto !important; min-height: 0 !important; }
+:where(html:where([data-bp="s"])) .split-container > .main-content { width: 100%; min-width: 0; }
+:where(html:where([data-bp="s"])) #list-todo {
+    grid-template-columns: repeat(auto-fill, minmax(max(var(--todo-min-s), calc((100% - (var(--todo-cols-s) - 1) * 10px) / var(--todo-cols-s) - 1px)), 1fr)) !important;
+    gap: 10px !important;
+}
+:where(html:where([data-bp="m"])) #list-todo {
+    grid-template-columns: repeat(auto-fill, minmax(max(var(--todo-min-ml), calc((100% - (var(--todo-cols-m) - 1) * 15px) / var(--todo-cols-m) - 1px)), 1fr)) !important;
+}
+:where(html:where([data-bp="l"])) #list-todo {
+    grid-template-columns: repeat(auto-fill, minmax(max(var(--todo-min-ml), calc((100% - (var(--todo-cols-l) - 1) * 15px) / var(--todo-cols-l) - 1px)), 1fr)) !important;
+}
+:where(html:where([data-bp="s"])) #list-todo li { padding: 0.8rem !important; border-radius: 18px !important; }
+:where(html:where([data-bp="s"])) #list-todo li .todo-actions-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+:where(html:where([data-bp="s"])) #list-todo li .todo-btn-done { grid-column: 1 / -1; }
+:where(html:where([data-bp="s"])) #list-todo li .todo-title { font-size: 1rem; }
+
+/* ----- 10.3 Fixkosten-Formular: Betrag und Intervall brechen bei sehr hohem Zoom um ----- */
+#fixkostenModal .fix-form-row { flex-wrap: wrap; }
+#fixkostenModal .fix-form-row > div { flex: 1 1 8rem !important; min-width: 0; }
+
+/* ----- 11. Einkaufsliste: Einträge passen sich dem Inhalt an, kurze stehen nebeneinander ----- */
+#list-shop {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+}
+#list-shop > li {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: min(7.5rem, 100%) !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    gap: 0.6rem;
+}
+#list-shop > li > span { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+#list-shop > li > .btn-del-item { flex: 0 0 auto; }
+:where(html:where([data-bp="s"])) #list-shop > li { padding: 0.75rem 0.9rem !important; border-radius: 18px !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #list-shop { gap: 12px !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #list-shop > li { max-width: min(100%, 26rem) !important; }
+
+/* ----- 12. Theme-Dekoration (Emoji oben rechts an Karten): reservierter Streifen, überdeckt nie Text/Buttons ----- */
+html body[class*="theme-"] :is(.month-card, .day-card) { position: relative; }
+html body[class*="theme-"] :is(.month-card, .day-card)::after {
+    position: absolute !important;
+    top: 0.25rem !important;
+    right: 0.5rem !important;
+    bottom: auto !important;
+    left: auto !important;
+    font-size: 0.9rem !important;
+    line-height: 1 !important;
+    max-width: calc(100% - 1rem);
+    overflow: hidden;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 0;
+}
+html body[class*="theme-"] :is(#months-container, #years-container) .month-card { padding-top: 1.45rem !important; }
+html body[class*="theme-"] .day-card { padding-top: 1.4rem !important; }
+
+/* ----- 13. Schwebende Hintergrund-Icons der Themes liegen HINTER dem Inhalt (nie mehr über Schrift/Buttons) ----- */
+html body[class*="theme-"]::before { z-index: -1 !important; }
+html body[class*="theme-"] #loginOverlay::before { z-index: -1 !important; }
+
+/* ----- 14. Wochenplan am Tablet/PC: Tage in mehreren Spalten + kompakter Kopf, damit alles ohne Scrollen sichtbar ist ----- */
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .week-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(var(--week-card-min), 100%), 1fr)) !important;
+    gap: 0.6rem !important;
+    margin-top: 0 !important;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .day-card {
+    padding: 1.15rem 0.8rem 0.55rem !important;
+    gap: 0.7rem !important;
+    min-width: 0;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .day-card::after {
+    font-size: 0.7rem !important;
+    top: 0.15rem !important;
+    right: 0.4rem !important;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .day-label { min-width: 2.8rem; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .day-label span { font-size: 1.3rem; margin-bottom: 3px; }
+
+/* Kopfbereich über dem Plan enger */
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .admin-row { margin-bottom: 0.5rem !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .admin-btn { padding: 0.55rem !important; margin-bottom: 0 !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .cat-scroll { padding-bottom: 0.4rem !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .cat-btn { padding: 0.55rem 1.1rem !important; margin-bottom: 0.4rem !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .fav-grid { margin-bottom: 0.5rem !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .fav-chip { padding: 0.55rem 1.1rem !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .week-switcher { margin: 0.4rem 0 !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .food-auto-info { margin: 0.4rem 0 0.6rem !important; padding: 0.4rem 0.8rem !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food > header { margin: 0.2rem 0 0.6rem; }
+:where(html:where([data-bp="m"], [data-bp="l"])) .app-body { padding-bottom: 1.25rem; }
+
+/* Tageskarte als Raster:  Tag | Gerichte | Wer kocht?  (Kocher-Button passt sich der Kartenbreite an) */
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .day-card {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) clamp(7.5rem, 26%, 11.5rem);
+    align-items: center;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .day-card > .meal-inputs-inline { min-width: 0; width: auto !important; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .day-card > .custom-cook-wrapper {
+    width: 100%; min-width: 0; margin-left: 0 !important; justify-content: stretch !important;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .day-card .custom-cook-btn {
+    width: 100% !important; min-width: 0 !important; max-width: 100% !important;
+    font-size: 0.75rem !important; padding: 0.45rem 0.6rem !important;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .day-card > .cook-select { width: 100% !important; max-width: none; min-width: 0; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #v-food .meal-mini-label {
+    font-size: 0.58rem; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
 }

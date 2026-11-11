@@ -3,7 +3,7 @@
     let storedUser = localStorage.getItem("selectedUser");
     let user = (isSessionActive || storedUser === "Tablet" || (storedUser && isPersistentUser(storedUser))) ? storedUser : "";
     
-    let curTab = sessionStorage.getItem("current_tab") || "shop";
+    let curTab = sessionStorage.getItem("current_tab") || "home";
     let curTheme = localStorage.getItem("app_theme") || "theme-light";
     
     let curCat = "Alle", lastActivity = Date.now(), isUpdatingFood = false;
@@ -188,6 +188,14 @@ function applyTabsToDOM(visibleTabs) {
             } else {
                 btnEl.style.setProperty("display", "none", "important");
             }
+        }
+
+        // Startseite: Karte des Bereichs nur zeigen, wenn der Bereich eingeschaltet ist
+        const homeCards = { todo: "home-card-todo", shop: "home-card-shop", food: "home-card-food", finance: "home-card-money" };
+        const cardEl = homeCards[tabKey] ? document.getElementById(homeCards[tabKey]) : null;
+        if (cardEl) {
+            if (visibleTabs.includes(tabKey)) cardEl.style.removeProperty("display");
+            else cardEl.style.setProperty("display", "none", "important");
         }
     });
 
@@ -641,7 +649,7 @@ function isPersistentUser(uName) {
 
 let inputResolver = null;
 
-function showInputPrompt(message, title = "Eingabe") {
+function showInputPrompt(message, title = "Eingabe", prefill = "") {
     return new Promise((resolve) => {
         inputResolver = resolve;
         const modal = document.getElementById('customInputModal');
@@ -652,7 +660,7 @@ function showInputPrompt(message, title = "Eingabe") {
         if (titleEl) titleEl.innerText = title;
         if (msgEl) msgEl.innerText = message;
         if (inputEl) {
-            inputEl.value = ""; // Vorheriges leeren
+            inputEl.value = prefill || ""; // Vorheriges leeren (oder Vorschlag eintragen)
             setTimeout(() => inputEl.focus(), 100); // Direkt fokussieren
         }
         
@@ -1953,35 +1961,38 @@ function renderTodoList() {
         const safeAssigned = t.assignedTo ? escapeHtml(t.assignedTo) : "";
 
         li.innerHTML = `
-            <div style="margin-bottom: 10px;">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
-                    <div style="display:flex; flex-direction:column; gap:4px;">
-                        <strong style="font-size:1.1rem;">${safeName}</strong>
-                        ${safeAssigned ? `<span style="font-size:0.75rem; color:var(--gray); font-weight:bold;">👤 ${safeAssigned}</span>` : ''}
+            <div class="todo-body">
+                <div class="todo-head">
+                    <div class="todo-title-col">
+                        <strong class="todo-title">${safeName}</strong>
+                        ${safeAssigned ? `<span class="todo-assigned" style="color:var(--gray);">👤 ${safeAssigned}</span>` : ''}
                     </div>
-                    <span style="color:${statusColor}; font-weight:800; font-size:0.7rem; background:${statusColor}15; padding:4px 8px; border-radius:8px; border: 1px solid ${statusColor}30; white-space:nowrap;">${escapeHtml(timeText)}</span>
+                    <span class="todo-pill" style="color:${statusColor}; background:${statusColor}15; border: 1px solid ${statusColor}30;">${escapeHtml(timeText)}</span>
                 </div>
-                <div style="font-size:0.75rem; color:var(--gray); margin-top:12px; display:flex; flex-direction:column; gap:4px;">
+                <div class="todo-meta" style="color:var(--gray);">
                     <span>📅 Fällig: ${escapeHtml(formatDT(t.nextDate))} Uhr</span>
                     <span>✅ Zuletzt: ${t.lastDone ? escapeHtml(formatDT(t.lastDone)) : 'Neu'}</span>
                 </div>
             </div>
-            <div class="todo-actions-row" style="display:flex; gap:10px; margin-top: auto;"></div>`;
+            <div class="todo-actions-row"></div>`;
 
         const actionsRow = li.querySelector(".todo-actions-row");
 
         const btnComplete = document.createElement("button");
-        btnComplete.style.cssText = `flex:3; color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer; background: ${statusColor}; transition: background 0.3s;`;
+        btnComplete.className = "todo-btn todo-btn-done";
+        btnComplete.style.cssText = `color:white; border:none; cursor:pointer; background: ${statusColor}; transition: background 0.3s;`;
         btnComplete.textContent = btnLabel;
         btnComplete.addEventListener("click", () => completeTodo(t.id));
 
         const btnEdit = document.createElement("button");
-        btnEdit.style.cssText = "flex:1; background:#f2f2f7; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:1.2rem;";
+        btnEdit.className = "todo-btn todo-btn-icon";
+        btnEdit.style.cssText = "background:#f2f2f7; border:none; cursor:pointer;";
         btnEdit.textContent = "✏️";
         btnEdit.addEventListener("click", () => openEdit(t.id));
 
         const btnDel = document.createElement("button");
-        btnDel.style.cssText = "flex:1; background:#f2f2f7; border:none; border-radius:12px; font-weight:bold; cursor:pointer;";
+        btnDel.className = "todo-btn todo-btn-icon";
+        btnDel.style.cssText = "background:#f2f2f7; border:none; cursor:pointer;";
         btnDel.textContent = "🗑️";
         btnDel.addEventListener("click", () => deleteTodo(t.id));
 
@@ -2022,6 +2033,10 @@ async function syncDown() {
                 if (parsed) {
                     db[t].cats = parsed.cats || ["Alle"];
                     db[t].favs = parsed.favs || [];
+                    if (t === "food" && parsed.recipes && typeof parsed.recipes === "object") {
+                        db[t].recipes = parsed.recipes;
+                        try { localStorage.setItem("hh_recipes", JSON.stringify(parsed.recipes)); } catch (e) { /* egal */ }
+                    }
                 }
             }
         }
@@ -2443,6 +2458,7 @@ async function load() {
 
     if (typeof renderSidebars === "function") await renderSidebars();
     if (curTab === 'trash' || isUpdatingFood) return;
+    if (curTab === 'home') { loadHome(false); return; }
     if (curTab === 'todo') { renderTodoList(); return; }
 
     if (curTab === 'food') {
@@ -2586,10 +2602,19 @@ async function saveFood(idx) {
         outCook: isSunday && outCookElem ? outCookElem.value : ""
     };
 
+    let changedMeals = [];
+    let saved = false;
+
     try {
         const d = await haGetState(FOOD_ENTITIES[entityIdx]);
         const raw = (d && d.state && d.state !== 'unknown' && d.state !== '---') ? d.state : '';
         const weekParts = raw.split('~');
+
+        // Welche Gerichte wurden gerade neu eingetragen/geändert? (für den Zutaten-Vorschlag)
+        const oldMeals = parseFoodWeekStr((activeFoodWeek === 0 ? weekParts[0] : weekParts[1]) || "", isSunday);
+        changedMeals = ["bf", "lunch", "dn"]
+            .filter(k => editedWeekObj[k] && editedWeekObj[k] !== String(oldMeals[k] || "").trim())
+            .map(k => ({ text: editedWeekObj[k], meal: k, dayIdx: entityIdx }));
 
         let week0Str = weekParts[0] ? serializeFoodWeekObj(parseFoodWeekStr(weekParts[0], isSunday), isSunday) : serializeFoodWeekObj({}, isSunday);
         let week1Str = weekParts[1] ? serializeFoodWeekObj(parseFoodWeekStr(weekParts[1], isSunday), isSunday) : serializeFoodWeekObj({}, isSunday);
@@ -2607,11 +2632,17 @@ async function saveFood(idx) {
         const existingStamp = (entityIdx === 0) ? `~${stampToKeep}` : '';
         const finalValue = `${week0Str}~${week1Str}${existingStamp}`;
         await haSetInputText(FOOD_ENTITIES[entityIdx], finalValue);
+        saved = true;
     } catch (e) {
         console.error("Fehler beim Speichern des Essensplans:", e);
     }
 
     setTimeout(() => { isUpdatingFood = false; }, 2000);
+
+    if (saved && changedMeals.length && curTab === 'food' && typeof ingMaybeSuggest === "function") {
+        ingMaybeSuggest(changedMeals, entityIdx, activeFoodWeek)
+            .catch(e => console.error("Zutaten-Vorschlag fehlgeschlagen:", e));
+    }
 }
 
 function highlightToday() {
@@ -2651,6 +2682,970 @@ async function clearWeek() {
         }
     }
 }
+// ==========================================================================
+//  ZUTATEN-AUTOMATIK
+//  Gericht im Wochenplan  →  passende Zutaten als Vorschlag für die Einkaufsliste
+//  - beim Eintragen eines bekannten Gerichts (abschaltbar) oder per Knopf "Einkauf aus dem Plan"
+//  - eigene Rezepte werden in db.food.recipes gemerkt (Home Assistant + Kopie im Browser)
+// ==========================================================================
+
+// Zutaten stehen als Text: "Name" oder "Name*Menge", durch Komma getrennt
+const ING_RECIPES = [
+    // ---- Frühstück ----
+    { n: "Müsli", a: ["Müsli", "Granola"], i: "Müsli, Milch, Joghurt, Obst" },
+    { n: "Porridge", a: ["Porridge", "Haferbrei"], i: "Haferflocken, Milch, Bananen, Honig" },
+    { n: "Eier", a: ["Rührei", "Spiegelei", "Omelett", "Omelette"], i: "Eier*6, Butter, Schnittlauch, Brot" },
+    { n: "Pancakes", a: ["Pancakes", "Pfannkuchen", "Eierkuchen", "Crêpes", "Crepes"], i: "Mehl, Eier*3, Milch, Butter, Zucker, Ahornsirup" },
+    { n: "Brötchen", a: ["Brötchen", "Semmeln"], i: "Brötchen*6, Butter, Aufschnitt, Käse, Marmelade" },
+    { n: "Frühstücksbuffet", a: ["Frühstücksbuffet", "Brunch"], i: "Brötchen*6, Eier*6, Aufschnitt, Käse, Butter, Marmelade, Orangensaft" },
+    { n: "Joghurt mit Obst", a: ["Joghurt mit", "Obstsalat"], i: "Naturjoghurt, Obst, Honig, Haferflocken" },
+    { n: "Abendbrot", a: ["Abendbrot", "Brotzeit", "Vesper", "Brot & Käse", "Brot und Käse", "Brot mit Käse"], i: "Brot, Butter, Aufschnitt, Käse, Gurke, Tomaten" },
+    // ---- Nudeln, Pizza, Italienisch ----
+    { n: "Pizza", a: ["Pizza"], i: "Pizzateig, Tomatensoße, Mozzarella*2, Salami, Champignons, Zwiebeln" },
+    { n: "Tiefkühlpizza", a: ["Tiefkühlpizza", "TK-Pizza", "TK Pizza"], i: "Tiefkühlpizza*2" },
+    { n: "Spaghetti Bolognese", a: ["Spaghetti Bolognese", "Bolognese", "Spaghetti Bolo"], i: "Spaghetti, Hackfleisch, Passierte Tomaten, Zwiebeln, Karotten, Parmesan" },
+    { n: "Carbonara", a: ["Carbonara"], i: "Spaghetti, Speckwürfel, Eier*3, Parmesan, Sahne" },
+    { n: "Lasagne", a: ["Lasagne"], i: "Lasagneplatten, Hackfleisch, Passierte Tomaten, Zwiebeln, Béchamelsoße, Mozzarella*2, Parmesan" },
+    { n: "Nudeln", a: ["Nudeln"], i: "Nudeln, Passierte Tomaten, Zwiebeln, Parmesan" },
+    { n: "Gnocchi", a: ["Gnocchi"], i: "Gnocchi*2, Passierte Tomaten, Mozzarella, Parmesan, Basilikum" },
+    { n: "Risotto", a: ["Risotto"], i: "Risottoreis, Zwiebeln, Weißwein, Parmesan, Gemüsebrühe, Champignons" },
+    { n: "Nudelsalat", a: ["Nudelsalat"], i: "Nudeln, Mayonnaise, Mais, Gurken, Paprika, Fleischwurst, Erbsen" },
+    // ---- Fleisch und Deftiges ----
+    { n: "Schnitzel", a: ["Schnitzel"], i: "Schnitzel*4, Paniermehl, Eier*2, Mehl, Zitrone, Kartoffeln" },
+    { n: "Currywurst", a: ["Currywurst"], i: "Bratwurst*4, Pommes, Ketchup, Currypulver" },
+    { n: "Burger", a: ["Burger", "Hamburger", "Cheeseburger"], i: "Burgerbrötchen, Hackfleisch, Käsescheiben, Salat, Tomaten, Zwiebeln, Gurken" },
+    { n: "Hot Dog", a: ["Hot Dog", "Hotdog"], i: "Hot-Dog-Brötchen, Würstchen*4, Röstzwiebeln, Ketchup, Senf" },
+    { n: "Tacos", a: ["Tacos", "Burrito", "Fajita"], i: "Tortillas, Hackfleisch, Kidneybohnen, Mais, Salsa, Käse (gerieben), Salat, Paprika" },
+    { n: "Wraps", a: ["Wrap", "Wraps"], i: "Wraps, Hähnchenbrust, Salat, Tomaten, Gurke, Soße" },
+    { n: "Chili con Carne", a: ["Chili con Carne", "Chili"], i: "Hackfleisch, Kidneybohnen, Mais, Passierte Tomaten, Zwiebeln, Paprika, Reis" },
+    { n: "Gulasch", a: ["Gulasch"], i: "Rindergulasch, Zwiebeln*2, Paprika, Tomatenmark, Kartoffeln" },
+    { n: "Rouladen", a: ["Rouladen", "Roulade"], i: "Rinderrouladen*4, Senf, Gewürzgurken, Speck, Zwiebeln, Rotkohl, Klöße" },
+    { n: "Braten", a: ["Braten", "Sonntagsbraten", "Schweinebraten"], i: "Schweinebraten, Zwiebeln, Karotten, Klöße, Rotkohl, Bratensoße" },
+    { n: "Hähnchen", a: ["Hähnchen", "Hühnchen", "Brathähnchen", "Hähnchenschenkel"], i: "Hähnchenschenkel*4, Kartoffeln, Gemüse, Gewürzmischung" },
+    { n: "Bratwurst", a: ["Bratwurst", "Grillabend", "Grillen"], i: "Bratwurst*4, Brötchen, Senf, Ketchup" },
+    { n: "Maultaschen", a: ["Maultaschen"], i: "Maultaschen, Zwiebeln, Eier*2, Brühe" },
+    { n: "Spätzle", a: ["Spätzle", "Käsespätzle"], i: "Spätzle, Käse (gerieben), Zwiebeln*2, Röstzwiebeln" },
+    { n: "Döner", a: ["Döner", "Gyros"], i: "Dönerfleisch, Fladenbrot, Salat, Tomaten, Zwiebeln, Joghurtsoße" },
+    { n: "Fischstäbchen", a: ["Fischstäbchen"], i: "Fischstäbchen, Kartoffeln, Spinat, Milch" },
+    { n: "Sushi", a: ["Sushi"], i: "Sushireis, Nori, Lachs, Gurke, Avocado, Sojasoße, Wasabi" },
+    // ---- Suppen und Eintöpfe ----
+    { n: "Kartoffelsuppe", a: ["Kartoffelsuppe"], i: "Kartoffeln, Karotten, Lauch, Zwiebeln, Gemüsebrühe, Würstchen" },
+    { n: "Linsensuppe", a: ["Linsensuppe", "Linseneintopf", "Linsen"], i: "Linsen, Karotten, Kartoffeln, Zwiebeln, Gemüsebrühe, Würstchen" },
+    { n: "Gemüsesuppe", a: ["Gemüsesuppe", "Gemüseeintopf"], i: "Suppengemüse, Kartoffeln, Zwiebeln, Gemüsebrühe" },
+    { n: "Hühnersuppe", a: ["Hühnersuppe", "Hühnchensuppe"], i: "Hähnchenschenkel*2, Suppengemüse, Nudeln, Petersilie" },
+    { n: "Tomatensuppe", a: ["Tomatensuppe"], i: "Passierte Tomaten, Zwiebeln, Sahne, Gemüsebrühe, Brot" },
+    { n: "Erbsensuppe", a: ["Erbsensuppe"], i: "Erbsen, Kartoffeln, Karotten, Würstchen, Gemüsebrühe" },
+    { n: "Eintopf", a: ["Eintopf"], i: "Suppengemüse, Kartoffeln, Würstchen, Gemüsebrühe" },
+    // ---- Vegetarisch, Pfanne, Ofen ----
+    { n: "Kaiserschmarrn", a: ["Kaiserschmarrn"], i: "Mehl, Eier*4, Milch, Rosinen, Puderzucker, Apfelmus" },
+    { n: "Curry", a: ["Curry", "Hähnchen-Curry", "Hähnchencurry"], i: "Hähnchenbrust, Kokosmilch, Currypaste, Reis, Paprika, Zwiebeln" },
+    { n: "Kartoffelpüree", a: ["Kartoffelpüree", "Püree"], i: "Kartoffeln, Milch, Butter, Muskat" },
+    { n: "Bratkartoffeln", a: ["Bratkartoffeln"], i: "Kartoffeln, Zwiebeln, Speckwürfel, Eier*4" },
+    { n: "Pellkartoffeln", a: ["Pellkartoffeln"], i: "Kartoffeln, Quark, Leinöl, Schnittlauch, Zwiebeln" },
+    { n: "Flammkuchen", a: ["Flammkuchen"], i: "Flammkuchenteig, Schmand, Zwiebeln*2, Speckwürfel, Lauchzwiebeln" },
+    { n: "Quiche", a: ["Quiche"], i: "Quiche-Teig, Eier*3, Sahne, Schinken, Käse (gerieben), Lauch" },
+    { n: "Gemüsepfanne", a: ["Gemüsepfanne", "Gemüse-Pfanne", "Wokgemüse"], i: "Wokgemüse*2, Paprika, Zwiebeln, Sojasoße, Reis" },
+    { n: "Ofengemüse", a: ["Ofengemüse", "Ofenkartoffeln"], i: "Kartoffeln, Karotten, Zucchini, Paprika, Feta, Olivenöl" },
+    { n: "Auflauf", a: ["Auflauf"], i: "Sahne, Käse (gerieben)*2, Brokkoli, Schinken" },
+    { n: "Kartoffelauflauf", a: ["Kartoffelauflauf", "Kartoffelgratin", "Gratin"], i: "Kartoffeln, Sahne, Käse (gerieben), Knoblauch, Muskat" },
+    { n: "Toast Hawaii", a: ["Toast Hawaii", "Toast"], i: "Toastbrot, Kochschinken, Ananas, Käsescheiben" },
+    // ---- Salate ----
+    { n: "Salat", a: ["Salat"], i: "Blattsalat, Tomaten, Gurke, Paprika, Dressing" },
+    { n: "Salat mit Hähnchen", a: ["Salat mit Hähnchen", "Salat mit Hühnchen", "Hähnchensalat"], i: "Blattsalat, Hähnchenbrust, Tomaten, Gurke, Dressing, Brot" },
+    { n: "Kartoffelsalat", a: ["Kartoffelsalat"], i: "Kartoffeln, Zwiebeln, Gurken, Brühe, Essig, Würstchen*4, Senf" },
+];
+
+// Einträge, für die nichts eingekauft wird (Reste, Restaurant, "Fr beim Italiener" …)
+const ING_SKIP = /(^| )(reste\w*|nichts|kein\w*|ausser haus|auswaerts|restaurant|lieferdienst|bestell\w*|essen gehen|beim|bei|offen)( |$)/;
+
+const ING_DAYS = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];
+const ING_MEALS = { bf: "Frühstück", lunch: "Mittagessen", dn: "Abendessen" };
+
+// ---- Hilfsfunktionen -----------------------------------------------------
+function ingNorm(s) {
+    return String(s || "").toLowerCase()
+        .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+        .replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+}
+
+// Vergleichsschlüssel: Zwiebel = Zwiebeln, Tomate = Tomaten
+function ingFold(s) {
+    return ingNorm(s).replace(/(en|n|e|s)$/, "");
+}
+
+// "Milch, 2 Zwiebeln, Käse*2, 500 g Mehl"  →  [{n, q}]
+function ingParseList(str) {
+    return String(str || "").split(/[,;\n]+/).map(s => s.trim()).filter(Boolean).map(tok => {
+        let q = 1, n = tok, m;
+        if (/^\d+(?:[.,]\d+)?\s*(kg|g|l|ml|pck|pkg|packung|packungen|dose|dosen|bund|stk|stueck|stück|glas|flasche|flaschen)\b/i.test(tok)) {
+            return { n: tok, q: 1 };
+        }
+        if ((m = tok.match(/^(\d{1,2})\s*(?:x|×)?\s+(.+)$/i))) { q = parseInt(m[1], 10); n = m[2]; }
+        else if ((m = tok.match(/^(.+?)\s*[*×x]\s*(\d{1,2})$/i))) { n = m[1]; q = parseInt(m[2], 10); }
+        return { n: n.trim(), q: Math.max(1, q || 1) };
+    }).filter(x => x.n);
+}
+
+function ingItemsToText(items) {
+    return items.map(x => x.q > 1 ? `${x.n}*${x.q}` : x.n).join(", ");
+}
+
+function ingItemName(entry) {
+    return String(entry).split(" @")[0].replace(/^\d+\s*x\s+/i, "");
+}
+
+// ---- Eigene Rezepte (Home Assistant + Kopie im Browser) -------------------
+function ingLocalRecipes() {
+    try { return JSON.parse(localStorage.getItem("hh_recipes") || "{}") || {}; } catch (e) { return {}; }
+}
+
+// Maßgeblich ist der Stand aus Home Assistant; die Browser-Kopie gilt nur, solange dort noch nichts steht
+function ingGetRecipes() {
+    return (db.food && db.food.recipes) ? db.food.recipes : ingLocalRecipes();
+}
+
+// aliases: Suchwörter, bei denen das Rezept greift (bei angepassten Standard-Rezepten die ursprünglichen)
+function ingSaveRecipe(text, itemsText, aliases) {
+    const key = ingNorm(text);
+    if (!key) return;
+    if (!db.food.recipes) db.food.recipes = Object.assign({}, ingLocalRecipes());
+    if (itemsText) {
+        const rec = { n: String(text).trim(), i: itemsText };
+        if (Array.isArray(aliases) && aliases.length) rec.a = aliases;
+        db.food.recipes[key] = rec;
+    } else {
+        delete db.food.recipes[key];
+    }
+    try { localStorage.setItem("hh_recipes", JSON.stringify(db.food.recipes)); } catch (e) { /* Browser-Speicher gesperrt */ }
+    try {
+        const cfg = SYNC_CONFIG.food;
+        if (cfg && cfg.event) haFireEvent(cfg.event, { favs: JSON.stringify(db.food) });
+    } catch (e) { console.error("Rezept konnte nicht gespeichert werden:", e); }
+}
+
+// ---- Gericht → Rezepte ----------------------------------------------------
+function ingFindRecipes(text) {
+    const t = ingNorm(text);
+    if (!t) return [];
+    const cands = [];
+
+    const user = ingGetRecipes();
+    Object.keys(user).forEach(k => {
+        const rec = user[k] || {};
+        const aliases = (Array.isArray(rec.a) && rec.a.length ? rec.a : [k]).map(ingNorm).filter(Boolean);
+        let best = null;
+        aliases.forEach(a => {
+            const at = t.indexOf(a);
+            if (at >= 0 && (!best || a.length > best.len)) best = { at, len: a.length };
+        });
+        if (best) cands.push({ n: rec.n || k, start: best.at, end: best.at + best.len, user: true, items: ingParseList(rec.i) });
+    });
+
+    ING_RECIPES.forEach(r => {
+        if (!r._a) r._a = r.a.map(ingNorm).filter(Boolean);
+        let best = null;
+        r._a.forEach(a => {
+            const at = t.indexOf(a);
+            if (at >= 0 && (!best || a.length > best.len)) best = { at, len: a.length };
+        });
+        if (best) cands.push({ n: r.n, start: best.at, end: best.at + best.len, user: false, items: ingParseList(r.i) });
+    });
+
+    // Längster Treffer gewinnt (Kartoffelsalat statt Salat), eigene Rezepte vor eingebauten
+    cands.sort((x, y) => ((y.end - y.start) - (x.end - x.start)) || ((y.user ? 1 : 0) - (x.user ? 1 : 0)));
+    const out = [];
+    cands.forEach(c => {
+        const covered = out.some(o => c.start >= o.start && c.end <= o.end);
+        if (!covered) out.push(c);
+    });
+    return out.sort((x, y) => x.start - y.start);
+}
+
+// ---- Dialog ---------------------------------------------------------------
+let ingState = { open: false, rows: [], dishes: [], extra: [], onList: new Set(), resolve: null, mode: "auto" };
+
+// Modus beim Eintragen eines Gerichts: ask = jedes Mal fragen · auto = direkt auf die Liste · manual = selbst auswählen · off = nichts tun
+function ingMode() {
+    const m = localStorage.getItem("hh_ing_mode");
+    if (m === "ask" || m === "auto" || m === "manual" || m === "off") return m;
+    return localStorage.getItem("hh_ing_auto") === "0" ? "off" : "ask";
+}
+function ingSetMode(m) { try { localStorage.setItem("hh_ing_mode", m); } catch (e) { /* egal */ } }
+
+async function ingReadList() {
+    try {
+        const cfg = SYNC_CONFIG.shopping;
+        const d = await haGetState(cfg.entity);
+        if (d && d.attributes && d.attributes[cfg.attr]) {
+            const raw = d.attributes[cfg.attr];
+            const list = (typeof raw === "string") ? JSON.parse(raw) : raw;
+            return Array.isArray(list) ? list : [];
+        }
+    } catch (e) { console.error("Einkaufsliste konnte nicht gelesen werden:", e); }
+    return [];
+}
+
+function ingCompute() {
+    const old = new Map(ingState.rows.map(r => [r.key, r]));
+    const map = new Map();
+    const add = (name, qty, from, isExtra) => {
+        const key = ingFold(name);
+        if (!key) return;
+        let r = map.get(key);
+        if (!r) { r = { key, name, qty: 0, from: new Set(), extraOnly: true }; map.set(key, r); }
+        r.qty += qty;
+        if (from) r.from.add(from);
+        if (!isExtra) r.extraOnly = false;
+    };
+
+    const chips = new Map();
+    ingState.dishes.forEach(d => {
+        const t = String(d.text || "").trim();
+        const nt = ingNorm(t);
+        if (!nt || ING_SKIP.test(nt)) return;
+        const found = ingFindRecipes(t);
+        if (!chips.has(nt)) chips.set(nt, { text: t, known: found.length > 0 });
+        found.forEach(rc => rc.items.forEach(it => add(it.n, it.q, rc.n, false)));
+    });
+    ingState.extra.forEach(e => add(e.n, e.q, null, true));
+
+    ingState.chips = [...chips.values()];
+    ingState.rows = [...map.values()].map(r => {
+        const o = old.get(r.key);
+        r.onList = ingState.onList.has(r.key);
+        if (o && o.userQty) { r.qty = o.qty; r.userQty = true; }
+        r.checked = o ? o.checked : (r.extraOnly ? true : !r.onList);
+        return r;
+    });
+}
+
+function ingMakeBtn(text, css, onClick, cls) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = text;
+    if (css) b.style.cssText = css;
+    if (cls) b.className = cls;
+    b.addEventListener("click", onClick);
+    return b;
+}
+
+function ingRender() {
+    const box = document.getElementById("ingList");
+    if (!box) return;
+    box.replaceChildren();
+
+    if (!ingState.rows.length) {
+        const empty = document.createElement("div");
+        empty.className = "ing-empty";
+        empty.textContent = "Für diese Gerichte kenne ich noch keine Zutaten. Tippe unten auf ein Gericht oder füge Zutaten hinzu.";
+        box.appendChild(empty);
+    }
+
+    ingState.rows.forEach((r, idx) => {
+        const row = document.createElement("div");
+        row.className = "ing-row" + (r.onList ? " is-dup" : "");
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.id = "ing-cb-" + idx;
+        cb.checked = r.checked;
+        cb.addEventListener("change", () => { r.checked = cb.checked; ingUpdateCount(); });
+
+        const lab = document.createElement("label");
+        lab.className = "ing-name";
+        lab.htmlFor = cb.id;
+        const main = document.createElement("span");
+        main.textContent = r.name;
+        lab.appendChild(main);
+        const sub = r.onList ? "✓ steht schon auf der Liste" : (r.from.size ? "für " + [...r.from].join(", ") : "");
+        if (sub) {
+            const small = document.createElement("small");
+            small.textContent = sub;
+            lab.appendChild(small);
+        }
+
+        const qty = document.createElement("div");
+        qty.className = "ing-qty";
+        const num = document.createElement("b");
+        num.textContent = String(r.qty);
+        const minus = ingMakeBtn("−", "", () => { if (r.qty > 1) { r.qty--; r.userQty = true; ingRender(); } }, "hh-round");
+        minus.setAttribute("aria-label", "weniger");
+        const plus = ingMakeBtn("+", "", () => { if (r.qty < 99) { r.qty++; r.userQty = true; ingRender(); } }, "hh-round");
+        plus.setAttribute("aria-label", "mehr");
+        qty.append(minus, num, plus);
+
+        row.append(cb, lab, qty);
+        box.appendChild(row);
+    });
+
+    // Gerichte (zum Ändern oder Merken von Rezepten)
+    const dishes = document.getElementById("ingDishes");
+    const dishWrap = document.getElementById("ingDishWrap");
+    if (dishes && dishWrap) {
+        dishes.replaceChildren();
+        (ingState.chips || []).forEach(c => {
+            const chip = ingMakeBtn((c.known ? "✏️ " : "➕ ") + c.text, "", () => ingEditRecipe(c.text));
+            chip.className = "ing-dish" + (c.known ? "" : " is-new");
+            chip.title = c.known ? "Zutaten ändern" : "Zutaten für dieses Gericht merken";
+            dishes.appendChild(chip);
+        });
+        dishWrap.style.display = (ingState.chips || []).length ? "" : "none";
+        const sum = document.getElementById("ingDishSummary");
+        if (sum) sum.textContent = `📖 Gerichte & Rezepte (${(ingState.chips || []).length}) – tippen zum Ändern oder Merken`;
+    }
+    ingUpdateCount();
+}
+
+function ingUpdateCount() {
+    const n = ingState.rows.filter(r => r.checked).length;
+    const yes = document.getElementById("ingYes");
+    if (yes) {
+        yes.textContent = n ? `Auf die Liste (${n})` : "Nichts ausgewählt";
+        yes.disabled = n === 0;
+        yes.style.opacity = n ? "1" : "0.45";
+    }
+}
+
+function ingAddCustom() {
+    const inp = document.getElementById("ingAddInput");
+    if (!inp) return;
+    const items = ingParseList(inp.value);
+    if (!items.length) return;
+    items.forEach(it => {
+        const key = ingFold(it.n);
+        const ex = ingState.extra.find(e => ingFold(e.n) === key);
+        if (ex) ex.q += it.q; else ingState.extra.push({ n: it.n, q: it.q });
+        const row = ingState.rows.find(r => r.key === key);
+        if (row) row.checked = true;
+    });
+    inp.value = "";
+    ingCompute();
+    ingRender();
+    inp.focus();
+}
+
+async function ingEditRecipe(text) {
+    const found = ingFindRecipes(text);
+    const cur = found.length ? ingItemsToText(found.flatMap(f => f.items)) : "";
+    const val = await showInputPrompt(
+        `Zutaten für „${text}" – mit Komma trennen, Menge z. B. 2 Zwiebeln. Leer lassen = Rezept vergessen.`,
+        "Rezept merken 📖",
+        cur
+    );
+    if (val === null) return;
+    ingSaveRecipe(text, val);
+    ingCompute();
+    ingRender();
+}
+
+// Manche Themes haben dunkle Karten mit dunkler Standardschrift (z. B. Glass) → Schrift automatisch hell
+function ingApplyTone(id) {
+    const modal = document.getElementById(id || "ingModal");
+    const card = modal && modal.querySelector(".win-card");
+    if (!card) return;
+    // Theme-Datei bringt eigene Farben (--hh-themed) -> kein Hell/Dunkel-Raten nötig
+    if (getComputedStyle(document.body).getPropertyValue("--hh-themed").trim()) { delete modal.dataset.tone; return; }
+    const m = (getComputedStyle(card).backgroundColor || "").match(/[\d.]+/g) || [];
+    const a = m[3] === undefined ? 1 : parseFloat(m[3]);
+    const mix = v => (parseFloat(v) || 0) * a + 40 * (1 - a);   // halbtransparent: liegt auf abgedunkeltem Hintergrund
+    const lum = (0.299 * mix(m[0]) + 0.587 * mix(m[1]) + 0.114 * mix(m[2])) / 255;
+    modal.dataset.tone = lum < 0.5 ? "dark" : "light";
+}
+
+function ingToast(msg) {
+    const old = document.getElementById("hhToast");
+    if (old) old.remove();
+    const t = document.createElement("div");
+    t.id = "hhToast";
+    t.className = "hh-toast";
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => { if (t.parentNode) t.remove(); }, 2600);
+}
+
+function ingClose(done) {
+    const modal = document.getElementById("ingModal");
+    if (modal) modal.style.display = "none";
+    ingState.open = false;
+    if (ingState.resolve) { ingState.resolve(!!done); ingState.resolve = null; }
+}
+
+// Schreibt Zutaten auf die Einkaufsliste (ein Event mit der kompletten Liste, wie beim normalen Hinzufügen)
+async function ingWrite(picks, store) {
+    const cfg = SYNC_CONFIG.shopping;
+    const list = await ingReadList();
+    picks.forEach(r => list.push(`${r.qty > 1 ? r.qty + "x " : ""}${r.name} @${store}`));
+    await haFireEvent(cfg.event, { json_data: list });
+    try { localStorage.setItem("hh_ing_store", store); } catch (e) { /* egal */ }
+    homeLastFetch = 0;
+    load();
+    if (typeof updateAppBadges === "function") updateAppBadges();
+}
+
+function ingDefaultStore() {
+    const names = (Array.isArray(stores) && stores.length) ? stores : [activeStore];
+    const remembered = localStorage.getItem("hh_ing_store");
+    return names.includes(remembered) ? remembered : (names.includes(activeStore) ? activeStore : names[0]);
+}
+
+// Laden-Auswahl befüllen (Zutaten-Dialog und Frage); gibt zurück, ob es mehrere Läden gibt
+function ingFillStores(sel, preferred) {
+    if (!sel) return false;
+    sel.replaceChildren();
+    const names = (Array.isArray(stores) && stores.length) ? stores.slice() : [activeStore];
+    names.forEach(s => {
+        const o = document.createElement("option");
+        o.value = s;
+        o.textContent = s;
+        sel.appendChild(o);
+    });
+    sel.value = names.includes(preferred) ? preferred : ingDefaultStore();
+    return names.length > 1;
+}
+
+function ingCountText(n) { return `${n} ${n === 1 ? "Zutat" : "Zutaten"}`; }
+
+async function ingConfirm() {
+    const picks = ingState.rows.filter(r => r.checked && r.qty > 0);
+    if (!picks.length) { ingClose(false); return; }
+    const sel = document.getElementById("ingStore");
+    const store = (sel && sel.value) || ingDefaultStore();
+
+    try {
+        await ingWrite(picks, store);
+        ingClose(true);
+        ingToast(`✅ ${ingCountText(picks.length)} auf die Liste (${store})`);
+    } catch (e) {
+        console.error("Zutaten konnten nicht hinzugefügt werden:", e);
+        showAlert("Die Zutaten konnten nicht zur Einkaufsliste hinzugefügt werden.", "Fehler ⚠️");
+    }
+}
+
+// Alles, was noch nicht auf der Liste steht, ohne Nachfrage hinzufügen
+async function ingAutoAdd(chosenStore) {
+    const picks = ingState.rows.filter(r => !r.onList && r.qty > 0);
+    if (!picks.length) return false;
+    const store = chosenStore || ingDefaultStore();
+    try {
+        await ingWrite(picks, store);
+        const dup = ingState.rows.length - picks.length;
+        ingToast(`⚡ ${ingCountText(picks.length)} automatisch auf die Liste (${store})` + (dup ? ` · ${dup} schon drauf` : ""));
+        return true;
+    } catch (e) {
+        console.error("Zutaten konnten nicht automatisch hinzugefügt werden:", e);
+        showAlert("Die Zutaten konnten nicht zur Einkaufsliste hinzugefügt werden.", "Fehler ⚠️");
+        return false;
+    }
+}
+
+// Zutaten für die Gerichte berechnen (gegen die aktuelle Einkaufsliste)
+async function ingPrepare(dishes) {
+    const list = await ingReadList();
+    ingState.onList = new Set(list.map(e => ingFold(ingItemName(e))));
+    ingState.dishes = dishes || [];
+    ingState.extra = [];
+    ingState.rows = [];
+    ingCompute();
+}
+
+function ingShow(opts) {
+    const modal = document.getElementById("ingModal");
+    if (!modal) return Promise.resolve(false);
+    ingState.mode = opts.mode || "auto";
+    document.getElementById("ingTitle").textContent = opts.title || "🛒 Zutaten";
+    document.getElementById("ingSub").textContent = opts.sub || "";
+    document.getElementById("ingAddInput").value = "";
+    document.getElementById("ingNo").textContent = ingState.mode === "auto" ? "Nein danke" : "Abbrechen";
+
+    ingFillStores(document.getElementById("ingStore"), opts.store);
+
+    document.getElementById("ingMode").value = ingMode();
+
+    ingRender();
+    const dishWrap = document.getElementById("ingDishWrap");
+    if (dishWrap) dishWrap.open = (ingState.chips || []).length <= 3;
+    ingApplyTone("ingModal");
+    modal.style.display = "flex";
+    ingState.open = true;
+    return new Promise(res => { ingState.resolve = res; });
+}
+
+async function ingOpen(opts) {
+    if (ingState.open) return false;
+    await ingPrepare(opts.dishes);
+    return ingShow(opts);
+}
+
+// Abfrage: automatisch oder händisch?
+let ingAskResolver = null;
+
+function ingAsk(o) {
+    return new Promise(resolve => {
+        ingAskResolver = resolve;
+        document.getElementById("ingAskTitle").textContent = o.title;
+        document.getElementById("ingAskText").textContent = o.text;
+        document.getElementById("ingAskRemember").checked = false;
+        const storeWrap = document.getElementById("ingAskStoreWrap");
+        if (storeWrap) storeWrap.style.display = ingFillStores(document.getElementById("ingAskStore"), o.store) ? "" : "none";
+        ingApplyTone("ingAskModal");
+        document.getElementById("ingAskModal").style.display = "flex";
+    });
+}
+
+function ingAskAnswer(how) {
+    const remember = document.getElementById("ingAskRemember").checked;
+    const storeSel = document.getElementById("ingAskStore");
+    const store = (storeSel && storeSel.value) || "";
+    document.getElementById("ingAskModal").style.display = "none";
+    if (ingAskResolver) {
+        const r = ingAskResolver;
+        ingAskResolver = null;
+        r({ how, remember, store });
+    }
+}
+
+// Wird von saveFood() nach dem Speichern aufgerufen
+async function ingMaybeSuggest(changed, dayIdx, week) {
+    const mode = ingMode();
+    if (mode === "off" || !changed.length || ingState.open || ingAskResolver) return;
+    const anyKnown = changed.some(c => !ING_SKIP.test(ingNorm(c.text)) && ingFindRecipes(c.text).length);
+    if (!anyKnown) return;
+
+    await ingPrepare(changed);
+    const fresh = ingState.rows.filter(r => !r.onList);
+    if (!fresh.length) return;   // alles Nötige steht schon auf der Liste
+
+    const weekTxt = week === 1 ? " · nächste Woche" : "";
+    const where = `${ING_DAYS[dayIdx] || ""} · ${changed.map(c => ING_MEALS[c.meal]).join(" + ")}${weekTxt}`;
+    const title = changed.length === 1 ? `🛒 Zutaten für „${changed[0].text}"` : "🛒 Zutaten für deine Gerichte";
+
+    let how = mode;
+    let store = "";
+    if (mode === "ask") {
+        const dup = ingState.rows.length - fresh.length;
+        const a = await ingAsk({
+            title,
+            text: `${ingCountText(fresh.length)} fehlen noch${dup ? ` (${dup} stehen schon auf der Liste)` : ""}. ` +
+                  `Soll ich sie automatisch auf die Einkaufsliste setzen oder möchtest du sie selbst auswählen?`
+        });
+        if (a.remember) ingSetMode(a.how === "off" ? "off" : a.how);
+        if (a.how === "off") return;
+        how = a.how;
+        store = a.store;
+    }
+
+    if (how === "auto") await ingAutoAdd(store);
+    else await ingShow({ mode: "auto", title, sub: where, store });
+}
+
+// Knopf "Einkauf aus dem Plan": alle Gerichte der angezeigten Woche
+async function openWeekIngredients() {
+    const dishes = [];
+    for (let i = 0; i < 7; i++) {
+        [["bf", `plan-${i}-bf`], ["lunch", `plan-${i}`], ["dn", `plan-${i}-dn`]].forEach(([meal, id]) => {
+            const el = document.getElementById(id);
+            const text = el ? el.value.trim() : "";
+            if (text) dishes.push({ text, meal, dayIdx: i });
+        });
+    }
+    if (!dishes.length) {
+        showAlert("Im Wochenplan stehen noch keine Gerichte. Trag zuerst etwas ein, dann stelle ich die Zutaten zusammen.", "Noch nichts geplant 🍽️");
+        return;
+    }
+    await ingOpen({
+        mode: "week",
+        title: "🛒 Einkauf aus dem Plan",
+        sub: activeFoodWeek === 0 ? "Diese Woche" : "Nächste Woche",
+        dishes
+    });
+}
+
+// ==========================================================================
+//  REZEPTE-SEITE  (alle eingebauten und eigenen Rezepte ansehen, ändern, neu anlegen)
+// ==========================================================================
+function recAll() {
+    const user = ingGetRecipes();
+    const list = [];
+    const used = new Set();
+
+    ING_RECIPES.forEach(r => {
+        const key = ingNorm(r.n);
+        const ov = user[key];
+        if (ov) used.add(key);
+        list.push({
+            key, name: r.n,
+            aliases: ov ? (Array.isArray(ov.a) && ov.a.length ? ov.a : [r.n]) : r.a,
+            itemsText: ov ? ov.i : r.i,
+            source: ov ? "override" : "builtin"
+        });
+    });
+    Object.keys(user).forEach(k => {
+        if (used.has(k)) return;
+        const rec = user[k] || {};
+        list.push({
+            key: k, name: rec.n || k,
+            aliases: (Array.isArray(rec.a) && rec.a.length) ? rec.a : [rec.n || k],
+            itemsText: rec.i || "", source: "own"
+        });
+    });
+    return list.sort((x, y) => x.name.localeCompare(y.name, "de"));
+}
+
+function recItemsPretty(itemsText) {
+    return ingParseList(itemsText).map(x => x.q > 1 ? `${x.q}× ${x.n}` : x.n).join(", ");
+}
+
+function recRender() {
+    const box = document.getElementById("recList");
+    if (!box) return;
+    const all = recAll();
+    const q = ingNorm((document.getElementById("recSearch") || {}).value || "");
+    const shown = all.filter(r => !q || ingNorm([r.name, ...r.aliases, r.itemsText].join(" ")).includes(q));
+
+    const own = all.filter(r => r.source !== "builtin").length;
+    const sub = document.getElementById("recSub");
+    if (sub) sub.textContent = `${all.length} Rezepte · ${own} eigene oder angepasste` + (q ? ` · ${shown.length} gefunden` : "");
+
+    box.replaceChildren();
+    if (!shown.length) {
+        const empty = document.createElement("div");
+        empty.className = "ing-empty";
+        empty.textContent = q ? "Nichts gefunden. Du kannst unten ein neues Rezept anlegen." : "Noch keine Rezepte.";
+        box.appendChild(empty);
+        return;
+    }
+    shown.forEach(r => {
+        const item = document.createElement("div");
+        item.className = "rec-item";
+
+        const head = document.createElement("div");
+        head.className = "rec-head";
+        const name = document.createElement("span");
+        name.className = "rec-name";
+        name.textContent = r.name;
+        head.appendChild(name);
+        if (r.source !== "builtin") {
+            const badge = document.createElement("span");
+            badge.className = "rec-badge";
+            badge.textContent = r.source === "own" ? "Eigenes" : "Angepasst";
+            head.appendChild(badge);
+        }
+        item.appendChild(head);
+
+        const ing = document.createElement("div");
+        ing.className = "rec-ing";
+        ing.textContent = recItemsPretty(r.itemsText) || "Keine Zutaten hinterlegt";
+        item.appendChild(ing);
+
+        const others = r.aliases.filter(a => ingNorm(a) !== ingNorm(r.name));
+        if (others.length) {
+            const al = document.createElement("div");
+            al.className = "rec-alias";
+            al.textContent = "Erkennt auch: " + others.join(", ");
+            item.appendChild(al);
+        }
+
+        const btns = document.createElement("div");
+        btns.className = "rec-btns";
+        btns.appendChild(ingMakeBtn("🛒 Einkaufen", "", () => recShop(r), "hh-pill"));
+        btns.appendChild(ingMakeBtn("✏️ Ändern", "", () => recEdit(r), "hh-pill"));
+        if (r.source !== "builtin") {
+            btns.appendChild(ingMakeBtn(r.source === "own" ? "🗑️ Löschen" : "↩︎ Standard", "", () => recDelete(r), "hh-pill"));
+        }
+        item.appendChild(btns);
+        box.appendChild(item);
+    });
+}
+
+function openRecipes() {
+    const modal = document.getElementById("recipesModal");
+    if (!modal) return;
+    const s = document.getElementById("recSearch");
+    if (s) s.value = "";
+    recRender();
+    ingApplyTone("recipesModal");
+    modal.style.display = "flex";
+}
+
+function recClose() {
+    const modal = document.getElementById("recipesModal");
+    if (modal) modal.style.display = "none";
+}
+
+function recShop(r) {
+    ingOpen({
+        mode: "week",
+        title: `🛒 Zutaten für „${r.name}"`,
+        sub: "Rezept",
+        dishes: [{ text: r.aliases[0] || r.name, meal: "lunch", dayIdx: 0 }]
+    });
+}
+
+async function recEdit(r) {
+    const val = await showInputPrompt(
+        `Zutaten für „${r.name}" – mit Komma trennen, Menge z. B. 2 Zwiebeln oder Käse*2.` +
+        (r.source === "builtin" ? "" : " Leer lassen = " + (r.source === "own" ? "Rezept löschen." : "Standard wiederherstellen.")),
+        "Rezept ändern ✏️",
+        ingItemsToText(ingParseList(r.itemsText))
+    );
+    if (val === null) return;
+    if (!val && r.source === "builtin") return;
+    ingSaveRecipe(r.name, val, r.aliases);
+    recRender();
+    ingToast(val ? "✅ Rezept gespeichert" : (r.source === "own" ? "🗑️ Rezept gelöscht" : "↩︎ Standard wiederhergestellt"));
+}
+
+async function recDelete(r) {
+    const own = r.source === "own";
+    const ok = await showDeleteModal(
+        own ? `Rezept „${r.name}" wirklich löschen?` : `Deine Änderungen an „${r.name}" verwerfen und das Standard-Rezept wiederherstellen?`,
+        own ? "Rezept löschen" : "Standard wiederherstellen",
+        own ? "Löschen" : "Wiederherstellen"
+    );
+    if (!ok) return;
+    ingSaveRecipe(r.name, "", r.aliases);
+    recRender();
+    ingToast(own ? "🗑️ Rezept gelöscht" : "↩︎ Standard wiederhergestellt");
+}
+
+async function recNew() {
+    const name = await showInputPrompt("Name des Gerichts – so, wie du es in den Wochenplan schreibst:", "Neues Rezept 📖");
+    if (!name) return;
+    if (recAll().some(r => ingNorm(r.name) === ingNorm(name))) {
+        await showAlert(`Ein Rezept „${name}" gibt es schon. Such es oben und tippe auf „Ändern".`, "Gibt es schon");
+        return;
+    }
+    const ing = await showInputPrompt(`Zutaten für „${name}" – mit Komma trennen, Menge z. B. 2 Zwiebeln oder Käse*2.`, "Zutaten 🛒");
+    if (!ing) return;
+    ingSaveRecipe(name, ing, [name]);
+    const s = document.getElementById("recSearch");
+    if (s) s.value = name;
+    recRender();
+    ingToast("✅ Rezept gespeichert");
+}
+
+// ==========================================================================
+//  MAHLZEITEN-AUSWAHL
+//  Tipp auf ein Essensfeld → (Frage: Favoriten?) → Fenster mit Favoriten / Rezepten,
+//  Suche, Eintippen + Übernehmen
+// ==========================================================================
+let mealPick = { open: false, target: null, dayIdx: 0, meal: "lunch", tab: "list", cat: "Alle" };
+let mealAskResolver = null;
+
+// ask = erst fragen (Favoriten?) · favs = gleich Favoriten · list = gleich Rezepte/Eintippen · off = Feld normal antippen und tippen
+function mealPickMode() {
+    const m = localStorage.getItem("hh_pick_mode");
+    return (m === "ask" || m === "favs" || m === "list" || m === "off") ? m : "ask";
+}
+
+function mealPickSetMode(m) {
+    try { localStorage.setItem("hh_pick_mode", m); } catch (e) { /* egal */ }
+    applyMealInputMode();
+}
+
+// Felder sind nur lesbar, solange die Auswahl aktiv ist – so poppt keine Tastatur vor dem Fenster auf
+function applyMealInputMode() {
+    const pick = mealPickMode() !== "off";
+    document.querySelectorAll("input.day-input").forEach(el => {
+        if (el.id === "plan-7") return;
+        el.readOnly = pick;
+        el.classList.toggle("is-pick", pick);
+    });
+}
+
+function mealFavs() {
+    return ((db.food && db.food.favs) || [])
+        .map(f => (typeof f === "string") ? { n: f, c: "" } : f)
+        .filter(f => f && f.n);
+}
+
+function mealInfoFromInput(el) {
+    const m = /^plan-(\d)(?:-(bf|dn))?$/.exec(el.id || "");
+    if (!m) return null;
+    return { dayIdx: parseInt(m[1], 10), meal: m[2] === "bf" ? "bf" : (m[2] === "dn" ? "dn" : "lunch") };
+}
+
+document.addEventListener("click", ev => {
+    const el = ev.target && ev.target.closest ? ev.target.closest("input.day-input") : null;
+    if (!el || el.id === "plan-7" || !el.readOnly) return;
+    if (mealPickMode() === "off" || mealPick.open || mealAskResolver) return;
+    el.blur();
+    activeMealInput = el;
+    openMealPicker(el);
+});
+
+function mealAsk(o) {
+    return new Promise(resolve => {
+        mealAskResolver = resolve;
+        document.getElementById("mealAskTitle").textContent = o.title;
+        document.getElementById("mealAskText").textContent = o.text;
+        document.getElementById("mealAskRemember").checked = false;
+        ingApplyTone("mealAskModal");
+        document.getElementById("mealAskModal").style.display = "flex";
+    });
+}
+
+function mealAskAnswer(how) {
+    const remember = document.getElementById("mealAskRemember").checked;
+    document.getElementById("mealAskModal").style.display = "none";
+    if (mealAskResolver) {
+        const r = mealAskResolver;
+        mealAskResolver = null;
+        r(how ? { how, remember } : null);
+    }
+}
+
+async function openMealPicker(el) {
+    const info = mealInfoFromInput(el);
+    if (!info) return;
+    mealPick.target = el;
+    mealPick.dayIdx = info.dayIdx;
+    mealPick.meal = info.meal;
+    mealPick.cat = "Alle";
+
+    const title = `🍽️ ${ING_MEALS[info.meal]} · ${ING_DAYS[info.dayIdx]}`;
+    const hasFavs = mealFavs().length > 0;
+    let tab = "list";
+    const mode = mealPickMode();
+
+    if (mode === "favs") tab = hasFavs ? "favs" : "list";
+    else if (mode === "ask" && hasFavs) {
+        const a = await mealAsk({ title, text: "Möchtest du etwas aus deinen Favoriten nehmen?" });
+        if (!a) return;
+        if (a.remember) mealPickSetMode(a.how);
+        tab = a.how;
+    }
+    showMealPicker(title, tab);
+}
+
+function showMealPicker(title, tab) {
+    const modal = document.getElementById("mealPickModal");
+    if (!modal) return;
+    const cur = mealPick.target ? mealPick.target.value.trim() : "";
+    document.getElementById("pickTitle").textContent = title;
+    document.getElementById("pickSub").textContent = cur ? `Aktuell: ${cur}` : "Noch nichts eingetragen";
+    document.getElementById("pickInput").value = "";
+    document.getElementById("pickMode").value = mealPickMode();
+    document.getElementById("pickClear").style.display = cur ? "" : "none";
+    mealPick.tab = tab;
+    mealPickRender();
+    ingApplyTone("mealPickModal");
+    modal.style.display = "flex";
+    mealPick.open = true;
+    setTimeout(() => {
+        // Am PC direkt tippbar; am Handy keine Tastatur erzwingen
+        if (window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+            const inp = document.getElementById("pickInput");
+            if (inp) inp.focus();
+        }
+    }, 120);
+}
+
+function mealPickTab(tab) {
+    mealPick.tab = tab;
+    mealPickRender();
+}
+
+function mealPickRender() {
+    const list = document.getElementById("pickList");
+    const cats = document.getElementById("pickCats");
+    if (!list || !cats) return;
+    const q = ingNorm(document.getElementById("pickInput").value || "");
+    const favs = mealFavs();
+    const recs = recAll();
+
+    // Reiter
+    const bf = document.getElementById("pickTabFavs"), bl = document.getElementById("pickTabList");
+    bf.textContent = `⭐ Favoriten (${favs.length})`;
+    bl.textContent = `📖 Rezepte (${recs.length})`;
+    bf.className = "hh-tab" + (mealPick.tab === "favs" ? " is-on" : "");
+    bl.className = "hh-tab" + (mealPick.tab === "list" ? " is-on" : "");
+
+    // Kategorien (nur bei Favoriten)
+    cats.replaceChildren();
+    const catNames = ((db.food && db.food.cats) || ["Alle"]).filter(c => c && c !== "Alle");
+    if (mealPick.tab === "favs" && catNames.length) {
+        ["Alle", ...catNames].forEach(c => {
+            const chip = ingMakeBtn(c, "", () => { mealPick.cat = c; mealPickRender(); });
+            chip.className = "ing-dish" + (mealPick.cat === c ? " is-active" : "");
+            cats.appendChild(chip);
+        });
+        cats.style.display = "";
+    } else {
+        cats.style.display = "none";
+    }
+
+    // Einträge
+    let rows;
+    if (mealPick.tab === "favs") {
+        rows = favs
+            .filter(f => (mealPick.cat === "Alle" || f.c === mealPick.cat) && (!q || ingNorm(f.n).includes(q)))
+            .map(f => ({ name: f.n, meta: (mealPick.cat === "Alle" && f.c && f.c !== "Alle") ? f.c : "" }));
+    } else {
+        rows = recs
+            .filter(r => !q || ingNorm([r.name, ...r.aliases].join(" ")).includes(q))
+            .map(r => ({ name: r.name, meta: "" }));
+    }
+
+    list.replaceChildren();
+    if (!rows.length) {
+        const empty = document.createElement("div");
+        empty.className = "ing-empty";
+        empty.textContent = q
+            ? "Nichts gefunden. Tippe auf „Übernehmen“, um deinen Text einzutragen."
+            : (mealPick.tab === "favs" ? "Noch keine Favoriten. Du kannst sie oben im Wochenplan mit „⭐️ + Favoriten“ anlegen." : "Noch keine Rezepte.");
+        list.appendChild(empty);
+        return;
+    }
+    rows.forEach(r => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "hh-pickrow";
+        const n = document.createElement("span");
+        n.textContent = r.name;
+        n.style.overflowWrap = "anywhere";
+        b.appendChild(n);
+        if (r.meta) {
+            const m = document.createElement("small");
+            m.textContent = r.meta;
+            m.style.cssText = "opacity:0.6;font-weight:600;flex:0 0 auto;";
+            b.appendChild(m);
+        }
+        b.addEventListener("click", () => mealPickChoose(r.name));
+        list.appendChild(b);
+    });
+}
+
+function mealPickChoose(name) {
+    const el = mealPick.target;
+    const day = mealPick.dayIdx;
+    mealPickClose();
+    if (!el || !String(name || "").trim()) return;
+    el.value = String(name).trim();
+    saveFood(day);
+}
+
+function mealPickApplyTyped() {
+    const t = (document.getElementById("pickInput").value || "").trim();
+    if (!t) return;
+    mealPickChoose(t);
+}
+
+function mealPickClear() {
+    const el = mealPick.target;
+    const day = mealPick.dayIdx;
+    mealPickClose();
+    if (!el) return;
+    el.value = "";
+    saveFood(day);
+}
+
+function mealPickClose() {
+    const modal = document.getElementById("mealPickModal");
+    if (modal) modal.style.display = "none";
+    mealPick.open = false;
+}
+
 async function delItem(t) {
     try {
         const cfg = SYNC_CONFIG.shopping;
@@ -2902,16 +3897,20 @@ function createFavChip(f, isCustom, idx) {
 }
 
 function tab(t) { 
+    applyMealInputMode();
     curTab = t; 
     sessionStorage.setItem("current_tab", t); 
-    ['shop','food','todo','trash','finance'].forEach(v => { 
+    ['home','shop','food','todo','trash','finance'].forEach(v => { 
         const view = document.getElementById('v-'+v);
         const tabBtn = document.getElementById('t-'+v);
         if(view) view.style.display = t===v?'block':'none'; 
-        if(tabBtn) tabBtn.className = `tab-item ${t===v?'active-'+t:''}`; 
+        // "Start" nutzt zusätzlich die Shop-Farbe, damit alle Themes den aktiven Tab hervorheben
+        if(tabBtn) tabBtn.className = `tab-item ${t===v ? 'active-'+v + (v==='home' ? ' active-shop' : '') : ''}`; 
     }); 
 
-    if(t==='trash') { 
+    if(t==='home') {
+        loadHome(true);
+    } else if(t==='trash') { 
         loadTrash(); 
     } else if(t==='finance') {
         loadFinance();
@@ -3154,6 +4153,241 @@ function updateStatus() {
         statusElem.appendChild(logoutSpan);
     }
 }
+
+// ============================================================================
+// STARTSEITE  –  Willkommen · heute fällige Aufgaben · Einkaufsliste · Ausgaben des Monats
+// ============================================================================
+let homeLastFetch = 0;
+const homeHtmlCache = {};
+
+// Schreibt nur, wenn sich der Inhalt geändert hat (kein Flackern beim Auffrischen)
+function homeSet(id, html) {
+    const el = document.getElementById(id);
+    if (!el || homeHtmlCache[id] === html) return;
+    homeHtmlCache[id] = html;
+    el.innerHTML = html;
+}
+
+function homeMoney(v) {
+    return (parseFloat(v) || 0).toFixed(2) + "€";
+}
+
+function renderHomeHeader() {
+    const now = new Date();
+    const h = now.getHours();
+    const part = h < 5 ? "Gute Nacht" : h < 11 ? "Guten Morgen" : h < 17 ? "Guten Tag" : "Guten Abend";
+    const name = (user && user !== "Tablet") ? ", " + user : "";
+    const date = now.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+    const sub = document.getElementById("home-sub");
+    if (sub) sub.textContent = `${part}${name} · ${date}`;
+}
+
+// Heute fällige (und überfällige) Aufgaben – gleiche Regel wie das Zahlen-Symbol am Tab "Haus"
+function renderHomeTodos() {
+    const now = new Date();
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    const due = (todoDb || [])
+        .filter(t => t && t.nextDate && t.room !== "Müll" && new Date(t.nextDate) <= end)
+        .sort((a, b) => new Date(a.nextDate) - new Date(b.nextDate));
+
+    const MAX = 6;
+    let html = "";
+    if (!due.length) {
+        html = `<div class="home-empty">Heute ist nichts offen 🎉</div>`;
+    } else {
+        due.slice(0, MAX).forEach(t => {
+            const d = new Date(t.nextDate);
+            const overdue = d < now;
+            const color = overdue ? "var(--danger)" : "#f39c12";
+            const timeStr = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+            const pill = overdue ? "Überfällig" : (timeStr === "00:00" ? "Heute" : timeStr + " Uhr");
+            const sub = [
+                t.room ? "🚪 " + escapeHtml(t.room) : "",
+                t.assignedTo ? "👤 " + escapeHtml(t.assignedTo) : ""
+            ].filter(Boolean).join(" · ");
+            html += `<div class="home-row">
+                <div class="home-row-main">
+                    <strong class="home-row-title">${escapeHtml(t.name)}</strong>
+                    ${sub ? `<span class="home-row-sub" style="color:var(--gray);">${sub}</span>` : ""}
+                </div>
+                <span class="home-pill" style="color:${color}; background:${color}15; border:1px solid ${color}30;">${pill}</span>
+                <button type="button" class="home-done" data-home-act="done" data-id="${escapeHtml(String(t.id))}" aria-label="Erledigt">✅</button>
+            </div>`;
+        });
+        if (due.length > MAX) {
+            html += `<button type="button" class="home-more" data-home-act="go" data-tab="todo">+ ${due.length - MAX} weitere anzeigen</button>`;
+        }
+    }
+    homeSet("home-todo-list", html);
+    const c = document.getElementById("home-todo-count");
+    if (c) {
+        c.textContent = String(due.length);
+        c.classList.toggle("is-zero", due.length === 0);
+    }
+}
+
+// Einkaufsliste: nach Geschäft gruppiert
+async function renderHomeShop() {
+    let items = [];
+    try {
+        const cfg = SYNC_CONFIG.shopping;
+        const d = await haGetState(cfg.entity);
+        if (d && d.attributes && d.attributes[cfg.attr]) {
+            const raw = d.attributes[cfg.attr];
+            items = (typeof raw === "string") ? JSON.parse(raw) : raw;
+        }
+    } catch (e) {
+        homeSet("home-shop-list", `<div class="home-empty">Einkaufsliste konnte nicht geladen werden ⚠️</div>`);
+        return;
+    }
+    if (!Array.isArray(items)) items = [];
+
+    const groups = new Map();
+    items.slice().reverse().forEach(o => {
+        const parts = String(o).split(" @");
+        const name = parts[0];
+        const store = parts.slice(1).join(" @") || "Sonstiges";
+        if (!groups.has(store)) groups.set(store, []);
+        groups.get(store).push(name);
+    });
+
+    const MAX_CHIPS = 5;
+    let html = "";
+    if (!items.length) {
+        html = `<div class="home-empty">Nichts auf der Liste – alles da ✅</div>`;
+    } else {
+        [...groups.entries()].sort((a, b) => b[1].length - a[1].length).forEach(([store, names]) => {
+            const chips = names.slice(0, MAX_CHIPS).map(n => `<span class="home-chip">${escapeHtml(n)}</span>`).join("");
+            const more = names.length > MAX_CHIPS ? `<span class="home-chip home-chip-more">+${names.length - MAX_CHIPS}</span>` : "";
+            html += `<button type="button" class="home-store" data-home-act="store" data-store="${escapeHtml(store)}">
+                <span class="home-store-head"><strong>${escapeHtml(store)}</strong><span class="home-count">${names.length}</span></span>
+                <span class="home-chips">${chips}${more}</span>
+            </button>`;
+        });
+    }
+    homeSet("home-shop-list", html);
+    const c = document.getElementById("home-shop-count");
+    if (c) {
+        c.textContent = String(items.length);
+        c.classList.toggle("is-zero", items.length === 0);
+    }
+}
+
+// Ausgaben des aktuellen Monats (aus der Finanz-Datenbank)
+async function renderHomeMoney() {
+    const now = new Date();
+    const monthNames = ["januar", "februar", "märz", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "dezember"];
+    const label = now.toLocaleDateString("de-DE", { month: "long", year: "numeric" });
+    const title = document.getElementById("home-money-title");
+    if (title) title.textContent = `💰 Ausgaben ${label}`;
+
+    if (typeof fetchHA !== "function" || typeof parseFinanceRoot !== "function") return;
+
+    let m = null;
+    try {
+        const s = await fetchHA("sensor.haushalt_finance_db");
+        const root = parseFinanceRoot(s);
+        m = (root.months || []).find(x =>
+            x && x.month_name &&
+            x.month_name.toLowerCase().includes(monthNames[now.getMonth()]) &&
+            String(extractYearFromMonth(x)) === String(now.getFullYear())
+        ) || null;
+    } catch (e) {
+        homeSet("home-money-body", `<div class="home-empty">Finanzen konnten nicht geladen werden ⚠️</div>`);
+        return;
+    }
+
+    if (!m) {
+        homeSet("home-money-body", `<div class="home-empty">Für ${escapeHtml(label)} gibt es noch keinen Monat in den Finanzen.</div>`);
+        return;
+    }
+
+    const sum = arr => (arr || []).reduce((acc, i) => acc + (parseFloat(i.amount) || 0), 0);
+    const fix = sum(m.fixum);
+    const spend = sum(m.spendings);
+    const latest = (m.spendings || []).slice(-4).reverse();
+
+    let html = `
+        <div class="home-money-row"><span>Fixkosten</span><b>${homeMoney(fix)}</b></div>
+        <div class="home-money-row"><span>Ausgaben</span><b>${homeMoney(spend)}</b></div>
+        <div class="home-money-total"><span>Gesamt</span><b>${homeMoney(fix + spend)}</b></div>`;
+    if (latest.length) {
+        html += `<div class="home-money-last-title">Zuletzt</div>`;
+        latest.forEach(i => {
+            html += `<div class="home-money-row home-money-last"><span>${escapeHtml(i.name)}</span><span>${homeMoney(i.amount)}</span></div>`;
+        });
+    }
+    homeSet("home-money-body", html);
+}
+
+// Essensplan der aktuellen Woche (Mo–So), heute hervorgehoben
+async function renderHomeFood() {
+    const dayNames = ["MO", "DI", "MI", "DO", "FR", "SA", "SO"];
+    const dayIcons = ["🥣", "🥗", "🍲", "🍝", "🍕", "🍔", "🍗"];
+    const todayIdx = (new Date().getDay() + 6) % 7;
+
+    let weeks = [];
+    try {
+        const states = await Promise.all(FOOD_ENTITIES.slice(0, 7).map(e => haGetState(e)));
+        weeks = states.map((d, i) => {
+            const raw = (d && typeof d.state === "string" && d.state !== "unknown" && d.state !== "---") ? d.state : "";
+            return parseFoodWeekStr(raw.split("~")[0] || "", i === 6);
+        });
+    } catch (e) {
+        homeSet("home-food-list", `<div class="home-empty">Wochenplan konnte nicht geladen werden ⚠️</div>`);
+        return;
+    }
+
+    const hasAny = weeks.some(w => w.bf || w.lunch || w.dn || w.out);
+    if (!hasAny) {
+        homeSet("home-food-list", `<div class="home-empty">Diese Woche ist noch nichts geplant 🍽️</div>`);
+        return;
+    }
+
+    let html = "";
+    weeks.forEach((w, i) => {
+        const meals = [["Frühstück", w.bf], ["Mittag", w.lunch], ["Abend", w.dn]]
+            .filter(m => m[1])
+            .map(m => `<span class="home-meal"><em>${m[0]}</em> ${escapeHtml(m[1])}</span>`);
+        if (w.out) meals.push(`<span class="home-meal"><em>Auswärts</em> ${escapeHtml(w.out)}${w.outCook ? " (" + escapeHtml(w.outCook) + ")" : ""}</span>`);
+        const body = meals.length ? meals.join("") : `<span class="home-meal home-meal-empty" style="color:var(--gray);">Noch nichts geplant</span>`;
+        const cls = "home-day" + (i === todayIdx ? " is-today" : "") + (i < todayIdx ? " is-past" : "");
+        html += `<div class="${cls}">
+            <div class="home-day-label"><span>${dayIcons[i]}</span>${dayNames[i]}</div>
+            <div class="home-day-main">${body}</div>
+            ${w.cook ? `<span class="home-cook">👨‍🍳 ${escapeHtml(w.cook)}</span>` : ""}
+        </div>`;
+    });
+    homeSet("home-food-list", html);
+}
+
+// Aufgaben sofort, Essen/Einkauf/Finanzen höchstens alle 10 Sekunden (oder mit force)
+async function loadHome(force) {
+    renderHomeHeader();
+    renderHomeTodos();
+    const nowMs = Date.now();
+    if (!force && nowMs - homeLastFetch < 10000) return;
+    homeLastFetch = nowMs;
+    await Promise.all([renderHomeFood(), renderHomeShop(), renderHomeMoney()]);
+}
+
+// Klicks auf der Startseite (Erledigt, Geschäft öffnen, Bereich öffnen)
+document.addEventListener("click", async (e) => {
+    const el = e.target.closest ? e.target.closest("[data-home-act]") : null;
+    if (!el) return;
+    const act = el.getAttribute("data-home-act");
+    if (act === "go") {
+        tab(el.getAttribute("data-tab"));
+    } else if (act === "store") {
+        activeStore = el.getAttribute("data-store");
+        tab("shop");
+    } else if (act === "done") {
+        el.disabled = true;
+        await completeTodo(el.getAttribute("data-id"));
+        renderHomeTodos();
+        updateAppBadges();
+    }
+});
 
 async function updateAppBadges() {
     try {
