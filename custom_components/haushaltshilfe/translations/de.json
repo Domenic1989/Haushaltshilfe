@@ -28,10 +28,14 @@
           "trash_bio_days": "🟢 Biomüll: Sensor für Tage",
           "trash_bio_date": "🟢 Biomüll: Sensor für Datum",
           "trash_xmas_days": "🎄 Weihnachtsbaum: Sensor für Tage",
-          "trash_xmas_date": "🎄 Weihnachtsbaum: Sensor für Datum"
+          "trash_xmas_date": "🎄 Weihnachtsbaum: Sensor für Datum",
+          "features": "Zusatzfunktionen (Vorrat, Wartung, Kalender)",
+          "calendar_entities": "📅 Kalender: Diese Kalender auf der Startseite anzeigen",
+          "calendar_write": "📅 Kalender: Neue Termine hier eintragen (leer = erster Kalender)"
         },
         "data_description": {
-          "trash_yellow_days": "Wähle hier und in den folgenden Feldern deine Sensoren für die Müllabfuhr aus."
+          "trash_yellow_days": "Wähle hier und in den folgenden Feldern deine Sensoren für die Müllabfuhr aus.",
+          "features": "Nur wenn „Kalender“ eingeschaltet ist, erscheint die Kalender-Karte auf der Startseite. Vorrat und Wartung lassen sich hier und in den App-Einstellungen ein- und ausschalten."
         }
       }
     }

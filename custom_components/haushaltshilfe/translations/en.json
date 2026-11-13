@@ -28,10 +28,14 @@
           "trash_bio_days": "🟢 Organic Waste: Days Sensor",
           "trash_bio_date": "🟢 Organic Waste: Date Sensor",
           "trash_xmas_days": "🎄 Christmas Tree: Days Sensor",
-          "trash_xmas_date": "🎄 Christmas Tree: Date Sensor"
+          "trash_xmas_date": "🎄 Christmas Tree: Date Sensor",
+          "features": "Extra features (Stock, Maintenance, Calendar)",
+          "calendar_entities": "📅 Calendar: show these calendars on the home page",
+          "calendar_write": "📅 Calendar: add new events to this one (empty = first calendar)"
         },
         "data_description": {
-          "trash_yellow_days": "Select your sensors for waste collection here and in the fields below."
+          "trash_yellow_days": "Select your sensors for waste collection here and in the fields below.",
+          "features": "The calendar card only appears on the home page when 'Calendar' is switched on. Stock and Maintenance can be switched here and in the app settings."
         }
       }
     }
