@@ -3,17 +3,24 @@ import asyncio
 import logging
 import os
 import json
+from datetime import date, datetime, timedelta
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.components import frontend
 from homeassistant.components.http import HomeAssistantView, StaticPathConfig
 from homeassistant.helpers.storage import Store
+from homeassistant.util import dt as dt_util
 
 from .const import (
     DOMAIN,
     CONF_ADMIN_PW,
     CONF_MASTER_PW,
     CONF_VISIBLE_TABS,
+    CONF_FEATURES,
+    CONF_CALENDARS,
+    CONF_CALENDAR_WRITE,
+    FEATURE_KEYS,
+    DEFAULT_FEATURES,
     TEXT_ENTITIES,
     CONF_TRASH_YELLOW_DAYS,
     CONF_TRASH_YELLOW_DATE,
@@ -38,6 +45,12 @@ from .security import (
 _LOGGER = logging.getLogger(__name__)
 
 FAILED_LOGIN_DELAY = 1.0
+
+# Kalender (Startseite): wie viele Tage auf einmal gelesen werden dürfen, Länge von Texten
+CALENDAR_MAX_DAYS = 62
+CALENDAR_MAX_TEXT = 200
+CAL_FEATURE_CREATE = 1   # CalendarEntityFeature.CREATE_EVENT
+CAL_FEATURE_DELETE = 2   # CalendarEntityFeature.DELETE_EVENT
 
 ALLOWED_PROXY_EVENTS = {
     "set_tasks_data",
@@ -84,6 +97,73 @@ def _stored_pw(hass, conf_key: str, store_key: str) -> str:
         if value:
             return str(value)
     return str(store_data.get(store_key, "") or "")
+
+
+def _opt(entry, key, default):
+    """Option lesen (Optionen vor ursprünglichen Daten)."""
+    if entry is None:
+        return default
+    if key in entry.options:
+        return entry.options.get(key)
+    if key in entry.data:
+        return entry.data.get(key)
+    return default
+
+
+def _get_features(entry) -> list:
+    """Eingeschaltete Zusatzfunktionen (Vorrat, Wartung, Kalender). Ohne Angabe: Vorrat + Wartung."""
+    raw = _opt(entry, CONF_FEATURES, None)
+    if raw is None:
+        return list(DEFAULT_FEATURES)
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except Exception:
+            raw = [v.strip().strip("'\"") for v in raw.strip("[]").split(",") if v.strip()]
+    if not isinstance(raw, (list, tuple)):
+        return list(DEFAULT_FEATURES)
+    return [k for k in FEATURE_KEYS if k in raw]
+
+
+def _get_calendar_ids(entry) -> list:
+    """Kalender, die auf der Startseite angezeigt werden dürfen (nur calendar.*)."""
+    raw = _opt(entry, CONF_CALENDARS, []) or []
+    if isinstance(raw, str):
+        raw = [raw]
+    out = []
+    for ent in raw:
+        ent = str(ent).strip()
+        if ent.startswith("calendar.") and ent not in out:
+            out.append(ent)
+    return out
+
+
+def _get_calendar_write(entry, ids) -> str:
+    """Kalender, in den neue Termine geschrieben werden (sonst der erste angezeigte)."""
+    w = str(_opt(entry, CONF_CALENDAR_WRITE, "") or "").strip()
+    if w and w in ids:
+        return w
+    return ids[0] if ids else ""
+
+
+def _calendar_info(hass, entry) -> dict:
+    """Kalender-Infos für die App: Name und was der Kalender kann (Termine anlegen / löschen)."""
+    ids = _get_calendar_ids(entry)
+    cals = []
+    for ent in ids:
+        st = hass.states.get(ent)
+        attrs = st.attributes if st is not None else {}
+        try:
+            feats = int(attrs.get("supported_features") or 0)
+        except (TypeError, ValueError):
+            feats = 0
+        cals.append({
+            "entity_id": ent,
+            "name": str(attrs.get("friendly_name") or ent),
+            "can_create": bool(feats & CAL_FEATURE_CREATE),
+            "can_delete": bool(feats & CAL_FEATURE_DELETE),
+        })
+    return {"calendars": cals, "calendar_write": _get_calendar_write(entry, ids)}
 
 
 async def _async_check_pw(hass, stored: str, given) -> bool:
@@ -230,8 +310,13 @@ class HaushaltshilfeCredentialsView(HomeAssistantView):
                 "icon": "🎄",
             })    
 
+        cal_info = _calendar_info(hass, entry)
+
         return self.json({
             "visible_tabs": visible_tabs,
+            "features": _get_features(entry),
+            "calendars": cal_info["calendars"],
+            "calendar_write": cal_info["calendar_write"],
             "trash_config": trash_config,
             "has_master_pw": bool(_stored_pw(hass, CONF_MASTER_PW, "helper_master_pw")),
             "has_admin_pw": bool(_stored_pw(hass, CONF_ADMIN_PW, "helper_admin_pw")),
@@ -279,13 +364,14 @@ class HaushaltshilfeUpdateCredentialsView(HomeAssistantView):
         new_master = data.get("master_pw")
         new_admin = data.get("admin_pw")
         new_tabs = data.get("visible_tabs")
+        new_features = data.get("features")
         new_device_id = data.get("device_id")
         new_zoom = data.get("zoom")
 
         new_master = str(new_master).strip() if new_master is not None else ""
         new_admin = str(new_admin).strip() if new_admin is not None else ""
 
-        if new_master or new_admin or new_tabs is not None:
+        if new_master or new_admin or new_tabs is not None or new_features is not None:
             if not await _async_check_master(hass, data.get("current_master_pw", "")):
                 return self.json({"success": False, "message": "Master-Passwort falsch"}, status_code=403)
 
@@ -312,6 +398,16 @@ class HaushaltshilfeUpdateCredentialsView(HomeAssistantView):
 
             if parsed_tabs is not None:
                 new_options[CONF_VISIBLE_TABS] = parsed_tabs
+                updated = True
+
+        if new_features is not None:
+            if isinstance(new_features, str):
+                try:
+                    new_features = json.loads(new_features)
+                except Exception:
+                    new_features = [v.strip().strip("'\"") for v in new_features.strip("[]").split(",") if v.strip()]
+            if isinstance(new_features, (list, tuple)):
+                new_options[CONF_FEATURES] = [k for k in FEATURE_KEYS if k in new_features]
                 updated = True
 
         if updated or (new_device_id and new_zoom is not None):
@@ -459,6 +555,184 @@ class HaushaltshilfeAppLoginView(HomeAssistantView):
         if target is None:
             await asyncio.sleep(FAILED_LOGIN_DELAY)
         return self.json({"success": False, "message": "Invalid credentials"}, status_code=401)
+
+
+def _cal_parse_when(value, all_day: bool):
+    """Text -> date (ganztägig) oder Datum+Uhrzeit mit Zeitzone. None, wenn unlesbar."""
+    text = str(value or "").strip()
+    if not text:
+        return None
+    if all_day:
+        try:
+            return date.fromisoformat(text[:10])
+        except ValueError:
+            return None
+    parsed = dt_util.parse_datetime(text)
+    if parsed is None:
+        return None
+    return dt_util.as_local(parsed) if parsed.tzinfo is None else parsed
+
+
+class HaushaltshilfeCalendarView(HomeAssistantView):
+    """Termine der gewählten Home-Assistant-Kalender lesen, anlegen und löschen (Startseite)."""
+    url = "/api/haushaltshilfe/calendar"
+    name = "api:haushaltshilfe:calendar"
+    requires_auth = True
+
+    def _setup(self, request):
+        hass = request.app["hass"]
+        entry = hass.data.get(DOMAIN, {}).get("entry")
+        enabled = entry is not None and "calendar" in _get_features(entry)
+        return hass, entry, enabled
+
+    async def get(self, request):
+        """Termine der gewählten Kalender für 'start' bis 'end' (ISO-Zeit)."""
+        hass, entry, enabled = self._setup(request)
+        if not enabled:
+            return self.json({"enabled": False, "events": [], "failed": [], **_calendar_info(hass, entry)})
+
+        start = dt_util.parse_datetime(request.query.get("start") or "")
+        end = dt_util.parse_datetime(request.query.get("end") or "")
+        if start is None or end is None:
+            return self.json({"error": "Invalid time range"}, status_code=400)
+        if start.tzinfo is None:
+            start = dt_util.as_local(start)
+        if end.tzinfo is None:
+            end = dt_util.as_local(end)
+        if end <= start or (end - start) > timedelta(days=CALENDAR_MAX_DAYS):
+            return self.json({"error": "Invalid time range"}, status_code=400)
+
+        events = []
+        failed = []
+        for ent in _get_calendar_ids(entry):
+            state = hass.states.get(ent)
+            if state is None:
+                failed.append(ent)
+                continue
+            name = str(state.attributes.get("friendly_name") or ent)
+            try:
+                resp = await hass.services.async_call(
+                    "calendar",
+                    "get_events",
+                    {"entity_id": ent, "start_date_time": start, "end_date_time": end},
+                    blocking=True,
+                    return_response=True,
+                )
+            except Exception as err:  # ein kaputter Kalender soll die anderen nicht blockieren
+                _LOGGER.warning("Kalender %s konnte nicht gelesen werden: %s", ent, err)
+                failed.append(ent)
+                continue
+
+            for ev in ((resp or {}).get(ent) or {}).get("events", []):
+                s = str(ev.get("start") or "")
+                if not s:
+                    continue
+                events.append({
+                    "cal": ent,
+                    "calName": name,
+                    "summary": str(ev.get("summary") or ""),
+                    "start": s,
+                    "end": str(ev.get("end") or ""),
+                    "allDay": len(s) <= 10,
+                    "location": str(ev.get("location") or ""),
+                    "description": str(ev.get("description") or ""),
+                })
+
+        return self.json({"enabled": True, "events": events, "failed": failed, **_calendar_info(hass, entry)})
+
+    async def post(self, request):
+        """Termin anlegen ('create') oder löschen ('delete')."""
+        hass, entry, enabled = self._setup(request)
+        if not enabled:
+            return self.json({"success": False, "message": "Kalender ist ausgeschaltet"}, status_code=403)
+
+        data = await _read_json(request)
+        action = data.get("action")
+        info = _calendar_info(hass, entry)
+        by_id = {c["entity_id"]: c for c in info["calendars"]}
+
+        if action == "create":
+            ent = str(data.get("calendar") or info["calendar_write"] or "")
+            cal = by_id.get(ent)
+            if cal is None:
+                return self.json({"success": False, "message": "Kalender nicht ausgewählt"}, status_code=400)
+            if not cal["can_create"]:
+                return self.json({"success": False, "message": "Dieser Kalender erlaubt keine neuen Termine"}, status_code=400)
+
+            summary = str(data.get("summary") or "").strip()[:CALENDAR_MAX_TEXT]
+            if not summary:
+                return self.json({"success": False, "message": "Titel fehlt"}, status_code=400)
+            all_day = bool(data.get("allDay"))
+            start = _cal_parse_when(data.get("start"), all_day)
+            end = _cal_parse_when(data.get("end"), all_day) if data.get("end") else None
+            if start is None:
+                return self.json({"success": False, "message": "Ungültiger Beginn"}, status_code=400)
+
+            svc = {"entity_id": ent, "summary": summary}
+            if all_day:
+                last = end if end is not None else start      # 'end' ist der letzte Tag (inklusive)
+                if last < start:
+                    return self.json({"success": False, "message": "Ende liegt vor dem Beginn"}, status_code=400)
+                svc["start_date"] = start
+                svc["end_date"] = last + timedelta(days=1)     # Home Assistant will den Tag danach
+            else:
+                if end is None:
+                    end = start + timedelta(hours=1)
+                if end <= start:
+                    return self.json({"success": False, "message": "Ende liegt vor dem Beginn"}, status_code=400)
+                svc["start_date_time"] = start
+                svc["end_date_time"] = end
+            desc = str(data.get("description") or "").strip()[:1000]
+            loc = str(data.get("location") or "").strip()[:CALENDAR_MAX_TEXT]
+            if desc:
+                svc["description"] = desc
+            if loc:
+                svc["location"] = loc
+            try:
+                await hass.services.async_call("calendar", "create_event", svc, blocking=True)
+            except Exception as err:
+                _LOGGER.warning("Termin konnte nicht in %s angelegt werden: %s", ent, err)
+                return self.json({"success": False, "message": str(err) or "Termin konnte nicht angelegt werden"}, status_code=500)
+            return self.json({"success": True})
+
+        if action == "delete":
+            ent = str(data.get("calendar") or "")
+            cal = by_id.get(ent)
+            if cal is None:
+                return self.json({"success": False, "message": "Kalender nicht ausgewählt"}, status_code=400)
+            if not cal["can_delete"]:
+                return self.json({"success": False, "message": "Dieser Kalender erlaubt kein Löschen"}, status_code=400)
+            summary = str(data.get("summary") or "")
+            all_day = bool(data.get("allDay"))
+            start = _cal_parse_when(data.get("start"), all_day)
+            if start is None:
+                return self.json({"success": False, "message": "Ungültiger Beginn"}, status_code=400)
+
+            component = hass.data.get("calendar")
+            entity = component.get_entity(ent) if component is not None and hasattr(component, "get_entity") else None
+            if entity is None:
+                return self.json({"success": False, "message": "Kalender nicht erreichbar"}, status_code=500)
+            if all_day:
+                win_start = dt_util.as_local(datetime.combine(start, datetime.min.time()))
+                win_end = win_start + timedelta(days=1)
+            else:
+                win_start, win_end = start - timedelta(minutes=1), start + timedelta(minutes=1)
+            try:
+                found = await entity.async_get_events(hass, win_start, win_end)
+                match = None
+                for ev in found:
+                    if str(ev.summary or "") == summary and ev.start == start:
+                        match = ev
+                        break
+                if match is None or not getattr(match, "uid", None):
+                    return self.json({"success": False, "message": "Termin nicht gefunden"}, status_code=404)
+                await entity.async_delete_event(match.uid, getattr(match, "recurrence_id", None), None)
+            except Exception as err:
+                _LOGGER.warning("Termin konnte in %s nicht gelöscht werden: %s", ent, err)
+                return self.json({"success": False, "message": str(err) or "Termin konnte nicht gelöscht werden"}, status_code=500)
+            return self.json({"success": True})
+
+        return self.json({"success": False, "message": "Unbekannte Aktion"}, status_code=400)
 
 
 class HaushaltshilfeStateProxyView(HomeAssistantView):
@@ -723,6 +997,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.http.register_view(HaushaltshilfePublicUsersView())
         hass.http.register_view(HaushaltshilfeAppLoginView())
         hass.http.register_view(HaushaltshilfeStateProxyView())
+        hass.http.register_view(HaushaltshilfeCalendarView())
         hass.http.register_view(HaushaltshilfeGetZoomView())
         hass.http.register_view(HaushaltshilfeUpdateZoomView())
         hass.data[DOMAIN]["views_registered"] = True

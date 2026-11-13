@@ -15,7 +15,12 @@
     "step": {
       "init": {
         "title": "Haushaltshilfe Pro Optionen",
-        "description": "Hier kannst du die Einstellungen für die Haushaltshilfe anpassen."
+        "description": "Hier kannst du die Einstellungen für die Haushaltshilfe anpassen.",
+        "data": {
+          "features": "Extra features (Stock, Maintenance, Calendar)",
+          "calendar_entities": "Calendar: show these calendars on the home page",
+          "calendar_write": "Calendar: add new events to this one (empty = first calendar)"
+        }
       }
     }
   }

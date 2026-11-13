@@ -16,6 +16,10 @@ from .const import (
     CONF_ADMIN_PW,
     CONF_MASTER_PW,
     CONF_VISIBLE_TABS,
+    CONF_FEATURES,
+    CONF_CALENDARS,
+    CONF_CALENDAR_WRITE,
+    DEFAULT_FEATURES,
     CONF_TRASH_YELLOW_DAYS,
     CONF_TRASH_YELLOW_DATE,
     CONF_TRASH_PAPER_DAYS,
@@ -37,9 +41,24 @@ AVAILABLE_TABS = {
     "finance": "💶 Finanzen",
 }
 
+# Zusatzfunktionen für das Formular
+AVAILABLE_FEATURES = {
+    "stock": "📦 Vorrat",
+    "maint": "🔧 Wartung",
+    "calendar": "📅 Kalender (Startseite)",
+}
+
 # Passwort-Selector für maskierte Eingabefelder (Punkte)
 PASSWORD_SELECTOR = TextSelector(
     TextSelectorConfig(type=TextSelectorType.PASSWORD)
+)
+
+# Entity-Selector für Kalender (mehrere zum Anzeigen, einer zum Eintragen)
+CALENDAR_LIST_SELECTOR = EntitySelector(
+    EntitySelectorConfig(domain="calendar", multiple=True)
+)
+CALENDAR_ONE_SELECTOR = EntitySelector(
+    EntitySelectorConfig(domain="calendar")
 )
 
 # Entity-Selector für Müll-Sensoren
@@ -89,6 +108,10 @@ class HaushaltshilfeConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_VISIBLE_TABS,
                 default=list(AVAILABLE_TABS.keys()),
             ): cv.multi_select(AVAILABLE_TABS),
+            vol.Optional(
+                CONF_FEATURES,
+                default=DEFAULT_FEATURES,
+            ): cv.multi_select(AVAILABLE_FEATURES),
             vol.Optional(CONF_TRASH_YELLOW_DAYS, default=TRASH_DEFAULTS[CONF_TRASH_YELLOW_DAYS]): SENSOR_SELECTOR,
             vol.Optional(CONF_TRASH_YELLOW_DATE, default=TRASH_DEFAULTS[CONF_TRASH_YELLOW_DATE]): SENSOR_SELECTOR,
             vol.Optional(CONF_TRASH_PAPER_DAYS, default=TRASH_DEFAULTS[CONF_TRASH_PAPER_DAYS]): SENSOR_SELECTOR,
@@ -133,6 +156,15 @@ class HaushaltshilfeOptionsFlowHandler(config_entries.OptionsFlow):
             if CONF_VISIBLE_TABS in user_input:
                 updated_options[CONF_VISIBLE_TABS] = user_input[CONF_VISIBLE_TABS]
 
+            if CONF_FEATURES in user_input:
+                updated_options[CONF_FEATURES] = list(user_input[CONF_FEATURES])
+
+            cals = user_input.get(CONF_CALENDARS) or []
+            if isinstance(cals, str):
+                cals = [cals]
+            updated_options[CONF_CALENDARS] = [str(c) for c in cals if c]
+            updated_options[CONF_CALENDAR_WRITE] = user_input.get(CONF_CALENDAR_WRITE) or ""
+
             for trash_key in TRASH_DEFAULTS:
                 updated_options[trash_key] = user_input.get(trash_key, "")
 
@@ -142,6 +174,13 @@ class HaushaltshilfeOptionsFlowHandler(config_entries.OptionsFlow):
             CONF_VISIBLE_TABS,
             entry.data.get(CONF_VISIBLE_TABS, list(AVAILABLE_TABS.keys())),
         )
+
+        current_features = entry.options.get(
+            CONF_FEATURES,
+            entry.data.get(CONF_FEATURES, DEFAULT_FEATURES),
+        )
+        current_cals = entry.options.get(CONF_CALENDARS, entry.data.get(CONF_CALENDARS, [])) or []
+        current_write = entry.options.get(CONF_CALENDAR_WRITE, entry.data.get(CONF_CALENDAR_WRITE, "")) or ""
 
         def _get_trash_opt(key):
             return entry.options.get(key, entry.data.get(key, TRASH_DEFAULTS[key]))
@@ -153,6 +192,18 @@ class HaushaltshilfeOptionsFlowHandler(config_entries.OptionsFlow):
                 CONF_VISIBLE_TABS,
                 default=current_tabs,
             ): cv.multi_select(AVAILABLE_TABS),
+            vol.Optional(
+                CONF_FEATURES,
+                default=current_features,
+            ): cv.multi_select(AVAILABLE_FEATURES),
+            vol.Optional(
+                CONF_CALENDARS,
+                description={"suggested_value": current_cals},
+            ): CALENDAR_LIST_SELECTOR,
+            vol.Optional(
+                CONF_CALENDAR_WRITE,
+                description={"suggested_value": current_write or None},
+            ): CALENDAR_ONE_SELECTOR,
             vol.Optional(
                 CONF_TRASH_YELLOW_DAYS,
                 description={"suggested_value": _get_trash_opt(CONF_TRASH_YELLOW_DAYS)},

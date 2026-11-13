@@ -57,3 +57,12 @@ CONF_TRASH_BIO_DAYS = "trash_bio_days"
 CONF_TRASH_BIO_DATE = "trash_bio_date"
 CONF_TRASH_XMAS_DAYS = "trash_xmas_days"
 CONF_TRASH_XMAS_DATE = "trash_xmas_date"
+
+# Zusatzfunktionen, die man ein- und ausschalten kann (Optionen der Integration oder App-Einstellungen)
+CONF_FEATURES = "features"
+FEATURE_KEYS = ("stock", "maint", "calendar")
+DEFAULT_FEATURES = ["stock", "maint"]  # wer schon Vorrat/Wartung nutzt, behält sie; der Kalender ist neu und startet aus
+
+# Kalender (Startseite): welche HA-Kalender angezeigt werden und in welchen neue Termine geschrieben werden
+CONF_CALENDARS = "calendar_entities"
+CONF_CALENDAR_WRITE = "calendar_write"
