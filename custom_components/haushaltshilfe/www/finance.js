@@ -139,6 +139,59 @@ function escapeHtml(str) {
         .replace(/'/g, "&#39;");
 }
 
+// --- EINKOMMEN / ÜBRIG / GESPART: Rechenhilfen ---
+function finNum(v) { const n = parseFloat(v); return isNaN(n) ? 0 : n; }
+function finSum(arr) { return Array.isArray(arr) ? arr.reduce((a, i) => a + finNum(i && i.amount), 0) : 0; }
+function finRound(x) { return Math.round((x + Number.EPSILON) * 100) / 100; }
+function finEur(x, plus) { const v = finRound(x); return (plus && v > 0 ? "+" : "") + v.toFixed(2) + "€"; }
+
+// Zahlen eines Monats: Übrig = Einkommen − Fixkosten − Ausgaben (nur sinnvoll, wenn Einkommen eingetragen ist)
+function finMonthStats(m) {
+    const income = finSum(m && m.income), fix = finSum(m && m.fixum), spend = finSum(m && m.spendings);
+    return { income, fix, spend, cost: fix + spend, left: income - fix - spend, hasIncome: !!(m && Array.isArray(m.income) && m.income.length > 0) };
+}
+// Zahlen eines Jahres: gespart wird nur aus Monaten gezählt, in denen Einkommen eingetragen ist
+function finYearStats(months) {
+    const r = { income: 0, fix: 0, spend: 0, saved: 0, counted: 0, total: 0 };
+    (months || []).forEach(m => {
+        const st = finMonthStats(m);
+        r.total++; r.fix += st.fix; r.spend += st.spend;
+        if (st.hasIncome) { r.income += st.income; r.saved += st.left; r.counted++; }
+    });
+    return r;
+}
+// Kleines farbiges Schild (grün = Plus, rot = Minus), Farben stehen in home.css
+function finPill(value, extraClass) {
+    const v = finRound(value);
+    const el = document.createElement("span");
+    el.className = "fin-pill " + (v < 0 ? "is-minus" : (v > 0 ? "is-plus" : "is-zero")) + (extraClass ? " " + extraClass : "");
+    el.textContent = finEur(v, true);
+    return el;
+}
+function finToast(msg) { if (typeof ingToast === "function") ingToast(msg); }
+
+// --- Art der Vorlage: Fixkosten oder Einkommen ---
+window.setTplKind = function(kind) {
+    const row = document.getElementById("tplKindRow");
+    const k = (kind === "income") ? "income" : "fix";
+    if (row) {
+        row.dataset.kind = k;
+        row.querySelectorAll("button[data-kind]").forEach(b => {
+            const on = b.dataset.kind === k;
+            b.classList.toggle("is-on", on);
+            b.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+    }
+    const saveBtn = document.getElementById("tplSaveBtn");
+    if (saveBtn && parseInt(saveBtn.dataset.editIndex || "-1", 10) < 0) {
+        saveBtn.textContent = k === "income" ? "➕ Einkommen speichern" : "➕ Fixkosten-Eintrag speichern";
+    }
+};
+function getTplKind() {
+    const row = document.getElementById("tplKindRow");
+    return row && row.dataset.kind === "income" ? "income" : "fix";
+}
+
 function renderFixkostenList() {
     const listEl = document.getElementById("fixkostenList");
     if (!listEl) return;
@@ -172,7 +225,7 @@ function renderFixkostenList() {
 
         const strongEl = document.createElement("strong");
         strongEl.style.cssText = "color:var(--text); font-size:0.95rem;";
-        strongEl.textContent = tpl.title;
+        strongEl.textContent = (tpl.kind === "income" ? "💰 " : "") + tpl.title;
 
         const sepSpan = document.createElement("span");
         sepSpan.textContent = " — ";
@@ -183,7 +236,7 @@ function renderFixkostenList() {
 
         const subDiv = document.createElement("div");
         subDiv.style.cssText = "font-size:0.75rem; color:var(--gray); margin-top:2px;";
-        subDiv.textContent = monthLabels[tpl.months] || tpl.months;
+        subDiv.textContent = (tpl.kind === "income" ? "Einkommen · " : "") + (monthLabels[tpl.months] || tpl.months);
 
         infoDiv.appendChild(strongEl);
         infoDiv.appendChild(sepSpan);
@@ -228,6 +281,7 @@ window.editFixkostenTemplate = function(index) {
         titleInput.value = tpl.title;
         amountInput.value = tpl.amount;
         monthsSelect.value = tpl.months;
+        setTplKind(tpl.kind === "income" ? "income" : "fix");
 
         saveBtn.dataset.editIndex = index;
         saveBtn.innerHTML = "💾 Änderung speichern";
@@ -254,6 +308,7 @@ window.cancelFixkostenEdit = function() {
         if (monthsSelect) monthsSelect.value = "all";
 
         saveBtn.dataset.editIndex = "-1";
+        setTplKind("fix");
         saveBtn.innerHTML = "➕ Fixkosten-Eintrag speichern";
         saveBtn.style.background = "var(--primary)";
 
@@ -274,6 +329,7 @@ window.addFixkostenTemplate = async function() {
     const amount = parseFloat(amountInput.value);
     const months = monthsSelect.value;
     const editIndex = saveBtn ? parseInt(saveBtn.dataset.editIndex || "-1", 10) : -1;
+    const kind = getTplKind();
 
     if (!title || isNaN(amount)) {
         const modal = document.getElementById("customConfirmModal");
@@ -296,10 +352,14 @@ window.addFixkostenTemplate = async function() {
 
     if (!Array.isArray(fixkostenTemplates)) fixkostenTemplates = [];
 
+    // Fixkosten bleiben wie bisher gespeichert (ohne "kind"); nur Einkommen bekommt die Kennzeichnung
+    const entry = { title: title, amount: amount, months: months };
+    if (kind === "income") entry.kind = "income";
+
     if (editIndex >= 0 && editIndex < fixkostenTemplates.length) {
-        fixkostenTemplates[editIndex] = { title: title, amount: amount, months: months };
+        fixkostenTemplates[editIndex] = entry;
     } else {
-        fixkostenTemplates.push({ title: title, amount: amount, months: months });
+        fixkostenTemplates.push(entry);
     }
 
     await saveFixkostenTemplates();
@@ -313,7 +373,7 @@ window.deleteFixkostenTemplate = async function(index) {
     const item = fixkostenTemplates[index];
     const name = item.title || item.name || "diese Vorlage";
     
-    const confirmed = await showDeleteModal(`Möchtest du die Fixkosten-Vorlage "${name}" wirklich löschen?`, "Vorlage löschen");
+    const confirmed = await showDeleteModal(`Möchtest du die ${item.kind === "income" ? "Einkommens" : "Fixkosten"}-Vorlage "${name}" wirklich löschen?`, "Vorlage löschen");
     
     if (confirmed) {
         const saveBtn = document.getElementById("tplSaveBtn");
@@ -337,10 +397,11 @@ function parseMonthIndex(monthString) {
     return new Date().getMonth() + 1;
 }
 
-async function getFixkostenForMonthName(monthName) {
+// Liefert die zum Monat passenden Vorlagen, getrennt nach Fixkosten und Einkommen
+async function getTemplatesForMonthName(monthName) {
     await loadFixkostenTemplates();
     const monthNum = parseMonthIndex(monthName);
-    let autoFixum = [];
+    const out = { fixum: [], income: [] };
 
     if (Array.isArray(fixkostenTemplates)) {
         fixkostenTemplates.forEach(tpl => {
@@ -352,11 +413,16 @@ async function getFixkostenForMonthName(monthName) {
                 if (allowed.includes(monthNum)) isMatch = true;
             }
             if (isMatch) {
-                autoFixum.push({ name: tpl.title, amount: parseFloat(tpl.amount) });
+                const item = { name: tpl.title, amount: parseFloat(tpl.amount) };
+                (tpl.kind === "income" ? out.income : out.fixum).push(item);
             }
         });
     }
-    return autoFixum;
+    return out;
+}
+
+async function getFixkostenForMonthName(monthName) {
+    return (await getTemplatesForMonthName(monthName)).fixum;
 }
 
 // --- FINANCE LOGIK (JAHRE -> MONATE) ---
@@ -480,7 +546,7 @@ function renderFinanceItems(items, mIdx, type) {
 
 // --- 1. ÜBERSICHT LADEN (JAHRE ODER MONATE) ---
 window.loadFinance = async function(isBackgroundSync = false) {
-    if (isBackgroundSync && financeDragState.isDragging) return;
+    if (isBackgroundSync && typeof hhSortBusy === "function" && hhSortBusy()) return;   // gerade wird eine Karte gezogen
 
     const yearsView = document.getElementById('finance-years-view');
     const monthsView = document.getElementById('finance-months-view');
@@ -501,12 +567,17 @@ window.loadFinance = async function(isBackgroundSync = false) {
     let list = root.months;
     let yearsList = root.years.map(String);
 
+    renderFinanceSavedCard(root);
+    const savedModalEl = document.getElementById('savedModal');
+    if (savedModalEl && savedModalEl.style.display === 'flex') renderSavedModal(root);
+
     if (activeFinanceYear === null) {
         // --- ANSICHT 1: JAHRE ANZEIGEN ---
         if (yearsView) yearsView.style.display = 'block';
         if (monthsView) monthsView.style.display = 'none';
 
         yearsContainer.replaceChildren();
+        if (typeof hhHintSet === "function") hhHintSet("years", yearsList.length);
 
         if (yearsList.length === 0) {
             const emptyYearDiv = document.createElement("div");
@@ -519,12 +590,9 @@ window.loadFinance = async function(isBackgroundSync = false) {
         yearsList.forEach((yearStr, yIdx) => {
             const monthsInYear = list.filter(m => extractYearFromMonth(m) === yearStr);
             
-            let sumFixYear = 0;
-            let sumVarYear = 0;
-            monthsInYear.forEach(m => {
-                sumFixYear += (m.fixum || []).reduce((acc, i) => acc + (parseFloat(i.amount) || 0), 0);
-                sumVarYear += (m.spendings || []).reduce((acc, i) => acc + (parseFloat(i.amount) || 0), 0);
-            });
+            const yst = finYearStats(monthsInYear);
+            const sumFixYear = yst.fix;
+            const sumVarYear = yst.spend;
 
             const card = document.createElement('div');
             card.className = "month-card year-card";
@@ -600,15 +668,35 @@ window.loadFinance = async function(isBackgroundSync = false) {
             totalRow.appendChild(totalLabel);
             totalRow.appendChild(totalVal);
 
+            if (yst.counted > 0) {
+                const incRowY = document.createElement("div");
+                incRowY.className = "mc-row";
+                const incLabelY = document.createElement("span");
+                incLabelY.textContent = "Einkommen (Jahr):";
+                const incValY = document.createElement("b");
+                incValY.textContent = `${yst.income.toFixed(2)}€`;
+                incRowY.appendChild(incLabelY);
+                incRowY.appendChild(incValY);
+                infoBox.appendChild(incRowY);
+            }
             infoBox.appendChild(fixRow);
             infoBox.appendChild(varRow);
             infoBox.appendChild(hr);
             infoBox.appendChild(totalRow);
+            if (yst.counted > 0) {
+                const savedRowY = document.createElement("div");
+                savedRowY.className = "mc-row mc-left";
+                const savedLabelY = document.createElement("span");
+                savedLabelY.textContent = "Gespart:";
+                savedRowY.appendChild(savedLabelY);
+                savedRowY.appendChild(finPill(yst.saved));
+                infoBox.appendChild(savedRowY);
+            }
 
             card.appendChild(topRow);
             card.appendChild(infoBox);
 
-            enableFinanceDragAndDrop(card, 'year', yIdx);
+            if (typeof hhSortBind === "function") hhSortBind(card, 'fin-year', yIdx, (f, t) => applyFinanceNewOrder('year', f, t), { ignore: '.del-finance-btn, button', label: `📅 Jahr ${yearStr}` });
             yearsContainer.appendChild(card);
         });
     } else {
@@ -625,6 +713,8 @@ window.loadFinance = async function(isBackgroundSync = false) {
             .map((m, idx) => ({ m, idx }))
             .filter(item => extractYearFromMonth(item.m) === String(activeFinanceYear));
 
+        if (typeof hhHintSet === "function") hhHintSet("months", monthsWithIndex.length);
+
         if (monthsWithIndex.length === 0) {
             const emptyMonthDiv = document.createElement("div");
             emptyMonthDiv.style.cssText = "text-align:center; padding:30px; opacity:0.6; font-weight:bold; grid-column: 1 / -1;";
@@ -632,8 +722,9 @@ window.loadFinance = async function(isBackgroundSync = false) {
             monthsContainer.appendChild(emptyMonthDiv);
         } else {
             monthsWithIndex.forEach(({ m, idx: mIdx }, localIdx) => {
-                const sumFix = (m.fixum || []).reduce((acc, i) => acc + (parseFloat(i.amount) || 0), 0);
-                const sumVar = (m.spendings || []).reduce((acc, i) => acc + (parseFloat(i.amount) || 0), 0);
+                const mst = finMonthStats(m);
+                const sumFix = mst.fix;
+                const sumVar = mst.spend;
                 
                 const card = document.createElement('div');
                 card.className = "month-card";
@@ -672,15 +763,30 @@ window.loadFinance = async function(isBackgroundSync = false) {
                 totalRow.style.cssText = "color:var(--text);";
                 totalRow.innerHTML = `<span>Gesamt:</span><span>${(sumFix+sumVar).toFixed(2)}€</span>`;
 
+                if (mst.hasIncome) {
+                    const incRow = document.createElement("div");
+                    incRow.className = "mc-row";
+                    incRow.innerHTML = `<span>Einkommen:</span><b>${mst.income.toFixed(2)}€</b>`;
+                    infoBox.appendChild(incRow);
+                }
                 infoBox.appendChild(fixRow);
                 infoBox.appendChild(varRow);
                 infoBox.appendChild(hr);
                 infoBox.appendChild(totalRow);
+                if (mst.hasIncome) {
+                    const leftRow = document.createElement("div");
+                    leftRow.className = "mc-row mc-left";
+                    const leftLabel = document.createElement("span");
+                    leftLabel.textContent = "Übrig:";
+                    leftRow.appendChild(leftLabel);
+                    leftRow.appendChild(finPill(mst.left));
+                    infoBox.appendChild(leftRow);
+                }
 
                 card.appendChild(monthTitle);
                 card.appendChild(infoBox);
 
-                enableFinanceDragAndDrop(card, 'month', localIdx);
+                if (typeof hhSortBind === "function") hhSortBind(card, 'fin-month', localIdx, (f, t) => applyFinanceNewOrder('month', f, t), { ignore: '.del-finance-btn, button', label: `📅 ${m.month_name}` });
                 monthsContainer.appendChild(card);
             });
         }
@@ -696,146 +802,24 @@ window.loadFinance = async function(isBackgroundSync = false) {
 };
 
 // ========================================================
-// --- DRAG & DROP LOGIK FÜR JAHRE UND MONATE ---
+// --- REIHENFOLGE VON JAHREN UND MONATEN SPEICHERN ---
+// (Ziehen selbst: hhSortBind in script.js – Handy: gedrückt halten, PC: Maus)
 // ========================================================
-let financeDragState = {
-    type: null,
-    fromIndex: null,
-    toIndex: null,
-    isDragging: false,
-    startX: 0,
-    startY: 0
-};
-
-function enableFinanceDragAndDrop(card, type, index) {
-    card.draggable = true;
-
-    card.addEventListener('dragstart', (e) => {
-        financeDragState.type = type;
-        financeDragState.fromIndex = index;
-        financeDragState.isDragging = true;
-        card.classList.add('dragging-side-btn');
-        if (e.dataTransfer) {
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', index);
-        }
-    });
-
-    card.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        if (financeDragState.type !== type || financeDragState.fromIndex === index) return;
-        card.classList.add('drag-over-side-btn');
-    });
-
-    card.addEventListener('dragleave', () => {
-        card.classList.remove('drag-over-side-btn');
-    });
-
-    card.addEventListener('drop', async (e) => {
-        e.preventDefault();
-        card.classList.remove('drag-over-side-btn');
-        if (financeDragState.type !== type) return;
-        
-        const fromIdx = financeDragState.fromIndex;
-        const toIdx = index;
-        financeDragState.isDragging = false;
-
-        if (fromIdx !== null && fromIdx !== toIdx) {
-            await applyFinanceNewOrder(type, fromIdx, toIdx);
-        }
-    });
-
-    card.addEventListener('dragend', () => {
-        financeDragState.isDragging = false;
-        card.classList.remove('dragging-side-btn');
-        document.querySelectorAll('.drag-over-side-btn').forEach(el => el.classList.remove('drag-over-side-btn'));
-        financeDragState.type = null;
-        financeDragState.fromIndex = null;
-    });
-
-    card.addEventListener('touchstart', (e) => {
-        if (e.target.closest('.del-finance-btn') || e.target.tagName === 'BUTTON') return;
-
-        const touch = e.touches[0];
-        financeDragState.startX = touch.clientX;
-        financeDragState.startY = touch.clientY;
-        financeDragState.type = type;
-        financeDragState.fromIndex = index;
-        financeDragState.toIndex = index;
-        card.dataset.wasDragged = "false";
-    }, { passive: true });
-
-    card.addEventListener('touchmove', (e) => {
-        if (financeDragState.type !== type || financeDragState.fromIndex !== index) return;
-
-        const touch = e.touches[0];
-        const moveX = Math.abs(touch.clientX - financeDragState.startX);
-        const moveY = Math.abs(touch.clientY - financeDragState.startY);
-
-        if (!financeDragState.isDragging && (moveX > 12 || moveY > 12)) {
-            financeDragState.isDragging = true;
-            card.classList.add('dragging-side-btn');
-            card.dataset.wasDragged = "true";
-            if (navigator.vibrate) navigator.vibrate(30);
-        }
-
-        if (financeDragState.isDragging) {
-            if (e.cancelable) e.preventDefault();
-
-            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-            const overCard = targetEl ? targetEl.closest(`.month-card[data-type="${type}"]`) : null;
-
-            document.querySelectorAll('.drag-over-side-btn').forEach(el => el.classList.remove('drag-over-side-btn'));
-
-            if (overCard && overCard !== card) {
-                overCard.classList.add('drag-over-side-btn');
-                financeDragState.toIndex = parseInt(overCard.dataset.index, 10);
-            }
-        }
-    }, { passive: false });
-
-    const endTouchDrag = async () => {
-        if (!financeDragState.isDragging) {
-            financeDragState.type = null;
-            financeDragState.fromIndex = null;
-            return;
-        }
-
-        financeDragState.isDragging = false;
-        card.classList.remove('dragging-side-btn');
-        document.querySelectorAll('.drag-over-side-btn').forEach(el => el.classList.remove('drag-over-side-btn'));
-
-        const fromIdx = financeDragState.fromIndex;
-        const toIdx = financeDragState.toIndex;
-        
-        financeDragState.type = null;
-        financeDragState.fromIndex = null;
-        financeDragState.toIndex = null;
-
-        if (fromIdx !== null && toIdx !== null && fromIdx !== toIdx) {
-            await applyFinanceNewOrder(type, fromIdx, toIdx);
-        }
-
-        setTimeout(() => { card.dataset.wasDragged = "false"; }, 150);
-    };
-
-    card.addEventListener('touchend', endTouchDrag);
-    card.addEventListener('touchcancel', endTouchDrag);
-}
-
 async function applyFinanceNewOrder(type, fromIndex, toIndex) {
     const s = await fetchHA('sensor.haushalt_finance_db');
     let root = parseFinanceRoot(s);
 
     if (type === 'year') {
         let yearsList = root.years.map(String);
+        if (fromIndex < 0 || toIndex < 0 || fromIndex >= yearsList.length || toIndex >= yearsList.length) { lastFinanceDataHash = ""; loadFinance(false); return; }   // inzwischen woanders geändert
         const [movedYear] = yearsList.splice(fromIndex, 1);
         yearsList.splice(toIndex, 0, movedYear);
         root.years = yearsList;
     } else if (type === 'month') {
         const yearStr = String(activeFinanceYear);
         const yearMonths = root.months.filter(m => extractYearFromMonth(m) === yearStr);
-        
+        if (fromIndex < 0 || toIndex < 0 || fromIndex >= yearMonths.length || toIndex >= yearMonths.length) { lastFinanceDataHash = ""; loadFinance(false); return; }   // inzwischen woanders geändert
+
         const [movedMonth] = yearMonths.splice(fromIndex, 1);
         yearMonths.splice(toIndex, 0, movedMonth);
 
@@ -866,6 +850,54 @@ function updateOpenFinanceModalContent(root, mIdx) {
 
     // Grundstruktur des Modals aufbauen
     content.replaceChildren();
+
+    // 0. Übrig / Gespart (Einkommen − Fixkosten − Ausgaben)
+    const st = finMonthStats(m);
+    const resSection = document.createElement('div');
+    resSection.className = "fin-section fin-result-section";
+    const resTitle = document.createElement('small');
+    resTitle.className = "fin-section-title";
+    resTitle.textContent = "🧮 ÜBRIG / GESPART";
+    resSection.appendChild(resTitle);
+    const resBox = document.createElement('div');
+    resBox.className = "fin-section-box";
+    const resRow = document.createElement('div');
+    resRow.className = "finance-item fin-result";
+    const resName = document.createElement('span');
+    resName.className = "fi-name";
+    resName.textContent = st.hasIncome ? "Übrig in diesem Monat" : "Noch kein Einkommen eingetragen";
+    resRow.appendChild(resName);
+    if (st.hasIncome) resRow.appendChild(finPill(st.left));
+    const resNote = document.createElement('div');
+    resNote.className = "fin-result-note";
+    resNote.textContent = st.hasIncome
+        ? `Einkommen ${finEur(st.income)} − Fixkosten ${finEur(st.fix)} − Ausgaben ${finEur(st.spend)}`
+        : "Trage unten bei „💰 EINKOMMEN“ dein Einkommen ein, dann wird hier gerechnet.";
+    resRow.appendChild(resNote);
+    resBox.appendChild(resRow);
+    resSection.appendChild(resBox);
+    content.appendChild(resSection);
+
+    // 0b. Einkommen Sektion
+    const incSection = document.createElement('div');
+    incSection.className = "fin-section";
+    const incTitle = document.createElement('small');
+    incTitle.className = "fin-section-title";
+    incTitle.textContent = "💰 EINKOMMEN";
+    incSection.appendChild(incTitle);
+    const incBox = document.createElement('div');
+    incBox.className = "fin-section-box";
+    incBox.appendChild(renderFinanceItems(m.income, mIdx, 'income'));
+    if (!st.hasIncome) {
+        const fillBtn = document.createElement('button');
+        fillBtn.type = "button";
+        fillBtn.className = "finance-item fin-fill-income";
+        fillBtn.textContent = "↻ Einkommen aus Vorlagen eintragen";
+        fillBtn.addEventListener("click", () => fillIncomeFromTemplates(mIdx));
+        incBox.appendChild(fillBtn);
+    }
+    incSection.appendChild(incBox);
+    content.appendChild(incSection);
 
     // 1. Fixkosten Sektion
     const fixSection = document.createElement('div');
@@ -917,6 +949,251 @@ function updateOpenFinanceModalContent(root, mIdx) {
     deleteWrapper.appendChild(delMonthBtn);
     content.appendChild(deleteWrapper);
 }
+
+// ========================================================
+// --- GESPART: SUMME ÜBER ALLE JAHRE + FENSTER "JAHR FÜR JAHR" ---
+// ========================================================
+// Gespart = Einkommen − Fixkosten − Ausgaben eines Monats. Jeder Monat steht in der Liste;
+// ohne Einkommen (oder wenn nichts übrig blieb) steht dort 0,00 € bzw. der Minusbetrag.
+function financeSavedTotals(root) {
+    const yearSet = new Set((root.years || []).map(String));
+    (root.months || []).forEach(m => { const y = extractYearFromMonth(m); if (y) yearSet.add(y); });
+    const years = Array.from(yearSet).sort((a, b) => parseInt(b) - parseInt(a));
+    let total = 0, anyIncome = false;
+    const rows = years.map(y => {
+        const months = (root.months || []).filter(m => extractYearFromMonth(m) === y);
+        const st = finYearStats(months);
+        total += st.saved;
+        if (st.counted > 0) anyIncome = true;
+        return { year: y, months, st };
+    });
+    return { total, rows, anyIncome };
+}
+
+// Was soll auf der Startseite stehen? Jeder Benutzer entscheidet für sich (Datenbank: homeShow.<Benutzer>).
+// Einschalten geht nur mit dem Passwort des Benutzers, Ausschalten ohne.
+function financeCurrentUser() {
+    try { if (typeof user !== "undefined" && user) return String(user); } catch (e) { /* egal */ }
+    try { return localStorage.getItem("selectedUser") || ""; } catch (e) { return ""; }
+}
+
+function financeHomeOpts(root, userName) {
+    const all = (root && root.homeShow && typeof root.homeShow === "object") ? root.homeShow : {};
+    const o = (userName && all[userName] && typeof all[userName] === "object") ? all[userName] : {};
+    return { saved: !!o.saved, left: !!o.left };
+}
+
+function paintHomeOptButtons() {
+    const o = window.__finHomeOpts || { saved: false, left: false };
+    document.querySelectorAll(".saved-card-opts button[data-opt]").forEach(btn => {
+        const on = !!o[btn.dataset.opt];
+        btn.classList.toggle("is-on", on);
+        btn.setAttribute("aria-pressed", on ? "true" : "false");
+        btn.textContent = (on ? "✓ " : "") + (btn.dataset.opt === "saved" ? "💰 Gespart (Jahr)" : "🧮 Übrig (Monat)");
+    });
+}
+
+window.toggleHomeOpt = async function(key) {
+    if (key !== "saved" && key !== "left") return;
+    const who = financeCurrentUser();
+    if (!who) { finToast("Bitte zuerst anmelden."); return; }
+    if (window.__finHomeBusy) return;
+
+    const cur = window.__finHomeOpts || { saved: false, left: false };
+    const turningOn = !cur[key];
+
+    if (turningOn) {
+        // Einschalten: Passwort des angemeldeten Benutzers abfragen und am Server prüfen
+        window.__finHomeBusy = true;
+        try {
+            const what = key === "saved" ? "Das Gesparte dieses Jahres" : "Das Übrige dieses Monats";
+            const pw = await showPasswordPrompt(`🔒 Passwort von ${who} eingeben:\n${what} wird dann auf deiner Startseite angezeigt.`);
+            if (pw === null) return;
+            const ok = await loginUserViaBackend(who, pw);
+            if (!ok) {
+                await showAlert("Das Passwort ist falsch. Der Schalter bleibt aus.", "Passwort falsch ❌");
+                return;
+            }
+        } finally {
+            window.__finHomeBusy = false;
+        }
+    }
+
+    const next = { saved: !!cur.saved, left: !!cur.left };
+    next[key] = turningOn;
+    window.__finHomeOpts = next;      // sofort sichtbar, auch bei schnellem Doppeltippen
+    paintHomeOptButtons();
+
+    const s = await fetchHA('sensor.haushalt_finance_db');
+    let root = parseFinanceRoot(s);
+    const all = (root.homeShow && typeof root.homeShow === "object") ? root.homeShow : {};
+    root.homeShow = Object.assign({}, all, { [who]: next });     // Einstellungen anderer Benutzer bleiben unberührt
+    await saveToHA(root);
+    lastFinanceDataHash = "";
+    setTimeout(() => loadFinance(false), 400);
+};
+
+function renderFinanceSavedCard(root) {
+    const wrap = document.getElementById("finance-saved-wrap");
+    if (!wrap) return;
+    const t = financeSavedTotals(root);
+    const who = financeCurrentUser();
+    window.__finHomeOpts = financeHomeOpts(root, who);
+    wrap.replaceChildren();
+
+    const card = document.createElement("div");
+    card.className = "saved-card";
+
+    // Hauptteil: Antippen öffnet das Fenster "Gespart"
+    const main = document.createElement("div");
+    main.className = "saved-card-main";
+    main.setAttribute("role", "button");
+    main.tabIndex = 0;
+    const open = () => openSavedModal();
+    main.addEventListener("click", open);
+    main.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+
+    const head = document.createElement("div");
+    head.className = "saved-card-head";
+    const title = document.createElement("div");
+    title.className = "saved-card-title";
+    title.textContent = "💰 Gespart insgesamt";
+    head.appendChild(title);
+    head.appendChild(finPill(t.total, "fin-pill-big"));
+
+    const sub = document.createElement("div");
+    sub.className = "saved-card-sub";
+    sub.textContent = t.anyIncome ? "Jahr für Jahr ansehen →" : "Trage in einem Monat dein Einkommen ein, dann siehst du hier, was übrig bleibt →";
+
+    main.appendChild(head);
+    main.appendChild(sub);
+    card.appendChild(main);
+
+    // Schalter: was soll auf der Startseite stehen?
+    const opts = document.createElement("div");
+    opts.className = "saved-card-opts";
+    const label = document.createElement("span");
+    label.className = "saved-opts-label";
+    label.textContent = "🏠 Auf der Startseite zeigen:";
+    opts.appendChild(label);
+    ["saved", "left"].forEach(key => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "fin-opt-btn";
+        btn.dataset.opt = key;
+        btn.addEventListener("click", () => toggleHomeOpt(key));
+        opts.appendChild(btn);
+    });
+    const hint = document.createElement("div");
+    hint.className = "saved-opts-hint";
+    hint.textContent = who
+        ? `🔒 Einschalten geht nur mit dem Passwort von ${who}, ausschalten ohne. Die Einstellung gilt nur für ${who}.`
+        : "🔒 Melde dich an, um das für die Startseite einzustellen.";
+    opts.appendChild(hint);
+    card.appendChild(opts);
+    wrap.appendChild(card);
+    paintHomeOptButtons();
+}
+
+const savedOpenYears = new Set();   // aufgeklappte Jahre im Gespart-Fenster (zuerst sind alle zugeklappt)
+
+function renderSavedModal(root) {
+    const box = document.getElementById("saved-content");
+    if (!box) return;
+    const t = financeSavedTotals(root);
+    box.replaceChildren();
+
+    // Gesamt
+    const totalRow = document.createElement("div");
+    totalRow.className = "saved-row saved-total";
+    const totalName = document.createElement("span");
+    totalName.className = "fi-name";
+    totalName.textContent = "Gespart insgesamt";
+    totalRow.appendChild(totalName);
+    totalRow.appendChild(finPill(t.total, "fin-pill-big"));
+    box.appendChild(totalRow);
+
+    if (t.rows.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "fin-result-note";
+        empty.textContent = "Noch kein Jahr angelegt.";
+        box.appendChild(empty);
+        return;
+    }
+
+    t.rows.forEach(r => {
+        const sec = document.createElement("div");
+        sec.className = "fin-section saved-year";
+
+        const headBtn = document.createElement("button");
+        headBtn.type = "button";
+        headBtn.className = "saved-year-head";
+        const isOpen = savedOpenYears.has(r.year);
+        headBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        const yName = document.createElement("span");
+        yName.className = "saved-year-name";
+        yName.textContent = `📅 ${r.year}`;
+        const yMeta = document.createElement("span");
+        yMeta.className = "saved-year-meta";
+        yMeta.textContent = `${r.months.length} ${r.months.length === 1 ? "Monat" : "Monate"}`;
+        const yArrow = document.createElement("span");
+        yArrow.className = "saved-year-arrow";
+        yArrow.textContent = isOpen ? "▾" : "▸";
+        headBtn.appendChild(yName);
+        headBtn.appendChild(yMeta);
+        headBtn.appendChild(finPill(r.st.saved));
+        headBtn.appendChild(yArrow);
+        headBtn.addEventListener("click", () => {
+            if (savedOpenYears.has(r.year)) savedOpenYears.delete(r.year); else savedOpenYears.add(r.year);
+            renderSavedModal(root);
+        });
+        sec.appendChild(headBtn);
+
+        if (isOpen) {
+            const body = document.createElement("div");
+            body.className = "fin-section-box saved-year-body";
+            if (r.months.length === 0) {
+                const none = document.createElement("div");
+                none.className = "fin-result-note";
+                none.textContent = "Noch keine Monate in diesem Jahr.";
+                body.appendChild(none);
+            }
+            r.months.forEach(m => {
+                const st = finMonthStats(m);
+                const row = document.createElement("div");
+                row.className = "saved-row";
+                const nm = document.createElement("span");
+                nm.className = "fi-name";
+                nm.textContent = String(m.month_name || "").replace(/\s*\b20\d{2}\b\s*/, " ").trim() || "Monat";
+                if (!st.hasIncome) {
+                    const note = document.createElement("small");
+                    note.className = "saved-note";
+                    note.textContent = " · kein Einkommen eingetragen";
+                    nm.appendChild(note);
+                }
+                row.appendChild(nm);
+                row.appendChild(finPill(st.hasIncome ? st.left : 0));
+                body.appendChild(row);
+            });
+            sec.appendChild(body);
+        }
+        box.appendChild(sec);
+    });
+}
+
+window.openSavedModal = async function() {
+    const modal = document.getElementById("savedModal");
+    if (!modal) return;
+    const s = await fetchHA('sensor.haushalt_finance_db');
+    renderSavedModal(parseFinanceRoot(s));
+    modal.style.display = "flex";
+};
+
+window.closeSavedModal = function() {
+    savedOpenYears.clear();
+    const modal = document.getElementById("savedModal");
+    if (modal) modal.style.display = "none";
+};
 
 // --- JAHR ÖFFNEN & ZURÜCK ---
 window.openFinanceYear = function(yearStr) {
@@ -1057,8 +1334,13 @@ window.openFinanceModal = async function(mIdx) {
     optFixum.value = "fixum";
     optFixum.textContent = "📌";
 
+    const optIncome = document.createElement("option");
+    optIncome.value = "income";
+    optIncome.textContent = "💰";
+
     selectType.appendChild(optSpendings);
     selectType.appendChild(optFixum);
+    selectType.appendChild(optIncome);
 
     const okBtn = document.createElement("button");
     okBtn.className = "btn-add";
@@ -1106,6 +1388,26 @@ window.addEntry = async function(mIdx) {
     setTimeout(() => loadFinance(false), 200);
 };
 
+// --- EINKOMMEN AUS VORLAGEN IN EINEN BESTEHENDEN MONAT ÜBERNEHMEN ---
+window.fillIncomeFromTemplates = async function(mIdx) {
+    const s = await fetchHA('sensor.haushalt_finance_db');
+    let root = parseFinanceRoot(s);
+    const m = root.months[mIdx];
+    if (!m) return;
+    if (Array.isArray(m.income) && m.income.length > 0) return;   // nichts doppelt eintragen
+
+    const tpl = await getTemplatesForMonthName(m.month_name || "");
+    if (!tpl.income.length) {
+        finToast("Keine Einkommens-Vorlage für diesen Monat. Lege sie bei „Fixkosten verwalten“ an.");
+        return;
+    }
+    m.income = tpl.income;
+    await saveToHA(root);
+    lastFinanceDataHash = "";
+    setTimeout(() => loadFinance(false), 200);
+    finToast("💰 Einkommen eingetragen");
+};
+
 // --- EINTRAG LÖSCHEN ---
 window.delEntry = async function(mIdx, type, iIdx) {
     const confirmed = await showDeleteModal("Diesen Eintrag wirklich löschen?", "Eintrag löschen");
@@ -1135,7 +1437,9 @@ window.addNewMonth = async function() {
             monthTitle = `${monthTitle} ${activeFinanceYear}`;
         }
 
-        const autoFixum = await getFixkostenForMonthName(monthTitle);
+        const autoTpl = await getTemplatesForMonthName(monthTitle);
+        const autoFixum = autoTpl.fixum;
+        const autoIncome = autoTpl.income;
 
         const s = await fetchHA('sensor.haushalt_finance_db');
         let root = parseFinanceRoot(s);
@@ -1149,6 +1453,7 @@ window.addNewMonth = async function() {
         root.months.push({
             year: yearStr,
             month_name: monthTitle,
+            income: autoIncome,
             fixum: autoFixum,
             spendings: []
         });

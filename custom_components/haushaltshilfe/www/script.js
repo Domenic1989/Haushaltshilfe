@@ -10,6 +10,8 @@
     let activeStore = "Aldi", activeRoom = "Küche";
     let stores = [], rooms = [], todoDb = [];
     let tempTodoName = ""; 
+    const shopHidden = new Set();   // Einträge, die gerade abgehakt/verschoben werden (nicht zwischendurch wieder zeigen)
+    let shopListSig = "";          // letzter gezeichneter Stand der Einkaufsliste
 
     let db = { 
         shop: { cats: ["Alle",], favs: [] }, 
@@ -125,6 +127,44 @@ async function haSetInputText(entityId, value) {
     });
 }
 
+// ---- ZUSATZFUNKTIONEN (📦 Vorrat, 🔧 Wartung, 📅 Kalender): in der Integration oder in den App-Einstellungen ein-/ausschaltbar ----
+// Was Home Assistant meldet, gilt für alle Geräte. Fehlt die Meldung (ältere Integration), gilt der zuletzt gemerkte Stand dieses Geräts.
+const HH_FEATURE_KEYS = ["stock", "maint", "calendar"];
+const HH_FEATURE_DEFAULT = ["stock", "maint"];   // wer Vorrat/Wartung schon nutzt, behält sie; der Kalender startet aus
+let hhFeatures = (function () {
+    try {
+        const a = JSON.parse(localStorage.getItem("ha_features") || "null");
+        if (Array.isArray(a)) return a.filter(k => HH_FEATURE_KEYS.includes(k));
+    } catch (e) { /* egal */ }
+    return HH_FEATURE_DEFAULT.slice();
+})();
+let hhCredLoaded = false;       // Antwort der Integration (Zusatzfunktionen, Kalender) schon gelesen?
+let hhCalendars = [];          // [{ entity_id, name, can_create, can_delete }]
+let hhCalendarWrite = "";
+function hhFeature(key) { return hhFeatures.includes(key); }
+function hhSetFeatures(list) {
+    hhFeatures = (Array.isArray(list) ? list : []).filter(k => HH_FEATURE_KEYS.includes(k));
+    try { localStorage.setItem("ha_features", JSON.stringify(hhFeatures)); } catch (e) { /* egal */ }
+}
+// Knöpfe, Karten und Haken passend zeigen oder verstecken (die Daten bleiben immer erhalten)
+function applyFeaturesToDOM() {
+    const show = (id, on) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (on) el.style.removeProperty("display"); else el.style.setProperty("display", "none", "important");
+    };
+    show("btn-shop-stock", hhFeature("stock"));
+    show("home-card-stock", hhFeature("stock"));
+    show("btn-todo-maint", hhFeature("maint"));
+    show("home-card-maint", hhFeature("maint"));
+    show("home-card-calendar", hhFeature("calendar"));
+    document.querySelectorAll(".feature-toggle").forEach(cb => { cb.checked = hhFeature(cb.value); });
+    if (!hhFeature("stock")) { const m = document.getElementById("stockModal"); if (m) m.style.display = "none"; }
+    if (!hhFeature("maint")) { const m = document.getElementById("maintModal"); if (m) m.style.display = "none"; }
+    if (!hhFeature("calendar") && typeof calCloseAll === "function") { try { calCloseAll(); } catch (e) { /* egal */ } }
+}
+window.hhFeature = hhFeature;
+
 // ---- HELFER: SICHTBARE TABS ABFRAGEN & ANWENDEN ----
 async function applyVisibleTabs() {
     let visibleTabs = null;
@@ -146,6 +186,11 @@ async function applyVisibleTabs() {
                     visibleTabs = data.visible_tabs;
                     localStorage.setItem("ha_visible_tabs", JSON.stringify(visibleTabs));
                 }
+                if (Array.isArray(data.features)) hhSetFeatures(data.features);
+                if (Array.isArray(data.calendars)) {
+                    hhCalendars = data.calendars;
+                    hhCalendarWrite = String(data.calendar_write || "");
+                }
             }
         }
     } catch (e) {
@@ -163,7 +208,9 @@ async function applyVisibleTabs() {
         visibleTabs = ["shop", "todo", "food", "trash", "finance"];
     }
 
+    hhCredLoaded = true;
     applyTabsToDOM(visibleTabs);
+    if (hhFeature("calendar") && typeof renderHomeCalendar === "function") { try { renderHomeCalendar(); } catch (e) { /* Startseite noch nicht da */ } }
     return visibleTabs;
 }
 
@@ -204,6 +251,9 @@ function applyTabsToDOM(visibleTabs) {
     checkboxes.forEach(cb => {
         cb.checked = visibleTabs.includes(cb.value);
     });
+
+    // 3. Zusatzfunktionen (Vorrat, Wartung, Kalender)
+    applyFeaturesToDOM();
 }
 
 
@@ -454,6 +504,7 @@ window.openSystemSettings = async function() {
 
         // Zoom-Wert beim Öffnen im Regler & Label anzeigen
         applyAppZoom(currentAppZoom);
+        hhHintsSync();
 
         document.querySelectorAll(".tab-toggle").forEach(cb => {
             cb.checked = visibleTabs.includes(cb.value);
@@ -475,6 +526,10 @@ window.saveSystemSettings = async function() {
         // Zoom-Faktor lokal als Backup sichern
         localStorage.setItem('house_central_zoom', currentAppZoom);
 
+        // Bedienhinweise (nur dieses Gerät)
+        const hintCb = document.getElementById("hintsToggle");
+        if (hintCb) hhHintsSetOn(hintCb.checked);
+
         // Kiosk-Token nur auf diesem Gerät speichern
         const newToken = elToken ? elToken.value.trim() : "";
         if (newToken) {
@@ -491,8 +546,12 @@ window.saveSystemSettings = async function() {
             const newAdminPw = elAdmin ? elAdmin.value.trim() : "";
             const selectedTabs = Array.from(document.querySelectorAll(".tab-toggle:checked")).map(cb => cb.value);
 
+            const selectedFeatures = Array.from(document.querySelectorAll(".feature-toggle:checked")).map(cb => cb.value);
+
             payload.current_master_pw = verifiedMasterPw;
             payload.visible_tabs = selectedTabs;
+            payload.features = selectedFeatures;
+            hhSetFeatures(selectedFeatures);
             if (newMasterPw) payload.master_pw = newMasterPw;   // leer = unverändert
             if (newAdminPw) payload.admin_pw = newAdminPw;      // leer = unverändert
             localStorage.setItem("ha_visible_tabs", JSON.stringify(selectedTabs));
@@ -1069,6 +1128,9 @@ async function renderSidebars() {
         console.error("Sidebar-Zählung Shop fehlgeschlagen", e); 
     }
 
+    // Gerade wird gezogen: erst danach neu zeichnen (sonst verschwindet das Element unter dem Finger)
+    if (typeof hhSortBusy === "function" && hhSortBusy()) { hhSortLater(renderSidebars); return; }
+
     // --- SHOP SIDEBAR ---
     const shopSide = document.getElementById("shopSidebar");
     if(shopSide) {
@@ -1080,6 +1142,7 @@ async function renderSidebars() {
             btn.className = `side-btn ${activeStore === s ? 'active-shop' : ''}`;
             btn.dataset.index = index;
             btn.dataset.type = 'shop';
+            btn.dataset.dropStore = s;   // Ziel zum Verschieben von Artikeln
 
             btn.onclick = () => { 
                 if (btn.dataset.wasDragged === "true") return;
@@ -1126,8 +1189,8 @@ async function renderSidebars() {
 
             btn.appendChild(txt);
 
-            // Drag & Drop (Maus + Touch) aktivieren
-            enableSidebarDragAndDrop(btn, 'shop', index);
+            // Sortieren per Ziehen (Handy: gedrückt halten, PC: Maus)
+            hhSortBind(btn, 'shop', index, (f, t) => applySidebarNewOrder('shop', f, t), { ignore: '.del-sidebar', label: s });
 
             shopSide.appendChild(btn);
         });
@@ -1206,8 +1269,8 @@ async function renderSidebars() {
 
             btn.appendChild(txt);
 
-            // Drag & Drop (Maus + Touch) aktivieren
-            enableSidebarDragAndDrop(btn, 'todo', index);
+            // Sortieren per Ziehen (Handy: gedrückt halten, PC: Maus)
+            hhSortBind(btn, 'todo', index, (f, t) => applySidebarNewOrder('todo', f, t), { ignore: '.del-sidebar', label: r });
 
             todoSide.appendChild(btn);
         });
@@ -1218,151 +1281,297 @@ async function renderSidebars() {
         addBtnTodo.onclick = () => addSidebarItem('todo');
         todoSide.appendChild(addBtnTodo);
     }
+
+    hhHintSet("shop", Array.isArray(stores) ? stores.length : 0);
+    hhHintSet("todo", Array.isArray(rooms) ? rooms.length : 0);
 }
 
 
 // ========================================================
-// --- OPTIMIERTE DRAG & DROP LOGIK FÜR SIDEBAR ---
+// --- SORTIEREN PER ZIEHEN (Geschäfte, Räume, Jahre, Monate) ---
+// Handy/Tablet: Element kurz gedrückt halten, dann ziehen (normales Scrollen geht weiter).
+// PC: einfach mit der Maus ziehen. Ein "Geist" folgt dem Finger, die Ziel-Stelle bekommt einen Balken,
+// am Rand wird automatisch gescrollt. Esc bricht ab. (Artikel im Einkauf verschieben: eigener Code, siehe shopDrag.)
 // ========================================================
-let sidebarDragState = {
-    type: null,
-    fromIndex: null,
-    toIndex: null,
-    isDragging: false,
-    startY: 0,
-    activeElement: null
+const hhSort = {
+    pending: false, active: false, el: null, group: "", from: -1, to: -1, row: false,
+    timer: 0, raf: 0, ghost: null, bar: null, scrollers: [], later: [],
+    sx: 0, sy: 0, x: 0, y: 0, mode: "", onDrop: null, shield: 0, pid: -1
 };
 
-function enableSidebarDragAndDrop(btn, type, index) {
-    // --- 1. PC MAUS DRAG & DROP ---
-    btn.draggable = true;
+function hhZoom() { return (typeof currentAppZoom === "number" && currentAppZoom > 0) ? currentAppZoom : 1; }
+function hhSortBusy() { return hhSort.pending || hhSort.active; }
+// Etwas erst nach dem Ziehen tun (z. B. Liste neu zeichnen, die sonst unter dem Finger verschwindet)
+function hhSortLater(fn) { if (!hhSort.later.includes(fn)) hhSort.later.push(fn); }
 
-    btn.addEventListener('dragstart', (e) => {
-        sidebarDragState.type = type;
-        sidebarDragState.fromIndex = index;
-        btn.classList.add('dragging-side-btn');
-        if (e.dataTransfer) {
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', index);
-        }
-    });
-
-    btn.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        if (sidebarDragState.type !== type || sidebarDragState.fromIndex === index) return;
-        btn.classList.add('drag-over-side-btn');
-    });
-
-    btn.addEventListener('dragleave', () => {
-        btn.classList.remove('drag-over-side-btn');
-    });
-
-    btn.addEventListener('drop', async (e) => {
-        e.preventDefault();
-        btn.classList.remove('drag-over-side-btn');
-        if (sidebarDragState.type !== type) return;
-        
-        const fromIdx = sidebarDragState.fromIndex;
-        const toIdx = index;
-        if (fromIdx !== null && fromIdx !== toIdx) {
-            await applySidebarNewOrder(type, fromIdx, toIdx);
-        }
-    });
-
-    btn.addEventListener('dragend', () => {
-        btn.classList.remove('dragging-side-btn');
-        document.querySelectorAll('.drag-over-side-btn').forEach(el => el.classList.remove('drag-over-side-btn'));
-        sidebarDragState.type = null;
-        sidebarDragState.fromIndex = null;
-    });
-
-    // --- 2. HANDY / TABLET TOUCH (FLÜSSIG & DIREKT) ---
-    btn.addEventListener('touchstart', (e) => {
-        // Mülleimer ausnehmen
-        if (e.target.classList.contains('del-sidebar')) return;
-
-        const touch = e.touches[0];
-        sidebarDragState.startY = touch.clientY;
-        sidebarDragState.type = type;
-        sidebarDragState.fromIndex = index;
-        sidebarDragState.toIndex = index;
-        sidebarDragState.activeElement = btn;
-        btn.dataset.wasDragged = "false";
-    }, { passive: true });
-
-    btn.addEventListener('touchmove', (e) => {
-        if (sidebarDragState.type !== type || sidebarDragState.fromIndex !== index) return;
-
-        const touch = e.touches[0];
-        const moveDistance = Math.abs(touch.clientY - sidebarDragState.startY);
-
-        // Sobald der Finger minimal bewegt wird (10px), startet das Ziehen sofort flüssig
-        if (!sidebarDragState.isDragging && moveDistance > 10) {
-            sidebarDragState.isDragging = true;
-            btn.classList.add('dragging-side-btn');
-            btn.dataset.wasDragged = "true";
-            if (navigator.vibrate) navigator.vibrate(30); // Kurzes haptisches Feedback
-        }
-
-        if (sidebarDragState.isDragging) {
-            // Verhindert, dass die ganze Seite mitgescrollt wird, während man einen Raum verschiebt
-            if (e.cancelable) e.preventDefault();
-
-            const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-            const overBtn = targetEl ? targetEl.closest(`.side-btn[data-type="${type}"]`) : null;
-
-            document.querySelectorAll('.drag-over-side-btn').forEach(el => el.classList.remove('drag-over-side-btn'));
-
-            if (overBtn && overBtn !== btn) {
-                overBtn.classList.add('drag-over-side-btn');
-                sidebarDragState.toIndex = parseInt(overBtn.dataset.index, 10);
-            }
-        }
-    }, { passive: false });
-
-    const endTouchDrag = async () => {
-        if (!sidebarDragState.isDragging) {
-            sidebarDragState.type = null;
-            sidebarDragState.fromIndex = null;
-            return;
-        }
-
-        sidebarDragState.isDragging = false;
-        btn.classList.remove('dragging-side-btn');
-        document.querySelectorAll('.drag-over-side-btn').forEach(el => el.classList.remove('drag-over-side-btn'));
-
-        const fromIdx = sidebarDragState.fromIndex;
-        const toIdx = sidebarDragState.toIndex;
-        
-        sidebarDragState.type = null;
-        sidebarDragState.fromIndex = null;
-        sidebarDragState.toIndex = null;
-        sidebarDragState.activeElement = null;
-
-        if (fromIdx !== null && toIdx !== null && fromIdx !== toIdx) {
-            await applySidebarNewOrder(type, fromIdx, toIdx);
-        }
-
-        setTimeout(() => { btn.dataset.wasDragged = "false"; }, 150);
-    };
-
-    btn.addEventListener('touchend', endTouchDrag);
-    btn.addEventListener('touchcancel', endTouchDrag);
+// opts: { label: Text im Geist, ignore: Selektor für Stellen, an denen nicht gezogen wird (z. B. Mülleimer) }
+function hhSortBind(el, group, index, onDrop, opts) {
+    if (!el) return;
+    const o = opts || {};
+    el.dataset.sortGroup = group;
+    el.dataset.sortIndex = String(index);
+    if (o.label) el.dataset.sortLabel = o.label;
+    el.draggable = false;
+    el.addEventListener("pointerdown", e => hhSortDown(e, el, group, onDrop, o.ignore || ""));
 }
+
+function hhSortItems(group) { return Array.from(document.querySelectorAll('[data-sort-group="' + group + '"]')); }
+
+function hhSortDown(e, el, group, onDrop, ignore) {
+    const s = hhSort;
+    if (s.pending || s.active) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    const skip = (ignore ? ignore + "," : "") + "input, select, textarea, [contenteditable]";
+    if (e.target && e.target.closest && e.target.closest(skip)) return;
+    if (hhSortItems(group).length < 2) return;                       // nichts zum Sortieren
+    s.pending = true; s.active = false;
+    s.el = el; s.group = group; s.onDrop = onDrop;
+    s.from = s.to = parseInt(el.dataset.sortIndex, 10);
+    s.sx = s.x = e.clientX; s.sy = s.y = e.clientY;
+    s.mode = (e.pointerType === "mouse") ? "mouse" : "touch";
+    s.pid = e.pointerId;                                              // nur dieser Finger / Zeiger zählt (zweiter Finger stört nicht)
+    if (s.mode === "touch") s.timer = setTimeout(hhSortStart, 380);  // erst gedrückt halten, damit Scrollen weiter geht
+    document.addEventListener("pointermove", hhSortMove, true);
+    document.addEventListener("pointerup", hhSortUp, true);
+    document.addEventListener("pointercancel", hhSortCancel, true);
+    document.addEventListener("keydown", hhSortKey, true);
+}
+
+function hhSortStart() {
+    const s = hhSort;
+    if (!s.pending || s.active) return;
+    clearTimeout(s.timer);
+    if (!s.el || !s.el.isConnected) { hhSortCleanup(); return; }
+    s.pending = false; s.active = true;
+    const items = hhSortItems(s.group);
+    if (items.length > 1) {                                           // Reihe (nebeneinander) oder Spalte (untereinander)?
+        const a = items[0].getBoundingClientRect(), b = items[1].getBoundingClientRect();
+        s.row = Math.abs(a.top - b.top) < Math.min(a.height, b.height) * 0.5;
+    } else s.row = false;
+    s.el.classList.add("hh-sort-src");
+    document.body.classList.add("hh-sorting");
+    document.addEventListener("touchmove", hhSortBlockScroll, { passive: false });
+
+    const g = document.createElement("div");
+    g.className = "hh-sort-ghost";
+    g.textContent = "↕ " + (s.el.dataset.sortLabel || (s.el.textContent || "").trim().slice(0, 40));
+    document.body.appendChild(g);
+    s.ghost = g;
+    const bar = document.createElement("div");
+    bar.className = "hh-sort-bar";
+    document.body.appendChild(bar);
+    s.bar = bar;
+
+    s.scrollers = hhSortScrollers(s.el);
+    if (navigator.vibrate) { try { navigator.vibrate(25); } catch (e) { /* egal */ } }
+    hhSortUpdate();
+    s.raf = requestAnimationFrame(hhSortTick);
+}
+
+function hhSortBlockScroll(e) { if (hhSort.active && e.cancelable) e.preventDefault(); }
+
+// Alles, was beim Ziehen am Rand mitscrollen darf (innerste zuerst), zuletzt die Seite selbst
+function hhSortScrollers(el) {
+    const out = [];
+    for (let n = el.parentElement; n && n !== document.documentElement; n = n.parentElement) {
+        const cs = getComputedStyle(n);
+        const sx = /(auto|scroll)/.test(cs.overflowX) && n.scrollWidth > n.clientWidth + 2;
+        const sy = /(auto|scroll)/.test(cs.overflowY) && n.scrollHeight > n.clientHeight + 2;
+        if (sx || sy) out.push({ n, sx, sy, root: false });
+    }
+    out.push({ n: null, sx: true, sy: true, root: true });
+    return out;
+}
+
+function hhSortTick() {
+    const s = hhSort;
+    if (!s.active) return;
+    s.raf = requestAnimationFrame(hhSortTick);
+    const edge = 56, vmax = 16;
+    const step = d => Math.max(1, Math.round(vmax * Math.min(1, Math.max(0, (edge - d) / edge))));
+    let moved = false;
+    s.scrollers.forEach(sc => {
+        const r = sc.root ? { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight } : sc.n.getBoundingClientRect();
+        if (s.x < r.left - 40 || s.x > r.right + 40 || s.y < r.top - 40 || s.y > r.bottom + 40) return;   // Finger nicht über diesem Bereich
+        let dx = 0, dy = 0;
+        if (sc.sy) { if (s.y - r.top < edge) dy = -step(s.y - r.top); else if (r.bottom - s.y < edge) dy = step(r.bottom - s.y); }
+        if (sc.sx) { if (s.x - r.left < edge) dx = -step(s.x - r.left); else if (r.right - s.x < edge) dx = step(r.right - s.x); }
+        if (!dx && !dy) return;
+        if (sc.root) {
+            const bx = window.scrollX, by = window.scrollY;
+            window.scrollBy(dx, dy);
+            if (window.scrollX !== bx || window.scrollY !== by) moved = true;
+        } else {
+            const bx = sc.n.scrollLeft, by = sc.n.scrollTop;
+            if (dx) sc.n.scrollLeft = bx + dx;
+            if (dy) sc.n.scrollTop = by + dy;
+            if (sc.n.scrollLeft !== bx || sc.n.scrollTop !== by) moved = true;
+        }
+    });
+    if (moved) hhSortUpdate();
+}
+
+// Welches Element liegt unter dem Finger? Zwischen den Elementen / dahinter: das nächstliegende (aber nicht, wenn der Finger weit weg ist)
+function hhSortTargetAt(x, y) {
+    const sel = '[data-sort-group="' + hhSort.group + '"]';
+    const stack = document.elementsFromPoint ? document.elementsFromPoint(x, y) : [];
+    for (const n of stack) { const t = n.closest ? n.closest(sel) : null; if (t) return t; }
+    let best = null, bd = 1e9;
+    document.querySelectorAll(sel).forEach(t => {
+        const r = t.getBoundingClientRect();
+        const d = Math.hypot(Math.max(r.left - x, 0, x - r.right), Math.max(r.top - y, 0, y - r.bottom));
+        if (d < bd) { bd = d; best = t; }
+    });
+    return bd <= 48 ? best : null;
+}
+
+function hhSortUpdate() {
+    const s = hhSort;
+    if (!s.active || !s.ghost) return;
+    const z = hhZoom();
+    const w = s.ghost.offsetWidth * z, h = s.ghost.offsetHeight * z;
+    s.ghost.style.left = (Math.max(4, Math.min(window.innerWidth - w - 4, s.x - w / 2)) / z) + "px";
+    s.ghost.style.top = (Math.max(4, s.y - h - 20) / z) + "px";           // über dem Finger, damit er das Ziel nicht verdeckt
+
+    const t = hhSortTargetAt(s.x, s.y);
+    const to = t ? parseInt(t.dataset.sortIndex, 10) : -1;
+    if (to !== s.to && to >= 0 && to !== s.from && navigator.vibrate) { try { navigator.vibrate(8); } catch (e) { /* egal */ } }
+    s.to = to >= 0 ? to : s.from;
+    document.querySelectorAll(".hh-sort-over").forEach(n => { if (n !== t) n.classList.remove("hh-sort-over"); });
+    if (!t || s.to === s.from) { s.bar.style.display = "none"; return; }
+    t.classList.add("hh-sort-over");
+    const r = t.getBoundingClientRect(), after = s.to > s.from, th = 4, b = s.bar;
+    b.style.display = "block";
+    if (s.row) {      // nebeneinander: senkrechter Balken links bzw. rechts vom Ziel
+        b.style.width = th + "px"; b.style.height = (r.height / z) + "px";
+        b.style.left = ((after ? r.right : r.left) / z - th / 2) + "px"; b.style.top = (r.top / z) + "px";
+    } else {          // untereinander: waagerechter Balken oberhalb bzw. unterhalb
+        b.style.height = th + "px"; b.style.width = (r.width / z) + "px";
+        b.style.top = ((after ? r.bottom : r.top) / z - th / 2) + "px"; b.style.left = (r.left / z) + "px";
+    }
+}
+
+function hhSortMove(e) {
+    const s = hhSort;
+    if (!(s.pending || s.active) || e.pointerId !== s.pid) return;
+    s.x = e.clientX; s.y = e.clientY;
+    if (s.pending) {
+        const dist = Math.hypot(s.x - s.sx, s.y - s.sy);
+        if (s.mode === "mouse") { if (dist > 6) hhSortStart(); }
+        else if (dist > 10) hhSortCleanup();                          // der Finger scrollt: nicht ziehen
+        return;
+    }
+    if (e.cancelable) e.preventDefault();
+    hhSortUpdate();
+}
+
+function hhSortUp(e) {
+    const s = hhSort;
+    if (!(s.pending || s.active) || e.pointerId !== s.pid) return;
+    const wasActive = s.active;
+    if (wasActive) { s.x = e.clientX; s.y = e.clientY; hhSortUpdate(); }
+    const el = s.el, group = s.group, from = s.from, to = s.to, cb = s.onDrop;
+    hhSortCleanup();
+    if (wasActive && to >= 0 && to !== from) {
+        hhSortMoveDom(el, group, from, to);
+        try {
+            const r = cb && cb(from, to);
+            if (r && typeof r.catch === "function") r.catch(err => console.error("❌ Sortieren:", err));
+        } catch (err) { console.error("❌ Sortieren:", err); }
+    }
+}
+function hhSortCancel(e) { if (!e || e.pointerId === hhSort.pid) hhSortCleanup(); }
+function hhSortKey(e) { if (e.key === "Escape") hhSortCleanup(); }
+
+// Sofort so anzeigen, wie es gleich gespeichert wird (die Liste wird danach ohnehin neu gezeichnet)
+function hhSortMoveDom(el, group, from, to) {
+    if (!el || !el.isConnected) return;
+    const items = hhSortItems(group);
+    const t = items.find(x => parseInt(x.dataset.sortIndex, 10) === to);
+    if (!t || t === el || t.parentNode !== el.parentNode) return;
+    el.parentNode.insertBefore(el, to > from ? t.nextSibling : t);
+    hhSortItems(group).forEach((x, i) => { x.dataset.sortIndex = String(i); if (x.dataset.index !== undefined) x.dataset.index = String(i); });
+}
+
+function hhSortCleanup() {
+    const s = hhSort;
+    const wasActive = s.active;
+    clearTimeout(s.timer);
+    cancelAnimationFrame(s.raf);
+    document.removeEventListener("pointermove", hhSortMove, true);
+    document.removeEventListener("pointerup", hhSortUp, true);
+    document.removeEventListener("pointercancel", hhSortCancel, true);
+    document.removeEventListener("keydown", hhSortKey, true);
+    document.removeEventListener("touchmove", hhSortBlockScroll, { passive: false });
+    if (s.el) s.el.classList.remove("hh-sort-src");
+    document.querySelectorAll(".hh-sort-src, .hh-sort-over").forEach(n => n.classList.remove("hh-sort-src", "hh-sort-over"));
+    if (s.ghost) s.ghost.remove();
+    if (s.bar) s.bar.remove();
+    document.body.classList.remove("hh-sorting");
+    if (wasActive) s.shield = Date.now() + 450;                       // das "Loslassen" soll nichts antippen (Geschäft wählen, Jahr öffnen …)
+    s.pending = false; s.active = false; s.el = null; s.ghost = null; s.bar = null; s.scrollers = []; s.onDrop = null;
+    const later = s.later.splice(0);
+    if (later.length) setTimeout(() => later.forEach(f => { try { f(); } catch (e) { console.error(e); } }), 0);
+}
+
+// App im Hintergrund (z. B. Anruf): Ziehen abbrechen
+document.addEventListener("visibilitychange", () => { if (document.hidden && hhSortBusy()) hhSortCleanup(); });
+
+// Während des Ziehens und kurz danach: kein Antippen / kein Rechtsklick-Menü (Rechtsklick löscht sonst Orte und Räume)
+document.addEventListener("click", e => {
+    if (Date.now() < hhSort.shield) { e.stopPropagation(); e.preventDefault(); }
+}, true);
+document.addEventListener("contextmenu", e => {
+    if (hhSort.pending || hhSort.active || Date.now() < hhSort.shield) { e.preventDefault(); e.stopPropagation(); }
+}, true);
+
+// ---- Hinweise: "das geht" ----
+// Kleine Zeile über der jeweiligen Liste; in den Einstellungen abschaltbar (nur auf diesem Gerät).
+function hhHintsOn() { try { return localStorage.getItem("hh_hints") !== "0"; } catch (e) { return true; } }
+function hhHintsSetOn(on) {
+    try { localStorage.setItem("hh_hints", on ? "1" : "0"); } catch (e) { /* egal */ }
+    hhHintsRefresh();
+}
+function hhHintsSync() {
+    const cb = document.getElementById("hintsToggle");
+    if (cb) cb.checked = hhHintsOn();
+}
+const hhHintCount = {};
+function hhHintText(key) {
+    const t = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+    const drag = t ? "gedrückt halten und ziehen" : "mit der Maus ziehen";
+    switch (key) {
+        case "shop": return t ? "💡 Gedrückt halten & ziehen: Artikel in ein anderes Geschäft schieben, Geschäfte sortieren."
+                              : "💡 Mit der Maus ziehen: Artikel in ein anderes Geschäft schieben, Geschäfte sortieren.";
+        case "todo": return `💡 Räume ${drag}, um sie zu sortieren.`;
+        case "years": return `💡 Jahre ${drag}, um sie zu sortieren.`;
+        case "months": return `💡 Monate ${drag}, um sie zu sortieren.`;
+    }
+    return "";
+}
+// n = Anzahl der Elemente, die sich sortieren lassen (ab 2 sinnvoll)
+function hhHintSet(key, n) { hhHintCount[key] = n; hhHintApply(key); }
+function hhHintApply(key) {
+    document.querySelectorAll('.hh-hint[data-hint="' + key + '"]').forEach(el => {
+        el.textContent = hhHintText(key);
+        el.style.display = (hhHintsOn() && (hhHintCount[key] || 0) >= 2) ? "" : "none";
+    });
+}
+function hhHintsRefresh() { ["shop", "todo", "years", "months"].forEach(hhHintApply); }
+
 
 // Speichert die neue Reihenfolge und synchronisiert sie mit Home Assistant
 async function applySidebarNewOrder(type, fromIndex, toIndex) {
     const arr = (type === 'shop') ? stores : rooms;
-    
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= arr.length || toIndex >= arr.length) return;
+
     // Element an alter Position entfernen und an neuer Position einfügen
     const [movedItem] = arr.splice(fromIndex, 1);
     arr.splice(toIndex, 0, movedItem);
 
-    // Direkt mit deiner bestehenden Funktion in Home Assistant speichern
-    await syncUpSidebar(type);
-    
-    // Sidebar neu zeichnen
+    // Sofort neu zeichnen (nicht erst nach dem Speichern), dann in Home Assistant sichern
     renderSidebars();
+    await syncUpSidebar(type);
 }  
 
 let currentSidebarType = 'room';
@@ -1390,6 +1599,7 @@ function addSidebarItem(type) {
 function closeRoomModal() {
     const modal = document.getElementById('roomModal');
     if (modal) modal.style.display = 'none';
+    if (typeof stockStoreDlgClosed === "function") stockStoreDlgClosed();   // Vorrat-Formular: neues Geschäft übernehmen
 }
 
 // 2. Eingabe bestätigen und speichern
@@ -1466,7 +1676,7 @@ async function confirmDelete() {
     renderSidebars();
 }
 
-async function saveTodoDb(taskName = "Update", actionType = "aktualisiert") {
+async function saveTodoDb(taskName = "Update", actionType = "aktualisiert", byName = "") {
     if (Array.isArray(todoDb)) {
         todoDb.forEach(t => {
             if (t.nextDate && String(t.nextDate).endsWith('Z')) {
@@ -1491,7 +1701,7 @@ async function saveTodoDb(taskName = "Update", actionType = "aktualisiert") {
     try {
         await haFireEvent("set_tasks_data", {
             tasks: dataToSend, 
-            user_name: user,       
+            user_name: byName || user,
             task_name: taskName,   
             room_name: roomName,   
             action: actionType     
@@ -1502,15 +1712,177 @@ async function saveTodoDb(taskName = "Update", actionType = "aktualisiert") {
     }
 }
 
+// ===== Lob-Fenster: geht nach dem Erledigen kurz auf ("Super gemacht, Sabrina!") =====
+// [Symbol, Text mit {n} für den Namen, (Text ohne Namen – sonst wird ", {n}" einfach weggelassen)]
+const HH_PRAISE = [
+    ["🎉", "Super gemacht, {n}!"], ["👏", "Klasse, {n}!"], ["🌟", "Stark, {n}!"],
+    ["💪", "Top Leistung, {n}!"], ["🏆", "Sauber erledigt, {n}!"], ["✨", "Das sieht gut aus, {n}!"],
+    ["🙌", "Danke, {n}!"], ["🥳", "Wieder was geschafft, {n}!"], ["😎", "Du rockst, {n}!"],
+    ["🚀", "Läuft bei dir, {n}!"], ["🦸", "Haushaltsheld {n} hat zugeschlagen!", "Der Haushaltsheld hat zugeschlagen!"],
+    ["🌈", "Wunderbar, {n}!"], ["🧹", "Alles blitzblank, {n}!"], ["🔥", "Du bist on fire, {n}!"],
+    ["🥇", "Goldmedaille für {n}!", "Goldmedaille!"], ["💫", "Fantastisch, {n}!"], ["🤩", "Wow, {n}, so geht das!", "Wow, so geht das!"],
+    ["👍", "Daumen hoch für {n}!", "Daumen hoch!"], ["🎯", "Volltreffer, {n}!"], ["🍀", "Gut gemacht, {n}!"],
+    ["🧠", "Clever gelöst, {n}!"], ["☀️", "Ein Haken mehr, {n}!"], ["🎊", "Hurra, {n} hat's geschafft!", "Hurra, geschafft!"],
+    ["🐝", "Fleißig wie eine Biene, {n}!"], ["🏅", "Respekt, {n}!"], ["🤝", "Danke für deine Hilfe, {n}!"],
+    ["⭐", "Du bist ein Stern, {n}!"], ["🦾", "Starke Arbeit, {n}!"], ["🎈", "Erledigt und abgehakt, {n}!"],
+    ["🍰", "Das hast du dir verdient, {n}!"], ["🕺", "Tanz der Erledigten, {n}!"], ["🌻", "Schön, dass du das machst, {n}!"]
+];
+// Es kommt immer ein anderer Spruch: erst werden alle durchgespielt (zufällige Reihenfolge), dann geht es von vorn los.
+// Der Stand wird auf dem Gerät gemerkt, damit es auch nach dem Neuladen der Seite nicht gleich wieder dieselben sind.
+let hhPraiseUsed = null;
+function hhPraisePick() {
+    const n = HH_PRAISE.length;
+    if (!Array.isArray(hhPraiseUsed)) {
+        hhPraiseUsed = [];
+        try {
+            const raw = JSON.parse(localStorage.getItem("hh_praise_used") || "[]");
+            if (Array.isArray(raw)) hhPraiseUsed = raw.filter(i => Number.isInteger(i) && i >= 0 && i < n);
+        } catch (e) { /* ohne Speicher: nur für diese Sitzung */ }
+    }
+    let free = [];
+    for (let i = 0; i < n; i++) if (!hhPraiseUsed.includes(i)) free.push(i);
+    if (!free.length) {   // Runde zu Ende: neu mischen, nicht mit dem zuletzt gezeigten starten
+        const last = hhPraiseUsed.length ? hhPraiseUsed[hhPraiseUsed.length - 1] : -1;
+        hhPraiseUsed = [];
+        for (let i = 0; i < n; i++) if (i !== last || n === 1) free.push(i);
+    }
+    const pick = free[Math.floor(Math.random() * free.length)];
+    hhPraiseUsed.push(pick);
+    try { localStorage.setItem("hh_praise_used", JSON.stringify(hhPraiseUsed)); } catch (e) { /* egal */ }
+    return pick;
+}
+let hhPraiseTimer = null;
+function hhPraiseClose() {
+    clearTimeout(hhPraiseTimer);
+    hhPraiseTimer = null;
+    const o = document.getElementById("hhPraiseOverlay");
+    if (!o) return;
+    o.classList.add("is-out");
+    setTimeout(() => { if (o.parentNode) o.remove(); }, 240);
+}
+// who: Name der Person, text: zweite Zeile (z. B. "Staubsaugen erledigt")
+function hhPraise(who, text) {
+    try {
+        const old = document.getElementById("hhPraiseOverlay");
+        if (old) old.remove();
+        clearTimeout(hhPraiseTimer);
+        const i = hhPraisePick();
+        const name = String(who || "").trim();
+        const entry = HH_PRAISE[i];
+        const msg = name ? entry[1].replace("{n}", name) : (entry[2] || entry[1].replace(", {n}", ""));
+
+        const o = document.createElement("div");
+        o.id = "hhPraiseOverlay";
+        o.className = "cook-modal-overlay hh-praise-overlay";
+        o.setAttribute("role", "status");
+        o.setAttribute("aria-live", "polite");
+        const card = document.createElement("div");
+        card.className = "modal-card cook-modal-card hh-praise-card";
+        card.onclick = hhPraiseClose;
+        const em = document.createElement("div");
+        em.className = "hh-praise-emoji";
+        em.textContent = HH_PRAISE[i][0];
+        const tt = document.createElement("div");
+        tt.className = "hh-praise-title";
+        tt.textContent = msg;
+        card.append(em, tt);
+        if (text) {
+            const sub = document.createElement("div");
+            sub.className = "hh-praise-sub";
+            sub.textContent = text;
+            card.appendChild(sub);
+        }
+        o.appendChild(card);
+        document.body.appendChild(o);
+        hhPraiseTimer = setTimeout(hhPraiseClose, 2400);
+    } catch (e) { /* das Lob ist nur nett – darf nie etwas kaputt machen */ }
+}
+
+// ===== "Wer hat es gemacht?" beim Erledigen / Zurücksetzen =====
+// Liefert den gewählten Benutzernamen, oder null wenn abgebrochen wurde.
+// Gibt es nur einen Benutzer, wird nicht gefragt.
+function hhWhoDid(taskName) {
+    const names = [];
+    (Array.isArray(users) ? users : []).forEach(u => {
+        if (typeof u === "string" && u.includes(":")) {
+            const n = u.split(":")[0];
+            if (n && !names.includes(n)) names.push(n);
+        }
+    });
+    if (names.length <= 1) return Promise.resolve(names[0] || user || "");
+    if (document.getElementById("hhWhoOverlay")) return Promise.resolve(null);   // Fenster ist schon offen
+
+    return new Promise(resolve => {
+        const modal = document.createElement("div");
+        modal.id = "hhWhoOverlay";
+        modal.className = "cook-modal-overlay";
+        let done = false;
+        const onKey = e => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); finish(null); } };
+        const finish = (val) => {
+            if (done) return;
+            done = true;
+            modal.remove();
+            document.removeEventListener("keydown", onKey, true);
+            resolve(val);
+        };
+        document.addEventListener("keydown", onKey, true);
+        modal.onclick = () => finish(null);
+
+        const card = document.createElement("div");
+        card.className = "modal-card cook-modal-card hh-who-card";
+        card.setAttribute("role", "dialog");
+        card.setAttribute("aria-label", "Wer hat es gemacht?");
+        card.onclick = e => e.stopPropagation();
+        const h = document.createElement("h3");
+        h.style.margin = "0 0 4px 0";
+        h.style.textAlign = "center";
+        h.textContent = "👤 Wer hat es gemacht?";
+        card.appendChild(h);
+        if (taskName) {
+            const sub = document.createElement("div");
+            sub.className = "hh-who-sub";
+            sub.textContent = taskName;
+            card.appendChild(sub);
+        }
+        const list = document.createElement("div");
+        list.className = "cook-modal-list";
+        names.forEach(n => {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "cat-btn cook-modal-option" + (n === user ? " active-food" : "");
+            b.textContent = "👤 " + n;
+            b.onclick = () => finish(n);
+            list.appendChild(b);
+        });
+        const cancel = document.createElement("button");
+        cancel.type = "button";
+        cancel.className = "cat-btn cook-modal-option hh-who-cancel";
+        cancel.textContent = "Abbrechen";
+        cancel.onclick = () => finish(null);
+        list.appendChild(cancel);
+        card.appendChild(list);
+        modal.appendChild(card);
+        document.body.appendChild(modal);
+        const cur = list.querySelector(".active-food") || list.firstElementChild;
+        if (cur) cur.focus({ preventScroll: true });
+    });
+}
+
 async function completeTodo(id) {
-    const t = todoDb.find(x => String(x.id) === String(id));
+    let t = todoDb.find(x => String(x.id) === String(id));
+    if (!t) return;
+
+    // Wer hat es gemacht? (nicht unbedingt der Benutzer, der gerade angemeldet ist)
+    const who = await hhWhoDid(t.name);
+    if (!who) return;   // abgebrochen
+    t = todoDb.find(x => String(x.id) === String(id));   // Stand könnte sich währenddessen geändert haben
     if (!t) return;
 
     try {
         const now = new Date();
         if (t.room.trim() === "Müllabfuhr") {
             todoDb = todoDb.filter(x => String(x.id) !== String(id));
-            await saveTodoDb(t.name, "Müll erledigt & entfernt 🗑️");
+            await saveTodoDb(t.name, "Müll erledigt & entfernt 🗑️", who);
         } else {
             t.lastDone = now.toISOString();
             let nextDate;
@@ -1551,15 +1923,1435 @@ async function completeTodo(id) {
             }
 
             t.nextDate = nextDate.toISOString();
-            await saveTodoDb(t.name, "erledigt ✅");
+            await saveTodoDb(t.name, "erledigt ✅", who);
         }
 
+        todoHistoryAdd(t.name, t.room, who);   // Verlauf (läuft im Hintergrund)
+        hhPraise(who, t.name + " erledigt ✅");
         renderTodoList();
         if (typeof updateAppBadges === "function") updateAppBadges();
     } catch (error) {
         console.error("Fehler beim Speichern:", error);
     }
 }     
+
+// ===== Verlauf der erledigten Aufgaben =====
+// Liegt in db.todo.history (neueste zuerst) und wird mit den Aufgaben-Favoriten in Home Assistant
+// gespeichert, damit alle Geräte denselben Verlauf sehen. Eintrag: { id, n: Name, r: Raum, b: wer, t: Zeitstempel (ms) }
+const TODO_HISTORY_MAX = 100;
+const todoHistGone = new Set();   // gelöschte IDs (diese Sitzung), damit ein veralteter Stand sie nicht zurückbringt
+let todoHistQueue = Promise.resolve();
+
+function todoHistList() {
+    return (db && db.todo && Array.isArray(db.todo.history)) ? db.todo.history : [];
+}
+
+function todoHistMerge(a, b) {
+    const map = new Map();
+    [...(a || []), ...(b || [])].forEach(e => {
+        if (e && e.id && !todoHistGone.has(e.id) && !map.has(e.id)) map.set(e.id, e);
+    });
+    return [...map.values()].sort((x, y) => (y.t || 0) - (x.t || 0)).slice(0, TODO_HISTORY_MAX);
+}
+
+async function todoHistReadRemote() {
+    const cfg = SYNC_CONFIG.todo;
+    const d = await haGetState(cfg.entity);
+    const raw = d && d.attributes && d.attributes[cfg.attr];
+    if (!raw) return null;
+    const parsed = (typeof raw === "string") ? JSON.parse(raw) : raw;
+    return (parsed && typeof parsed === "object") ? parsed : null;
+}
+
+// Frischen Stand holen, ändern, zurückschreiben – nacheinander, damit nichts verloren geht
+function todoHistWrite(mutator) {
+    todoHistQueue = todoHistQueue.then(async () => {
+        let base = null;
+        try { base = await todoHistReadRemote(); } catch (e) { /* dann mit dem lokalen Stand */ }
+        if (!base) base = { cats: db.todo.cats, favs: db.todo.favs, maint: db.todo.maint };
+        const merged = todoHistMerge(base.history, todoHistList());
+        const out = todoHistMerge(mutator(merged) || [], []);
+        base.history = out;
+        db.todo.history = out;
+        const res = await haFireEvent(SYNC_CONFIG.todo.event, { favs: JSON.stringify(base) });
+        if (res && res.ok === false) throw new Error("HTTP " + res.status);
+        return out;
+    }).catch(e => { console.error("❌ Verlauf konnte nicht gespeichert werden:", e); });
+    return todoHistQueue;
+}
+
+function todoHistoryAdd(name, room, by) {
+    const e = {
+        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        n: String(name || "").slice(0, 80),
+        r: String(room || "").slice(0, 40),
+        b: String(by || (typeof user !== "undefined" && user) || "").slice(0, 30),
+        t: Date.now()
+    };
+    // sofort lokal anzeigen, dann speichern
+    db.todo.history = todoHistMerge([e], todoHistList());
+    return todoHistWrite(list => [e, ...list]);
+}
+
+function todoHistFmt(ts) {
+    const d = new Date(ts);
+    const wd = d.toLocaleDateString("de-DE", { weekday: "short" });
+    const p2 = n => String(n).padStart(2, "0");
+    return `${wd}, ${p2(d.getDate())}.${p2(d.getMonth() + 1)}.${d.getFullYear()} · ${p2(d.getHours())}:${p2(d.getMinutes())} Uhr`;
+}
+
+function todoHistRender() {
+    const box = document.getElementById("histList");
+    if (!box) return;
+    const list = todoHistList().slice().sort((x, y) => (y.t || 0) - (x.t || 0));   // neueste zuerst
+    box.textContent = "";
+    const sub = document.getElementById("histSub");
+    if (sub) sub.textContent = list.length ? `${list.length} ${list.length === 1 ? "Eintrag" : "Einträge"} · nach Namen sortiert` : "";
+    const clr = document.getElementById("histClear");
+    if (clr) clr.disabled = !list.length;
+    if (!list.length) {
+        const empty = document.createElement("div");
+        empty.className = "ing-empty";
+        empty.textContent = "Noch nichts erledigt. Sobald du bei einer Aufgabe auf „Erledigt“ tippst, steht sie hier.";
+        box.appendChild(empty);
+        return;
+    }
+    // Pro Person eine Überschrift (A–Z, ohne Namen zuletzt), darunter ihre Aufgaben
+    const groups = new Map();
+    list.forEach(e => {
+        const k = String(e.b || "").trim();
+        if (!groups.has(k)) groups.set(k, []);
+        groups.get(k).push(e);
+    });
+    const keys = [...groups.keys()].sort((a, b) => {
+        if (!a) return 1;
+        if (!b) return -1;
+        return a.localeCompare(b, "de", { sensitivity: "base" });
+    });
+    keys.forEach(k => {
+        const items = groups.get(k);
+        const h = document.createElement("div");
+        h.className = "hist-person";
+        const hn = document.createElement("span");
+        hn.className = "hist-person-name";
+        hn.textContent = "👤 " + (k || "Ohne Namen");
+        const hc = document.createElement("span");
+        hc.className = "hist-count";
+        hc.textContent = String(items.length);
+        h.append(hn, hc);
+        box.appendChild(h);
+        items.forEach(e => {
+            const row = document.createElement("div");
+            row.className = "hist-row";
+            row.dataset.id = e.id;
+            const main = document.createElement("div");
+            main.className = "hist-main";
+            const nm = document.createElement("div");
+            nm.className = "hist-name";
+            nm.textContent = "✅ " + (e.n || "Aufgabe");
+            main.append(nm);
+            if (e.r) {
+                const meta = document.createElement("div");
+                meta.className = "hist-meta";
+                meta.textContent = e.r;
+                main.append(meta);
+            }
+            const tm = document.createElement("div");
+            tm.className = "hist-time";
+            tm.textContent = todoHistFmt(e.t);
+            main.append(tm);
+            const del = document.createElement("button");
+            del.type = "button";
+            del.className = "hh-round hist-del";
+            del.textContent = "🗑️";
+            del.setAttribute("aria-label", "Eintrag löschen");
+            del.title = "Eintrag löschen";
+            del.onclick = () => todoHistoryRemove(e.id);
+            row.append(main, del);
+            box.appendChild(row);
+        });
+    });
+}
+
+async function openTodoHistory() {
+    todoHistRender();
+    const m = document.getElementById("historyModal");
+    if (m) m.style.display = "flex";
+    try {   // aktuellen Stand von Home Assistant nachladen (z. B. von anderen Geräten)
+        const remote = await todoHistReadRemote();
+        if (remote && Array.isArray(remote.history)) {
+            db.todo.history = todoHistMerge(remote.history, todoHistList());
+            if (m && m.style.display !== "none") todoHistRender();
+        }
+    } catch (e) { /* egal */ }
+}
+function closeTodoHistory() {
+    const m = document.getElementById("historyModal");
+    if (m) m.style.display = "none";
+}
+
+function todoHistoryRemove(id) {
+    todoHistGone.add(id);
+    db.todo.history = todoHistList().filter(e => e.id !== id);
+    todoHistRender();
+    return todoHistWrite(list => list.filter(e => e.id !== id));
+}
+
+async function todoHistoryClear() {
+    if (!todoHistList().length) return;
+    const ok = await showDeleteModal("Möchtest du den ganzen Verlauf löschen? Das kann nicht rückgängig gemacht werden.", "Verlauf löschen 🗑️", "Alles löschen");
+    if (!ok) return;
+    todoHistList().forEach(e => todoHistGone.add(e.id));
+    db.todo.history = [];
+    todoHistRender();
+    await todoHistWrite(() => []);
+}
+
+// ===== Wartung (wiederkehrende Wartungen mit Intervall) =====
+// Liegt in db.todo.maint und wird mit den Aufgaben-Favoriten in Home Assistant gespeichert (alle Geräte gleich).
+//   items: { id, n: Name, e: Zahl, u: d|w|m|y, w: Vorwarnung in Tagen, x: nächster Termin (JJJJ-MM-TT), l: zuletzt gemacht (JJJJ-MM-TT oder "") }
+//   tpls:  { id, n, e, u, w }  – nur gespeichert, wenn Vorlagen geändert wurden (sonst gelten die Standard-Vorlagen)
+//   hist:  { id, n, b: wer, t: Zeitstempel }  – Verlauf der Wartungen, nur im Wartungsfenster sichtbar (nicht im Aufgaben-Verlauf)
+const MAINT_HIST_MAX = 50;
+const MAINT_UNITS = [["d", "Tage", "Tag"], ["w", "Wochen", "Woche"], ["m", "Monate", "Monat"], ["y", "Jahre", "Jahr"]];
+const MAINT_WARN = [[0, "Keine"], [3, "3 Tage"], [7, "1 Woche"], [14, "2 Wochen"], [30, "1 Monat"]];
+const MAINT_DEFAULT_TPLS = [
+    { id: "d1", n: "Rauchmelder prüfen", e: 12, u: "m", w: 14 },
+    { id: "d2", n: "Heizung warten", e: 12, u: "m", w: 30 },
+    { id: "d3", n: "Reifenwechsel", e: 6, u: "m", w: 14 },
+    { id: "d4", n: "Auto: TÜV / HU", e: 24, u: "m", w: 30 },
+    { id: "d5", n: "Dunstabzug-Filter reinigen", e: 3, u: "m", w: 7 },
+    { id: "d6", n: "Waschmaschine reinigen", e: 3, u: "m", w: 7 },
+    { id: "d7", n: "Geschirrspüler-Filter reinigen", e: 1, u: "m", w: 3 },
+    { id: "d8", n: "Kaffeemaschine entkalken", e: 3, u: "m", w: 7 },
+    { id: "d9", n: "Kühlschrank reinigen", e: 6, u: "m", w: 7 },
+    { id: "d10", n: "Dachrinne reinigen", e: 12, u: "m", w: 14 },
+    { id: "d11", n: "Versicherungen prüfen", e: 12, u: "m", w: 30 }
+];
+let maintBusy = 0;   // Anzahl noch nicht gespeicherter Änderungen (solange gilt der lokale Stand)
+
+function maintPad(n) { return String(n).padStart(2, "0"); }
+function maintId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function maintIso(d) { return `${d.getFullYear()}-${maintPad(d.getMonth() + 1)}-${maintPad(d.getDate())}`; }
+function maintParse(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || ""));
+    if (!m) return null;
+    const d = new Date(+m[1], +m[2] - 1, +m[3]);
+    return (d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3]) ? d : null;
+}
+function maintToday() { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
+// Datum + Intervall (Monate/Jahre mit Monatsende: 31.01. + 1 Monat = 28.02.)
+function maintAdd(date, e, u) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    if (u === "d") d.setDate(d.getDate() + e);
+    else if (u === "w") d.setDate(d.getDate() + 7 * e);
+    else {
+        const months = (u === "y") ? 12 * e : e;
+        const day = d.getDate();
+        d.setDate(1);
+        d.setMonth(d.getMonth() + months);
+        const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+        d.setDate(Math.min(day, last));
+    }
+    return d;
+}
+function maintDaysUntil(iso) {
+    const d = maintParse(iso);
+    return d ? Math.round((d - maintToday()) / 86400000) : null;
+}
+function maintFmtLong(iso) {
+    const d = maintParse(iso);
+    return d ? hhDtDateText(d.getFullYear(), d.getMonth(), d.getDate()) : "";
+}
+function maintFmtShort(iso) {
+    const d = maintParse(iso);
+    return d ? `${maintPad(d.getDate())}.${maintPad(d.getMonth() + 1)}.${d.getFullYear()}` : "";
+}
+function maintEveryText(e, u) {
+    if (e === 1) return { d: "jeden Tag", w: "jede Woche", m: "jeden Monat", y: "jedes Jahr" }[u] || "";
+    const lab = MAINT_UNITS.find(x => x[0] === u);
+    return `alle ${e} ${lab ? lab[1] : ""}`;
+}
+function maintWarnText(w) {
+    if (!w) return "ohne Vorwarnung";
+    const f = MAINT_WARN.find(x => x[0] === w);
+    return (f ? f[1] : `${w} Tage`) + " vorher";
+}
+
+function maintSaneItem(it) {
+    if (!it || typeof it !== "object" || !it.id) return null;
+    const e = Math.max(1, Math.min(999, parseInt(it.e, 10) || 1));
+    const u = ["d", "w", "m", "y"].includes(it.u) ? it.u : "m";
+    const w = Math.max(0, Math.min(365, parseInt(it.w, 10) || 0));
+    return {
+        id: String(it.id).slice(0, 24),
+        n: String(it.n || "").trim().slice(0, 60) || "Wartung",
+        e, u, w,
+        x: maintParse(it.x) ? String(it.x).slice(0, 10) : maintIso(maintAdd(maintToday(), e, u)),
+        l: maintParse(it.l) ? String(it.l).slice(0, 10) : ""
+    };
+}
+function maintSaneTpl(t) {
+    const x = maintSaneItem(t);
+    return x ? { id: x.id, n: x.n, e: x.e, u: x.u, w: x.w } : null;
+}
+function maintNorm(raw) {
+    const src = (raw && typeof raw === "object") ? raw : {};
+    const out = { items: [], hist: [] };
+    const seen = new Set();
+    (Array.isArray(src.items) ? src.items : []).forEach(it => {
+        const x = maintSaneItem(it);
+        if (x && !seen.has(x.id)) { seen.add(x.id); out.items.push(x); }
+    });
+    if (Array.isArray(src.tpls)) {
+        const seenT = new Set();
+        out.tpls = [];
+        src.tpls.forEach(t => {
+            const x = maintSaneTpl(t);
+            if (x && !seenT.has(x.id)) { seenT.add(x.id); out.tpls.push(x); }
+        });
+    }
+    const seenH = new Set();
+    (Array.isArray(src.hist) ? src.hist : []).forEach(h => {
+        if (!h || !h.id || seenH.has(h.id)) return;
+        seenH.add(h.id);
+        out.hist.push({ id: String(h.id).slice(0, 24), n: String(h.n || "").slice(0, 60), b: String(h.b || "").slice(0, 30), t: Number(h.t) || 0 });
+    });
+    out.hist.sort((a, b) => b.t - a.t);
+    out.hist = out.hist.slice(0, MAINT_HIST_MAX);
+    return out;
+}
+function maintData() {
+    if (!db.todo.maint || typeof db.todo.maint !== "object") db.todo.maint = { items: [], hist: [] };
+    if (!Array.isArray(db.todo.maint.items)) db.todo.maint.items = [];
+    if (!Array.isArray(db.todo.maint.hist)) db.todo.maint.hist = [];
+    return db.todo.maint;
+}
+function maintTpls() {
+    const m = maintData();
+    return Array.isArray(m.tpls) ? m.tpls : MAINT_DEFAULT_TPLS;
+}
+function maintItemsSorted() {
+    return maintData().items.slice().sort((a, b) => (a.x < b.x ? -1 : a.x > b.x ? 1 : a.n.localeCompare(b.n, "de", { sensitivity: "base" })));
+}
+
+function maintInText(days) {
+    if (days === 1) return "morgen";
+    if (days < 14) return `in ${days} Tagen`;
+    if (days < 60) return `in ${Math.round(days / 7)} Wochen`;
+    if (days < 700) return `in ${Math.round(days / 30.4)} Monaten`;
+    return `in ${Math.round(days / 365)} Jahren`;
+}
+// k: over = überfällig, soon = fällig / in der Vorwarnzeit, ok = später
+function maintStatus(it) {
+    const days = maintDaysUntil(it.x);
+    if (days === null) return { k: "ok", days: 9999, text: "" };
+    if (days < 0) return { k: "over", days, text: days === -1 ? "⚠️ seit gestern überfällig" : `⚠️ seit ${-days} Tagen überfällig` };
+    if (days === 0) return { k: "soon", days, text: "⏰ heute fällig" };
+    if (days <= it.w) return { k: "soon", days, text: days === 1 ? "⏰ morgen fällig" : `⏰ in ${days} Tagen fällig` };
+    return { k: "ok", days, text: "📅 " + maintInText(days) };
+}
+// Fällig oder in der Vorwarnzeit (für die Startseite)
+function maintDueList() {
+    return maintItemsSorted().filter(it => { const d = maintDaysUntil(it.x); return d !== null && d <= it.w; });
+}
+// Heute fällig oder überfällig (für das Zähl-Symbol)
+function maintBadgeCount() {
+    return maintData().items.filter(it => { const d = maintDaysUntil(it.x); return d !== null && d <= 0; }).length;
+}
+
+// ---- Speichern: frischen Stand holen, ändern, zurückschreiben (gemeinsame Warteschlange mit dem Aufgaben-Verlauf) ----
+function maintWrite(mutator) {
+    maintBusy++;
+    todoHistQueue = todoHistQueue.then(async () => {
+        let base = null;
+        try { base = await todoHistReadRemote(); } catch (e) { /* dann mit dem lokalen Stand */ }
+        const hadRemote = !!base;
+        if (!base) base = { cats: db.todo.cats, favs: db.todo.favs, history: todoHistList() };
+        const m = maintNorm(hadRemote ? base.maint : maintData());
+        const out = maintNorm(mutator(m) || m);
+        base.maint = out;
+        db.todo.maint = out;
+        const res = await haFireEvent(SYNC_CONFIG.todo.event, { favs: JSON.stringify(base) });
+        if (res && res.ok === false) throw new Error("HTTP " + res.status);
+        return out;
+    }).catch(e => {
+        console.error("❌ Wartung konnte nicht gespeichert werden:", e);
+        if (typeof ingToast === "function") ingToast("⚠️ Wartung konnte nicht gespeichert werden");
+    }).then(r => { maintBusy = Math.max(0, maintBusy - 1); return r; });
+    return todoHistQueue;
+}
+// Änderung sofort lokal zeigen, dann speichern
+function maintDo(mutator) {
+    const local = maintNorm(maintData());
+    db.todo.maint = maintNorm(mutator(local) || local);
+    maintRefreshUI();
+    return maintWrite(mutator).then(r => { maintRefreshUI(); return r; });
+}
+
+function maintRefreshUI() {
+    const m = document.getElementById("maintModal");
+    if (m && m.style.display !== "none") maintRender();
+    const t = document.getElementById("maintTplModal");
+    if (t && t.style.display !== "none") maintTplRender();
+    if (typeof renderHomeTodos === "function") { try { renderHomeTodos(); } catch (e) { /* Startseite noch nicht da */ } }
+    if (typeof updateAppBadges === "function") { try { updateAppBadges(); } catch (e) { /* egal */ } }
+}
+
+// ---- Aktionen ----
+function maintSaveItem(data) {
+    const item = maintSaneItem({ ...data, id: data.id || maintId() });
+    return maintDo(m => {
+        const i = m.items.findIndex(x => x.id === item.id);
+        if (i >= 0) m.items[i] = item; else m.items.push(item);
+        return m;
+    });
+}
+async function maintDelete(id) {
+    const it = maintData().items.find(x => x.id === id);
+    if (!it) return;
+    const ok = await showDeleteModal(`Möchtest du "${it.n}" wirklich löschen?`, "Wartung löschen 🗑️");
+    if (!ok) return;
+    await maintDo(m => { m.items = m.items.filter(x => x.id !== id); return m; });
+}
+// Erledigt: fragt, wer es gemacht hat, setzt "zuletzt" auf heute und den nächsten Termin auf heute + Intervall
+async function maintComplete(id) {
+    const it = maintData().items.find(x => x.id === id);
+    if (!it) return false;
+    const who = await hhWhoDid(it.n);
+    if (!who) return false;
+    const cur = maintData().items.find(x => x.id === id);   // Stand könnte sich währenddessen geändert haben
+    if (!cur) return false;
+    const today = maintToday();
+    const todayIso = maintIso(today);
+    const nextIso = maintIso(maintAdd(today, cur.e, cur.u));
+    const entry = { id: maintId(), n: cur.n, b: String(who).slice(0, 30), t: Date.now() };
+    const saved = maintDo(m => {
+        const i = m.items.find(x => x.id === id);
+        if (!i) return m;
+        i.l = todayIso;
+        i.x = nextIso;
+        m.hist.unshift(entry);
+        return m;
+    });
+    hhPraise(who, `${cur.n} erledigt ✅ · nächster Termin ${maintFmtShort(nextIso)}`);
+    await saved;
+    return true;
+}
+function maintHistRemove(id) {
+    return maintDo(m => { m.hist = m.hist.filter(h => h.id !== id); return m; });
+}
+async function maintHistClear() {
+    if (!maintData().hist.length) return;
+    const ok = await showDeleteModal("Möchtest du den ganzen Wartungs-Verlauf löschen? Das kann nicht rückgängig gemacht werden.", "Verlauf löschen 🗑️", "Alles löschen");
+    if (!ok) return;
+    await maintDo(m => { m.hist = []; return m; });
+}
+
+// ---- Hauptfenster ----
+let maintTab = "list";
+function maintSetTab(k) {
+    maintTab = (k === "hist") ? "hist" : "list";
+    maintRender();
+}
+function maintMk(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+}
+function maintRoundBtn(cls, text, label, fn) {
+    const b = maintMk("button", "hh-round maint-btn " + cls, text);
+    b.type = "button";
+    b.setAttribute("aria-label", label);
+    b.title = label;
+    b.onclick = fn;
+    return b;
+}
+function maintRender() {
+    const box = document.getElementById("maintList");
+    if (!box) return;
+    const isList = maintTab === "list";
+    const tl = document.getElementById("maintTabList"), th = document.getElementById("maintTabHist");
+    if (tl) { tl.classList.toggle("is-on", isList); tl.setAttribute("aria-pressed", isList ? "true" : "false"); }
+    if (th) { th.classList.toggle("is-on", !isList); th.setAttribute("aria-pressed", isList ? "false" : "true"); }
+    const al = document.getElementById("maintActList"), ah = document.getElementById("maintActHist");
+    if (al) al.style.display = isList ? "flex" : "none";
+    if (ah) ah.style.display = isList ? "none" : "flex";
+    const keep = box.scrollTop;
+    box.textContent = "";
+    const sub = document.getElementById("maintSub");
+    if (isList) maintRenderList(box, sub); else maintRenderHist(box, sub);
+    box.scrollTop = keep;
+}
+function maintRenderList(box, sub) {
+    const items = maintItemsSorted();
+    let over = 0, soon = 0;
+    items.forEach(it => { const k = maintStatus(it).k; if (k === "over") over++; else if (k === "soon") soon++; });
+    if (sub) {
+        sub.textContent = items.length
+            ? [`${items.length} ${items.length === 1 ? "Wartung" : "Wartungen"}`, over ? `${over} überfällig` : "", soon ? `${soon} bald fällig` : ""].filter(Boolean).join(" · ")
+            : "";
+    }
+    if (!items.length) {
+        box.appendChild(maintMk("div", "ing-empty", "Noch keine Wartung. Tippe auf „＋ Neu“ und wähle eine Vorlage, z. B. Rauchmelder oder Heizung."));
+        return;
+    }
+    items.forEach(it => {
+        const st = maintStatus(it);
+        const row = maintMk("div", "maint-row maint-s-" + st.k);
+        row.dataset.id = it.id;
+        const main = maintMk("div", "maint-main");
+        main.appendChild(maintMk("div", "maint-name", "🔧 " + it.n));
+        main.appendChild(maintMk("div", "maint-meta", "🔁 " + maintEveryText(it.e, it.u) + (it.l ? " · zuletzt " + maintFmtShort(it.l) : "")));
+        main.appendChild(maintMk("div", "maint-due", st.text + " · " + maintFmtLong(it.x)));
+        const btns = maintMk("div", "maint-btns");
+        btns.appendChild(maintRoundBtn("maint-ok", "✅", "Erledigt", () => maintComplete(it.id)));
+        btns.appendChild(maintRoundBtn("maint-edit", "✏️", "Bearbeiten", () => maintEditItem(it.id)));
+        btns.appendChild(maintRoundBtn("maint-del", "🗑️", "Löschen", () => maintDelete(it.id)));
+        row.append(main, btns);
+        box.appendChild(row);
+    });
+}
+function maintRenderHist(box, sub) {
+    const list = maintData().hist.slice().sort((a, b) => (b.t || 0) - (a.t || 0));
+    if (sub) sub.textContent = list.length ? `${list.length} ${list.length === 1 ? "Eintrag" : "Einträge"} · nach Namen sortiert` : "";
+    const clr = document.getElementById("maintHistClear");
+    if (clr) clr.disabled = !list.length;
+    if (!list.length) {
+        box.appendChild(maintMk("div", "ing-empty", "Noch nichts erledigt. Sobald du bei einer Wartung auf ✅ tippst, steht sie hier."));
+        return;
+    }
+    const groups = new Map();
+    list.forEach(e => {
+        const k = String(e.b || "").trim();
+        if (!groups.has(k)) groups.set(k, []);
+        groups.get(k).push(e);
+    });
+    const keys = [...groups.keys()].sort((a, b) => {
+        if (!a) return 1;
+        if (!b) return -1;
+        return a.localeCompare(b, "de", { sensitivity: "base" });
+    });
+    keys.forEach(k => {
+        const items = groups.get(k);
+        const h = maintMk("div", "hist-person");
+        h.append(maintMk("span", "hist-person-name", "👤 " + (k || "Ohne Namen")), maintMk("span", "hist-count", String(items.length)));
+        box.appendChild(h);
+        items.forEach(e => {
+            const row = maintMk("div", "hist-row");
+            row.dataset.id = e.id;
+            const main = maintMk("div", "hist-main");
+            main.append(maintMk("div", "hist-name", "✅ " + (e.n || "Wartung")), maintMk("div", "hist-time", todoHistFmt(e.t)));
+            const del = maintMk("button", "hh-round hist-del", "🗑️");
+            del.type = "button";
+            del.setAttribute("aria-label", "Eintrag löschen");
+            del.title = "Eintrag löschen";
+            del.onclick = () => maintHistRemove(e.id);
+            row.append(main, del);
+            box.appendChild(row);
+        });
+    });
+}
+async function openMaint() {
+    if (!hhFeature("maint")) return;   // in den Einstellungen ausgeschaltet
+    maintTab = "list";
+    maintRender();
+    const m = document.getElementById("maintModal");
+    if (m) m.style.display = "flex";
+    try {   // aktuellen Stand von Home Assistant nachladen (z. B. von anderen Geräten)
+        const remote = await todoHistReadRemote();
+        if (remote && !maintBusy) {
+            db.todo.maint = maintNorm(remote.maint);
+            maintRefreshUI();
+        }
+    } catch (e) { /* egal */ }
+}
+function closeMaint() {
+    const m = document.getElementById("maintModal");
+    if (m) m.style.display = "none";
+}
+
+// ---- Vorlagen ("＋ Neu": Vorlage wählen, ändern, löschen) ----
+function maintNew() { maintTplOpen(); }
+function maintTplOpen() {
+    maintTplRender();
+    const m = document.getElementById("maintTplModal");
+    if (m) m.style.display = "flex";
+}
+function maintTplClose() {
+    const m = document.getElementById("maintTplModal");
+    if (m) m.style.display = "none";
+}
+function maintTplRender() {
+    const box = document.getElementById("maintTplList");
+    if (!box) return;
+    box.textContent = "";
+    const list = maintTpls();
+    const rst = document.getElementById("maintTplReset");
+    if (rst) rst.style.display = Array.isArray(maintData().tpls) ? "" : "none";
+    if (!list.length) {
+        box.appendChild(maintMk("div", "ing-empty", "Keine Vorlagen mehr. Mit „＋ Vorlage“ legst du eine neue an, oder hole die Standard-Vorlagen zurück."));
+        return;
+    }
+    list.forEach(t => {
+        const row = maintMk("div", "maint-tpl-row");
+        const main = maintMk("button", "hh-pickrow maint-tpl-main");
+        main.type = "button";
+        const nm = maintMk("span", "maint-tpl-name");
+        nm.append(maintMk("strong", "", t.n), maintMk("small", "", maintEveryText(t.e, t.u) + " · " + maintWarnText(t.w)));
+        main.appendChild(nm);
+        main.onclick = () => maintFormOpen("item", t, false, true);
+        row.append(main,
+            maintRoundBtn("maint-edit", "✏️", "Vorlage ändern", () => maintFormOpen("tpl", t, true, false)),
+            maintRoundBtn("maint-del", "🗑️", "Vorlage löschen", () => maintTplDelete(t.id)));
+        box.appendChild(row);
+    });
+}
+function maintTplMutate(fn) {
+    return maintDo(m => {
+        if (!Array.isArray(m.tpls)) m.tpls = MAINT_DEFAULT_TPLS.map(t => ({ ...t }));
+        fn(m.tpls);
+        return m;
+    });
+}
+async function maintTplDelete(id) {
+    const t = maintTpls().find(x => x.id === id);
+    if (!t) return;
+    const ok = await showDeleteModal(`Vorlage "${t.n}" löschen? Bestehende Wartungen bleiben unverändert.`, "Vorlage löschen 🗑️");
+    if (!ok) return;
+    await maintTplMutate(l => { const i = l.findIndex(x => x.id === id); if (i >= 0) l.splice(i, 1); });
+}
+async function maintTplReset() {
+    const ok = await showDeleteModal("Die Standard-Vorlagen zurückholen? Deine geänderten und eigenen Vorlagen werden dabei ersetzt.", "Vorlagen zurücksetzen ↺", "Zurücksetzen");
+    if (!ok) return;
+    await maintDo(m => { delete m.tpls; return m; });
+}
+function maintTplNew() { maintFormOpen("tpl", null, false, false); }
+
+// ---- Formular (Wartung oder Vorlage) ----
+const maintForm = { kind: "item", id: null, edit: false, fromTpl: false, e: 12, u: "m", w: 14, touched: false };
+
+function maintEditItem(id) {
+    const it = maintData().items.find(x => x.id === id);
+    if (it) maintFormOpen("item", it, true, false);
+}
+// src: vorhandener Eintrag/Vorlage (edit = true) oder Vorlage als Vorbelegung für eine neue Wartung; null = leer
+function maintFormOpen(kind, src, edit, fromTpl) {
+    const f = maintForm;
+    f.kind = kind;
+    f.edit = !!edit;
+    f.id = (edit && src) ? src.id : null;
+    f.fromTpl = !!fromTpl;
+    f.touched = false;
+    f.e = src ? src.e : 12;
+    f.u = src ? src.u : "m";
+    f.w = src ? src.w : 14;
+    const isItem = kind === "item";
+    document.getElementById("mfTitle").textContent = isItem
+        ? (edit ? "✏️ Wartung bearbeiten" : "🔧 Neue Wartung")
+        : (edit ? "✏️ Vorlage ändern" : "📋 Neue Vorlage");
+    document.getElementById("mfName").value = src ? src.n : "";
+    document.getElementById("mfEvery").value = String(f.e);
+    document.getElementById("mfNextRow").style.display = isItem ? "" : "none";
+    if (isItem) {
+        document.getElementById("mfNext").value = (edit && src && src.x) ? src.x : maintIso(maintAdd(maintToday(), f.e, f.u));
+    }
+    maintFormPaint();
+    if (fromTpl) maintTplClose();   // Vorlagen-Fenster ruht, bis das Formular zu ist
+    const m = document.getElementById("maintFormModal");
+    if (m) m.style.display = "flex";
+    const nm = document.getElementById("mfName");
+    if (nm && !nm.value) { try { nm.focus({ preventScroll: true }); } catch (e) { /* egal */ } }
+}
+function maintFormPaint() {
+    const f = maintForm;
+    document.querySelectorAll("#mfUnits button").forEach(b => {
+        const u = b.dataset.u;
+        const lab = MAINT_UNITS.find(x => x[0] === u);
+        if (lab) b.textContent = (f.e === 1) ? lab[2] : lab[1];
+        b.classList.toggle("is-on", u === f.u);
+        b.setAttribute("aria-pressed", u === f.u ? "true" : "false");
+    });
+    document.querySelectorAll("#mfWarns button").forEach(b => {
+        const on = Number(b.dataset.w) === f.w;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+}
+// Neuer Eintrag: nächster Termin = heute + Intervall, solange man ihn nicht selbst gewählt hat
+function maintFormAutoNext() {
+    const f = maintForm;
+    if (f.kind === "item" && !f.edit && !f.touched) {
+        document.getElementById("mfNext").value = maintIso(maintAdd(maintToday(), f.e, f.u));
+    }
+}
+function maintFormEvery() {
+    const v = parseInt(document.getElementById("mfEvery").value, 10);
+    if (v >= 1 && v <= 999) { maintForm.e = v; maintFormPaint(); maintFormAutoNext(); }
+}
+function maintFormUnit(u) { maintForm.u = u; maintFormPaint(); maintFormAutoNext(); }
+function maintFormWarn(w) { maintForm.w = w; maintFormPaint(); }
+function maintFormClose(cancelled) {
+    const m = document.getElementById("maintFormModal");
+    if (m) m.style.display = "none";
+    if (cancelled && maintForm.kind === "item" && maintForm.fromTpl) maintTplOpen();   // zurück zur Vorlagen-Auswahl
+}
+async function maintFormSave() {
+    const f = maintForm;
+    const name = document.getElementById("mfName").value.trim();
+    if (!name) {
+        if (typeof ingToast === "function") ingToast("Bitte einen Namen eingeben ✏️");
+        document.getElementById("mfName").focus();
+        return;
+    }
+    const e = parseInt(document.getElementById("mfEvery").value, 10);
+    if (!(e >= 1 && e <= 999)) {
+        if (typeof ingToast === "function") ingToast("Bitte eine Zahl von 1 bis 999 eingeben");
+        document.getElementById("mfEvery").focus();
+        return;
+    }
+    f.e = e;
+    if (f.kind === "item") {
+        const next = document.getElementById("mfNext").value;
+        if (!maintParse(next)) {
+            if (typeof ingToast === "function") ingToast("Bitte einen Termin wählen 📅");
+            return;
+        }
+        const old = f.edit ? maintData().items.find(x => x.id === f.id) : null;
+        maintFormClose(false);
+        maintTab = "list";
+        await maintSaveItem({ id: f.id || undefined, n: name, e, u: f.u, w: f.w, x: next, l: old ? old.l : "" });
+    } else {
+        maintFormClose(false);
+        const tpl = maintSaneTpl({ id: f.id || maintId(), n: name, e, u: f.u, w: f.w });
+        await maintTplMutate(l => {
+            const i = l.findIndex(x => x.id === tpl.id);
+            if (i >= 0) l[i] = tpl; else l.push(tpl);
+        });
+    }
+}
+function maintInit() {
+    const nx = document.getElementById("mfNext");
+    if (nx) nx.addEventListener("change", () => { maintForm.touched = true; });
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", maintInit);
+else maintInit();
+
+// ===== Vorrat (Bestand mit Einkaufsgrenze, Orten und Einkaufsliste) =====
+// Liegt in db.shop.stock und wird mit den Einkaufs-Favoriten in Home Assistant gespeichert (alle Geräte gleich).
+//   items:  { id, n: Name, q: Menge jetzt, u: Einheit, o: Ort-ID oder "", w: Startseite ab, m: Einkaufsliste ab,
+//             s: Geschäft oder "" (= das gerade offene), k: a (automatisch) | h (von Hand), l: 1 = steht schon auf der Einkaufsliste,
+//             d: 1 = bei der Nachfrage "Nicht jetzt" gewählt (bis wieder genug da ist, wird nicht noch einmal gefragt) }
+//   places: { id, n }  – nur gespeichert, wenn Orte geändert wurden (sonst gelten die Standard-Orte)
+const STOCK_MAX_ITEMS = 100;
+const STOCK_UNITS = ["Stk", "Pack", "Fl.", "Dose", "kg", "l"];
+const STOCK_DEFAULT_PLACES = [
+    { id: "p1", n: "Vorratsschrank" },
+    { id: "p2", n: "Kühlschrank" },
+    { id: "p3", n: "Tiefkühler" },
+    { id: "p4", n: "Keller" },
+    { id: "p5", n: "Bad" }
+];
+// Vorschläge im Formular (füllen Name, Einheit, Menge und Grenzen aus; der Ort wird nur gesetzt, wenn es ihn gibt)
+const STOCK_SUGGEST = [
+    { n: "Nudeln", u: "Pack", p: "Vorratsschrank", q: 3, w: 2, m: 1 },
+    { n: "Reis", u: "Pack", p: "Vorratsschrank", q: 2, w: 1, m: 1 },
+    { n: "Mehl", u: "Pack", p: "Vorratsschrank", q: 2, w: 1, m: 1 },
+    { n: "Dosentomaten", u: "Dose", p: "Vorratsschrank", q: 6, w: 4, m: 2 },
+    { n: "Kaffee", u: "Pack", p: "Vorratsschrank", q: 2, w: 1, m: 1 },
+    { n: "Öl", u: "Fl.", p: "Vorratsschrank", q: 2, w: 1, m: 1 },
+    { n: "Milch", u: "Pack", p: "Kühlschrank", q: 3, w: 2, m: 1 },
+    { n: "Eier", u: "Pack", p: "Kühlschrank", q: 2, w: 1, m: 1 },
+    { n: "Tiefkühlpizza", u: "Stk", p: "Tiefkühler", q: 4, w: 2, m: 1 },
+    { n: "Wasser", u: "Fl.", p: "Keller", q: 24, w: 10, m: 6 },
+    { n: "Klopapier", u: "Pack", p: "Bad", q: 3, w: 2, m: 1 },
+    { n: "Spülmittel", u: "Fl.", p: "Bad", q: 2, w: 1, m: 1 }
+];
+let stockBusy = 0;                        // Anzahl noch nicht gespeicherter Änderungen (solange gilt der lokale Stand)
+let stockQueue = Promise.resolve();       // Speichern nacheinander
+let stockFilter = "all";                  // "all" | Ort-ID | "none"
+const stockForm = { id: null, edit: false, u: "Stk", k: "a", lastStore: "", waitStore: false, storesBefore: 0 };
+
+function stockEl(id) { return document.getElementById(id); }
+function stockId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function stockNum(v, d) {
+    const n = parseInt(v, 10);
+    return (isFinite(n) && n >= 0) ? Math.min(n, 999) : d;
+}
+function stockSaneItem(it) {
+    if (!it || typeof it !== "object") return null;
+    const n = String(it.n || "").trim().slice(0, 60);
+    if (!n) return null;
+    const m = stockNum(it.m, 1);
+    let w = stockNum(it.w, 2);
+    if (w < m) w = m;
+    return {
+        id: String(it.id || "").slice(0, 24) || stockId(),
+        n,
+        q: stockNum(it.q, 0),
+        u: STOCK_UNITS.includes(it.u) ? it.u : "Stk",
+        o: String(it.o || "").slice(0, 24),
+        w,
+        m,
+        s: String(it.s || "").slice(0, 40),
+        k: it.k === "h" ? "h" : "a",
+        l: it.l ? 1 : 0,
+        d: it.d ? 1 : 0
+    };
+}
+function stockSanePlace(p) {
+    if (!p || typeof p !== "object") return null;
+    const n = String(p.n || "").trim().slice(0, 30);
+    if (!n) return null;
+    return { id: String(p.id || "").slice(0, 24) || stockId(), n };
+}
+function stockNorm(raw) {
+    const src = (raw && typeof raw === "object") ? raw : {};
+    const out = { items: [] };
+    const seen = new Set();
+    (Array.isArray(src.items) ? src.items : []).forEach(it => {
+        const x = stockSaneItem(it);
+        if (x && !seen.has(x.id) && out.items.length < STOCK_MAX_ITEMS) { seen.add(x.id); out.items.push(x); }
+    });
+    if (Array.isArray(src.places)) {
+        out.places = [];
+        const seenP = new Set();
+        src.places.forEach(p => {
+            const x = stockSanePlace(p);
+            if (x && !seenP.has(x.id) && out.places.length < 20) { seenP.add(x.id); out.places.push(x); }
+        });
+    }
+    return out;
+}
+function stockData() {
+    if (!db.shop.stock || typeof db.shop.stock !== "object") db.shop.stock = { items: [] };
+    if (!Array.isArray(db.shop.stock.items)) db.shop.stock.items = [];
+    return db.shop.stock;
+}
+function stockPlaces() {
+    const s = stockData();
+    return Array.isArray(s.places) ? s.places : STOCK_DEFAULT_PLACES;
+}
+function stockPlaceName(id) {
+    const p = stockPlaces().find(x => x.id === id);
+    return p ? p.n : "";
+}
+// Geschäft für die Einkaufsliste: das gewählte, sonst (oder wenn es gelöscht wurde) das gerade offene
+function stockStoreFor(it) {
+    return (it.s && Array.isArray(stores) && stores.includes(it.s)) ? it.s : activeStore;
+}
+function stockQtyText(it) { return `${it.q} ${it.u}`; }
+// k: empty = leer, low = Einkaufsgrenze erreicht, warn = Startseiten-Grenze erreicht, ok = genug da
+function stockStatus(it) {
+    if (it.q <= 0) return { k: "empty", text: "Leer" };
+    if (it.q <= it.m) return { k: "low", text: "Nachkaufen" };
+    if (it.q <= Math.max(it.w, it.m)) return { k: "warn", text: "Wird knapp" };
+    return { k: "ok", text: "" };
+}
+function stockNeedsList(it) { return it.q <= it.m && !it.l; }
+function stockLowList() {
+    return stockData().items
+        .filter(it => stockStatus(it).k !== "ok")
+        .sort((a, b) => (a.q - b.q) || a.n.localeCompare(b.n, "de", { sensitivity: "base" }));
+}
+function stockNameSort(a, b) { return a.n.localeCompare(b.n, "de", { sensitivity: "base" }); }
+
+// Wer die Einkaufsgrenze erreicht hat: Merker zurücksetzen (wieder genug da) oder – im Modus "automatisch" – für die Liste vormerken.
+// ask = true (Standard "Immer fragen"): nichts vormerken, die Frage "auf die Liste? in welchen Laden?" folgt danach.
+function stockAutoFlag(s, adds, ask) {
+    s.items.forEach(it => {
+        if (it.q > it.m) { it.l = 0; it.d = 0; return; }
+        if (it.k === "a" && !it.l && !it.d) {
+            if (!ask) it.l = 1;
+            if (adds) adds.push({ id: it.id, n: it.n, s: it.s, q: it.q, u: it.u });
+        }
+    });
+}
+
+// ---- Nachfrage vor dem Verschieben auf die Einkaufsliste ----
+// "ask" (Standard): jedes Mal fragen, auch in welchen Laden (egal, was beim Artikel hinterlegt ist – man kauft nicht immer im selben).
+// "auto": ohne Nachfrage in den beim Artikel hinterlegten Laden (sonst das gerade offene).
+function stockAskMode() {
+    try { return localStorage.getItem("hh_stock_ask") === "auto" ? "auto" : "ask"; } catch (e) { return "ask"; }
+}
+function stockSetAskMode(v) {
+    try { localStorage.setItem("hh_stock_ask", v === "auto" ? "auto" : "ask"); } catch (e) { /* egal */ }
+    stockAskModeSync();
+}
+function stockAskModeSync() {
+    const sel = document.getElementById("stockAskMode");
+    if (sel && sel.value !== stockAskMode()) sel.value = stockAskMode();
+}
+let stockAskResolver = null;
+const stockAskPending = new Set();      // Artikel, nach denen gerade gefragt wird (keine doppelte Frage)
+// o: { n, q, u, s (hinterlegter Laden), manual, index, total } -> { store, remember } oder null ("Nicht jetzt" / abgebrochen)
+function stockAskStore(o) {
+    return new Promise(resolve => {
+        stockAskResolver = resolve;
+        const unit = o.u || "";
+        document.getElementById("stockAskTitle").textContent = `🛒 „${o.n}“ auf die Einkaufsliste?`;
+        let text;
+        if (o.manual) text = "In welchen Laden soll der Artikel?";
+        else if (o.q <= 0) text = "Der Artikel ist leer.";
+        else text = `Es ist nur noch ${o.q} ${unit} da.`;
+        if (o.total > 1) text += ` (${o.index + 1} von ${o.total})`;
+        document.getElementById("stockAskText").textContent = text;
+        document.getElementById("stockAskRemember").checked = false;
+        const pref = (o.s && Array.isArray(stores) && stores.includes(o.s)) ? o.s : (Array.isArray(stores) && stores.includes(activeStore) ? activeStore : undefined);
+        const wrap = document.getElementById("stockAskStoreWrap");
+        if (wrap) wrap.style.display = ingFillStores(document.getElementById("stockAskStore"), pref) ? "" : "none";
+        const no = document.getElementById("stockAskNo");
+        if (no) no.textContent = o.manual ? "Abbrechen" : "Nicht jetzt";
+        ingApplyTone("stockAskModal");
+        document.getElementById("stockAskModal").style.display = "flex";
+    });
+}
+function stockAskAnswer(yes) {
+    const remember = document.getElementById("stockAskRemember").checked;
+    const sel = document.getElementById("stockAskStore");
+    const store = (sel && sel.value) || "";
+    document.getElementById("stockAskModal").style.display = "none";
+    if (stockAskResolver) {
+        const r = stockAskResolver;
+        stockAskResolver = null;
+        r(yes ? { store, remember } : null);
+    }
+}
+// Neue Fälle (Einkaufsgrenze erreicht): je nach Modus gleich auf die Liste oder erst fragen
+async function stockHandleAdds(adds) {
+    if (!adds || !adds.length) return;
+    if (stockAskMode() === "auto") { await stockPushAdds(adds); return; }
+    const todo = adds.filter(a => !stockAskPending.has(a.id));
+    todo.forEach(a => stockAskPending.add(a.id));
+    const picks = [], skipped = [];
+    try {
+        for (let i = 0; i < todo.length; i++) {
+            const a = todo[i];
+            const r = await stockAskStore({ ...a, index: i, total: todo.length });
+            if (!r) { skipped.push(a.id); continue; }
+            if (r.remember) stockSetAskMode("auto");
+            picks.push({ id: a.id, n: a.n, s: r.store });
+        }
+        if (skipped.length) await stockDo(st => { st.items.forEach(it => { if (skipped.includes(it.id)) it.d = 1; }); return st; }, { noAuto: true });
+        if (picks.length) {
+            const ids = new Set(picks.map(x => x.id));
+            await stockDo(st => { st.items.forEach(it => { if (ids.has(it.id)) it.l = 1; }); return st; }, { noAuto: true });
+            await stockPushAdds(picks);
+        }
+    } finally {
+        todo.forEach(a => stockAskPending.delete(a.id));
+    }
+}
+
+// ---- Speichern: frischen Stand holen, ändern, zurückschreiben ----
+async function stockReadRemote() {
+    const cfg = SYNC_CONFIG.shop;
+    const d = await haGetState(cfg.entity);
+    const raw = d && d.attributes && d.attributes[cfg.attr];
+    if (!raw) return null;
+    const parsed = (typeof raw === "string") ? JSON.parse(raw) : raw;
+    return (parsed && typeof parsed === "object") ? parsed : null;
+}
+function stockWrite(mutator, opts) {
+    const noAuto = !!(opts && opts.noAuto);
+    stockBusy++;
+    stockQueue = stockQueue.then(async () => {
+        let base = null;
+        try { base = await stockReadRemote(); } catch (e) { /* dann mit dem lokalen Stand */ }
+        const hadRemote = !!base;
+        if (!base) base = { cats: db.shop.cats, favs: db.shop.favs };
+        const s = stockNorm(hadRemote ? base.stock : stockData());
+        const out = stockNorm(mutator(s) || s);
+        const adds = [];
+        if (!noAuto) stockAutoFlag(out, adds, stockAskMode() === "ask");
+        base.stock = out;
+        db.shop.stock = out;
+        const res = await haFireEvent(SYNC_CONFIG.shop.event, { favs: JSON.stringify(base) });
+        if (res && res.ok === false) throw new Error("HTTP " + res.status);
+        return { out, adds };
+    }).catch(e => {
+        console.error("❌ Vorrat konnte nicht gespeichert werden:", e);
+        if (typeof ingToast === "function") ingToast("⚠️ Vorrat konnte nicht gespeichert werden");
+        return null;
+    }).then(r => { stockBusy = Math.max(0, stockBusy - 1); return r; });
+    return stockQueue;
+}
+// Änderung sofort lokal zeigen, dann speichern; neue "Einkaufsliste"-Fälle danach auf die Liste setzen
+function stockDo(mutator, opts) {
+    const local = stockNorm(stockData());
+    db.shop.stock = stockNorm(mutator(local) || local);
+    stockRefreshUI();
+    return stockWrite(mutator, opts).then(async r => {
+        stockRefreshUI();
+        if (r && r.adds.length) {
+            const done = stockHandleAdds(r.adds);
+            if (stockAskMode() === "auto") await done;                // automatisch: erst fertig, wenn der Artikel auf der Liste steht
+            else done.catch(e => console.error("❌ Vorrat → Einkaufsliste:", e));   // fragen: nicht auf die Antwort im Dialog warten
+        }
+        return r;
+    });
+}
+function stockRefreshUI() {
+    const m = stockEl("stockModal");
+    if (m && m.style.display !== "none") stockRender();
+    const p = stockEl("stockPlacesModal");
+    if (p && p.style.display !== "none") stockPlacesRender();
+    if (typeof renderHomeStock === "function") { try { renderHomeStock(); } catch (e) { /* Startseite noch nicht da */ } }
+}
+
+// ---- Einkaufsliste ----
+// Einträge der Liste sehen so aus: "3x Nudeln @Aldi" – für den Vergleich zählt nur der Name
+function stockListKey(s) {
+    return String(s).replace(/\s*@.*$/, "").replace(/^\s*\d+\s*x\s+/i, "").trim().toLowerCase();
+}
+async function stockPushToList(items) {
+    const cfg = SYNC_CONFIG.shopping;
+    const data = await haGetState(cfg.entity);
+    // Ohne gelesene Liste nichts schreiben (sonst würde eine nicht erreichbare Liste überschrieben)
+    if (!data || !data.attributes || !(cfg.attr in data.attributes)) throw new Error("Einkaufsliste nicht erreichbar");
+    let list = [];
+    const raw = data.attributes[cfg.attr];
+    if (raw) {
+        const parsed = (typeof raw === "string") ? JSON.parse(raw) : raw;
+        if (Array.isArray(parsed)) list = parsed.slice();
+    }
+    const have = new Set(list.map(stockListKey));
+    let added = 0;
+    items.forEach(it => {
+        const key = stockListKey(it.n);
+        if (have.has(key)) return;   // steht schon drauf
+        have.add(key);
+        list.push(`${it.n} @${stockStoreFor(it)}`);
+        added++;
+    });
+    if (added) {
+        const res = await haFireEvent(cfg.event, { json_data: list });
+        if (res && res.ok === false) throw new Error("HTTP " + res.status);
+    }
+    return added;
+}
+async function stockPushAdds(adds) {
+    try {
+        const n = await stockPushToList(adds);
+        if (typeof ingToast === "function") {
+            if (adds.length === 1) ingToast(n ? `🛒 ${adds[0].n} steht jetzt auf der Einkaufsliste` : `🛒 ${adds[0].n} steht schon auf der Einkaufsliste`);
+            else ingToast(`🛒 ${n} von ${adds.length} Artikeln auf die Einkaufsliste gesetzt`);
+        }
+        if (typeof updateAppBadges === "function") { try { updateAppBadges(); } catch (e) { /* egal */ } }
+    } catch (e) {
+        console.error("❌ Einkaufsliste nicht erreichbar:", e);
+        if (typeof ingToast === "function") ingToast("⚠️ Einkaufsliste nicht erreichbar");
+        const ids = new Set(adds.map(a => a.id));
+        await stockWrite(s => { s.items.forEach(it => { if (ids.has(it.id)) it.l = 0; }); return s; }, { noAuto: true });
+        stockRefreshUI();
+    }
+}
+
+// ---- Aktionen ----
+function stockSetQty(id, q) {
+    const v = Math.max(0, Math.min(999, q));
+    return stockDo(s => { const it = s.items.find(x => x.id === id); if (it) it.q = v; return s; });
+}
+function stockStep(id, d) {
+    const it = stockData().items.find(x => x.id === id);
+    if (!it) return Promise.resolve();
+    return stockSetQty(id, it.q + d);
+}
+async function stockAskQty(id) {
+    const it = stockData().items.find(x => x.id === id);
+    if (!it) return;
+    const v = await showInputPrompt(`Wie viel ist von „${it.n}“ jetzt da? (in ${it.u})`, "📦 Menge setzen", String(it.q));
+    if (v === null) return;
+    const n = parseInt(String(v).trim(), 10);
+    if (!isFinite(n) || n < 0 || n > 999) {
+        if (typeof ingToast === "function") ingToast("Bitte eine Zahl von 0 bis 999 eingeben");
+        return;
+    }
+    await stockSetQty(id, n);
+}
+// Von Hand auf die Einkaufsliste setzen
+async function stockToList(id) {
+    const it = stockData().items.find(x => x.id === id);
+    if (!it || it.l || stockAskPending.has(id)) return;
+    let store = it.s;
+    if (stockAskMode() === "ask") {
+        stockAskPending.add(id);
+        try {
+            const r = await stockAskStore({ n: it.n, q: it.q, u: it.u, s: it.s, manual: true });
+            if (!r) return;                                   // abgebrochen: nichts ändern
+            if (r.remember) stockSetAskMode("auto");
+            store = r.store;
+        } finally {
+            stockAskPending.delete(id);
+        }
+    }
+    const pick = { id: it.id, n: it.n, s: store };
+    await stockDo(s => { const x = s.items.find(y => y.id === id); if (x) { x.l = 1; x.d = 0; } return s; }, { noAuto: true });
+    await stockPushAdds([pick]);
+}
+function stockSaveItem(data) {
+    const item = stockSaneItem({ ...data, id: data.id || stockId() });
+    return stockDo(s => {
+        const i = s.items.findIndex(x => x.id === item.id);
+        if (i >= 0) s.items[i] = { ...item, l: s.items[i].l, d: 0 };
+        else if (s.items.length < STOCK_MAX_ITEMS) s.items.push({ ...item, l: 0 });
+        return s;
+    });
+}
+async function stockDelete(id) {
+    const it = stockData().items.find(x => x.id === id);
+    if (!it) return;
+    const ok = await showDeleteModal(`Möchtest du "${it.n}" wirklich löschen?`, "Artikel löschen 🗑️");
+    if (!ok) return;
+    await stockDo(s => { s.items = s.items.filter(x => x.id !== id); return s; });
+}
+
+// ---- Orte ----
+function stockPlaceMutate(fn) {
+    return stockDo(s => {
+        if (!Array.isArray(s.places)) s.places = STOCK_DEFAULT_PLACES.map(p => ({ ...p }));
+        fn(s);
+        return s;
+    });
+}
+function stockPlaceTaken(name, exceptId) {
+    const k = name.trim().toLowerCase();
+    return stockPlaces().some(p => p.id !== exceptId && p.n.toLowerCase() === k);
+}
+async function stockPlaceAdd() {
+    const v = await showInputPrompt("Wie heißt der neue Ort?", "📍 Neuer Ort", "");
+    const name = (v || "").trim().slice(0, 30);
+    if (!name) return;
+    if (stockPlaceTaken(name, null)) { if (typeof ingToast === "function") ingToast("Diesen Ort gibt es schon"); return; }
+    await stockPlaceMutate(s => { s.places.push({ id: stockId(), n: name }); });
+}
+async function stockPlaceRename(id) {
+    const cur = stockPlaces().find(p => p.id === id);
+    if (!cur) return;
+    const v = await showInputPrompt("Neuer Name für den Ort:", "✏️ Ort umbenennen", cur.n);
+    const name = (v || "").trim().slice(0, 30);
+    if (!name || name === cur.n) return;
+    if (stockPlaceTaken(name, id)) { if (typeof ingToast === "function") ingToast("Diesen Ort gibt es schon"); return; }
+    await stockPlaceMutate(s => { const p = s.places.find(x => x.id === id); if (p) p.n = name; });
+}
+async function stockPlaceDelete(id) {
+    const cur = stockPlaces().find(p => p.id === id);
+    if (!cur) return;
+    const n = stockData().items.filter(it => it.o === id).length;
+    const msg = n
+        ? `Möchtest du "${cur.n}" wirklich löschen? Die ${n} Artikel darin bleiben erhalten und stehen dann unter „Ohne Ort“.`
+        : `Möchtest du "${cur.n}" wirklich löschen?`;
+    const ok = await showDeleteModal(msg, "Ort löschen 🗑️");
+    if (!ok) return;
+    await stockPlaceMutate(s => {
+        s.places = s.places.filter(p => p.id !== id);
+        s.items.forEach(it => { if (it.o === id) it.o = ""; });
+    });
+}
+
+// ---- Hauptfenster ----
+function stockSetFilter(k) { stockFilter = k; stockRender(); }
+function stockRow(it) {
+    const st = stockStatus(it);
+    const row = maintMk("div", "stock-row stock-s-" + st.k);
+    row.dataset.id = it.id;
+    const top = maintMk("div", "stock-top");
+    const main = maintMk("div", "stock-main");
+    main.appendChild(maintMk("div", "stock-name", it.n));
+    const place = stockPlaceName(it.o);
+    main.appendChild(maintMk("div", "stock-meta", [
+        place ? "📍 " + place : "",
+        "🛒 " + (it.s && Array.isArray(stores) && stores.includes(it.s) ? it.s : "offenes Geschäft"),
+        it.k === "a" ? "🤖 Automatisch" : "✋ Von Hand"
+    ].filter(Boolean).join(" · ")));
+    main.appendChild(maintMk("div", "stock-lim", `Startseite ab ${Math.max(it.w, it.m)} · Einkaufsliste ab ${it.m}`));
+    top.appendChild(main);
+    const label = (st.text ? st.text : "") + (it.l ? (st.text ? " · " : "") + "🛒 auf der Liste" : "");
+    if (label) top.appendChild(maintMk("span", "stock-pill s-" + (st.k === "ok" ? "list" : st.k), label));
+    row.appendChild(top);
+
+    const bottom = maintMk("div", "stock-bottom");
+    const step = maintMk("div", "stock-step");
+    const minus = maintRoundBtn("stock-minus", "−", "Eine Einheit weniger", () => stockStep(it.id, -1));
+    const plus = maintRoundBtn("stock-plus", "＋", "Eine Einheit mehr", () => stockStep(it.id, 1));
+    const qty = maintMk("button", "stock-qty", stockQtyText(it));
+    qty.type = "button";
+    qty.setAttribute("aria-label", "Menge eintippen");
+    qty.title = "Menge eintippen";
+    qty.onclick = () => stockAskQty(it.id);
+    minus.disabled = it.q <= 0;
+    step.append(minus, qty, plus);
+    const btns = maintMk("div", "maint-btns stock-btns");
+    if (stockNeedsList(it)) btns.appendChild(maintRoundBtn("stock-list", "🛒", "Auf die Einkaufsliste setzen", () => stockToList(it.id)));
+    btns.appendChild(maintRoundBtn("maint-edit", "✏️", "Bearbeiten", () => stockEditItem(it.id)));
+    btns.appendChild(maintRoundBtn("maint-del", "🗑️", "Löschen", () => stockDelete(it.id)));
+    bottom.append(step, btns);
+    row.appendChild(bottom);
+    return row;
+}
+function stockRender() {
+    const box = stockEl("stockList");
+    if (!box) return;
+    const s = stockData();
+    const places = stockPlaces();
+    if (stockFilter !== "all" && stockFilter !== "none" && !places.some(p => p.id === stockFilter)) stockFilter = "all";
+    const placeIds = new Set(places.map(p => p.id));
+    const hasPlace = it => placeIds.has(it.o);
+    const noPlace = s.items.filter(it => !hasPlace(it));
+
+    const chips = stockEl("stockChips");
+    if (chips) {
+        chips.textContent = "";
+        const mk = (key, label) => {
+            const b = maintMk("button", "hh-tab stock-chip" + (stockFilter === key ? " is-on" : ""), label);
+            b.type = "button";
+            b.setAttribute("aria-pressed", stockFilter === key ? "true" : "false");
+            b.onclick = () => stockSetFilter(key);
+            chips.appendChild(b);
+        };
+        mk("all", `Alle (${s.items.length})`);
+        places.forEach(p => mk(p.id, `📍 ${p.n} (${s.items.filter(it => it.o === p.id).length})`));
+        if (noPlace.length && places.length) mk("none", `Ohne Ort (${noPlace.length})`);
+        chips.style.display = (s.items.length || places.length) ? "" : "none";
+    }
+
+    const lowN = stockLowList().length;
+    const sub = stockEl("stockSub");
+    if (sub) sub.textContent = s.items.length ? `${s.items.length} ${s.items.length === 1 ? "Artikel" : "Artikel"}${lowN ? ` · ${lowN} knapp` : " · alles da ✅"}` : "";
+
+    const keep = box.scrollTop;
+    box.textContent = "";
+    if (!s.items.length) {
+        box.appendChild(maintMk("div", "ing-empty", "Noch kein Vorrat. Tippe auf „＋ Neu“ und wähle einen Vorschlag, z. B. Nudeln oder Klopapier."));
+        box.scrollTop = 0;
+        return;
+    }
+    let list = s.items.slice();
+    if (stockFilter === "none") list = noPlace;
+    else if (stockFilter !== "all") list = list.filter(it => it.o === stockFilter);
+    if (!list.length) {
+        box.appendChild(maintMk("div", "ing-empty", "Hier ist noch nichts drin."));
+        return;
+    }
+    const cols = maintMk("div", "stock-cols");   // Tablet/PC: Spalten nebeneinander (siehe home.css)
+    box.appendChild(cols);
+    if (stockFilter === "all") {
+        const groups = [];
+        places.forEach(p => groups.push({ name: p.n, items: list.filter(it => it.o === p.id) }));
+        groups.push({ name: "Ohne Ort", items: list.filter(it => !hasPlace(it)) });
+        const used = groups.filter(g => g.items.length);
+        const showHead = used.length > 1 || (used.length === 1 && used[0].name !== "Ohne Ort");
+        used.forEach(g => {
+            if (showHead) {
+                const h = maintMk("div", "hist-person");
+                h.append(maintMk("span", "hist-person-name", (g.name === "Ohne Ort" ? "" : "📍 ") + g.name), maintMk("span", "hist-count", String(g.items.length)));
+                cols.appendChild(h);
+            }
+            g.items.sort(stockNameSort).forEach(it => cols.appendChild(stockRow(it)));
+        });
+    } else {
+        list.sort(stockNameSort).forEach(it => cols.appendChild(stockRow(it)));
+    }
+    box.scrollTop = keep;
+}
+async function openStock() {
+    if (!hhFeature("stock")) return;   // in den Einstellungen ausgeschaltet
+    stockAskModeSync();
+    stockRender();
+    const m = stockEl("stockModal");
+    if (m) m.style.display = "flex";
+    try {   // aktuellen Stand von Home Assistant nachladen (z. B. von anderen Geräten)
+        const remote = await stockReadRemote();
+        if (remote && !stockBusy) {
+            db.shop.stock = stockNorm(remote.stock);
+            stockRefreshUI();
+        }
+    } catch (e) { /* egal */ }
+}
+function closeStock() {
+    const m = stockEl("stockModal");
+    if (m) m.style.display = "none";
+}
+
+// ---- Orte-Fenster ----
+function stockPlacesRender() {
+    const box = stockEl("stockPlacesList");
+    if (!box) return;
+    box.textContent = "";
+    const places = stockPlaces();
+    if (!places.length) {
+        box.appendChild(maintMk("div", "ing-empty", "Noch kein Ort. Tippe auf „＋ Ort“."));
+        return;
+    }
+    places.forEach(p => {
+        const n = stockData().items.filter(it => it.o === p.id).length;
+        const row = maintMk("div", "stock-place-row");
+        const name = maintMk("div", "stock-place-name");
+        name.append(maintMk("strong", "", "📍 " + p.n), maintMk("small", "", n === 1 ? "1 Artikel" : n + " Artikel"));
+        const btns = maintMk("div", "maint-btns");
+        btns.appendChild(maintRoundBtn("maint-edit", "✏️", "Umbenennen", () => stockPlaceRename(p.id)));
+        btns.appendChild(maintRoundBtn("maint-del", "🗑️", "Löschen", () => stockPlaceDelete(p.id)));
+        row.append(name, btns);
+        box.appendChild(row);
+    });
+}
+function stockPlacesOpen() {
+    stockPlacesRender();
+    const m = stockEl("stockPlacesModal");
+    if (m) m.style.display = "flex";
+}
+function stockPlacesClose() {
+    const m = stockEl("stockPlacesModal");
+    if (m) m.style.display = "none";
+    stockRender();
+}
+
+// ---- Formular (neuer Artikel / bearbeiten) ----
+function stockEditItem(id) {
+    const it = stockData().items.find(x => x.id === id);
+    if (it) stockFormOpen(it, true);
+}
+function stockNew() { stockFormOpen(null, false); }
+function stockFormFillPlaces(sel) {
+    const el = stockEl("sfPlace");
+    if (!el) return;
+    el.textContent = "";
+    const add = (v, t) => { const o = document.createElement("option"); o.value = v; o.textContent = t; el.appendChild(o); };
+    add("", "Ohne Ort");
+    stockPlaces().forEach(p => add(p.id, p.n));
+    el.value = stockPlaces().some(p => p.id === sel) ? sel : "";
+}
+function stockFormFillStores(sel) {
+    const el = stockEl("sfStore");
+    if (!el) return;
+    el.textContent = "";
+    const add = (v, t) => { const o = document.createElement("option"); o.value = v; o.textContent = t; el.appendChild(o); };
+    add("", "Kein festes Geschäft (das offene)");
+    (Array.isArray(stores) ? stores : []).forEach(s => add(s, s));
+    add("__new__", "＋ Neues Geschäft …");
+    const ok = !!sel && Array.isArray(stores) && stores.includes(sel);
+    el.value = ok ? sel : "";
+    stockForm.lastStore = ok ? sel : "";
+}
+// "＋ Neues Geschäft": das vorhandene Fenster zum Anlegen öffnen (liegt über diesem Fenster)
+function stockFormStoreChange() {
+    const el = stockEl("sfStore");
+    if (!el) return;
+    if (el.value === "__new__") {
+        stockForm.waitStore = true;
+        stockForm.storesBefore = Array.isArray(stores) ? stores.length : 0;
+        el.value = stockForm.lastStore;
+        if (typeof addSidebarItem === "function") addSidebarItem("shop");
+    } else {
+        stockForm.lastStore = el.value;
+    }
+}
+// Wird aufgerufen, wenn das Fenster "Neues Geschäft" zugeht (angelegt oder abgebrochen)
+function stockStoreDlgClosed() {
+    if (!stockForm.waitStore) return;
+    stockForm.waitStore = false;
+    const added = (Array.isArray(stores) && stores.length > stockForm.storesBefore) ? stores[stores.length - 1] : null;
+    stockFormFillStores(added || stockForm.lastStore);
+}
+function stockFormOpen(src, edit) {
+    const f = stockForm;
+    f.edit = !!edit;
+    f.id = (edit && src) ? src.id : null;
+    f.u = src ? src.u : "Stk";
+    f.k = src ? src.k : "a";
+    f.waitStore = false;
+    stockEl("sfTitle").textContent = edit ? "✏️ Artikel bearbeiten" : "📦 Neuer Artikel";
+    stockEl("sfName").value = src ? src.n : "";
+    stockEl("sfQty").value = String(src ? src.q : 3);
+    stockEl("sfWarn").value = String(src ? src.w : 2);
+    stockEl("sfMin").value = String(src ? src.m : 1);
+    stockFormFillPlaces(src ? src.o : "");
+    stockFormFillStores(src ? src.s : "");
+    stockFormSuggest();
+    stockFormPaint();
+    const m = stockEl("stockFormModal");
+    if (m) m.style.display = "flex";
+    const nm = stockEl("sfName");
+    if (nm && !nm.value) { try { nm.focus({ preventScroll: true }); } catch (e) { /* egal */ } }
+}
+// Vorschläge nur bei neuen Artikeln
+function stockFormSuggest() {
+    const row = stockEl("sfSugRow");
+    const box = stockEl("sfSug");
+    if (!row || !box) return;
+    row.style.display = stockForm.edit ? "none" : "";
+    box.textContent = "";
+    const have = new Set(stockData().items.map(it => it.n.toLowerCase()));
+    STOCK_SUGGEST.filter(sg => !have.has(sg.n.toLowerCase())).forEach(sg => {
+        const b = maintMk("button", "hh-tab stock-sug", sg.n);
+        b.type = "button";
+        b.onclick = () => stockFormApplySuggest(sg);
+        box.appendChild(b);
+    });
+    if (!box.childElementCount) row.style.display = "none";
+}
+function stockFormApplySuggest(sg) {
+    stockEl("sfName").value = sg.n;
+    stockEl("sfQty").value = String(sg.q);
+    stockEl("sfWarn").value = String(sg.w);
+    stockEl("sfMin").value = String(sg.m);
+    stockForm.u = sg.u;
+    const p = stockPlaces().find(x => x.n.toLowerCase() === sg.p.toLowerCase());
+    if (p) stockEl("sfPlace").value = p.id;
+    stockFormPaint();
+}
+function stockFormUnit(u) { stockForm.u = u; stockFormPaint(); }
+function stockFormMode(k) { stockForm.k = (k === "h") ? "h" : "a"; stockFormPaint(); }
+function stockFormPaint() {
+    const f = stockForm;
+    document.querySelectorAll("#sfUnits button").forEach(b => {
+        const on = b.dataset.u === f.u;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    document.querySelectorAll("#sfMode button").forEach(b => {
+        const on = b.dataset.k === f.k;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    const hint = stockEl("sfModeHint");
+    if (hint) hint.textContent = f.k === "a"
+        ? "Sobald die Einkaufsgrenze erreicht ist, kommt der Artikel von selbst auf die Einkaufsliste."
+        : "Der Artikel erscheint auf der Startseite. Mit 🛒 setzt du ihn selbst auf die Einkaufsliste.";
+}
+function stockFormClose() {
+    const m = stockEl("stockFormModal");
+    if (m) m.style.display = "none";
+    stockForm.waitStore = false;
+}
+async function stockFormSave() {
+    const f = stockForm;
+    const name = stockEl("sfName").value.trim();
+    if (!name) {
+        if (typeof ingToast === "function") ingToast("Bitte einen Namen eingeben ✏️");
+        stockEl("sfName").focus();
+        return;
+    }
+    if (stockData().items.some(it => it.id !== f.id && it.n.toLowerCase() === name.toLowerCase())) {
+        if (typeof ingToast === "function") ingToast("Diesen Artikel gibt es schon");
+        return;
+    }
+    if (!f.edit && stockData().items.length >= STOCK_MAX_ITEMS) {
+        if (typeof ingToast === "function") ingToast(`Es sind höchstens ${STOCK_MAX_ITEMS} Artikel möglich`);
+        return;
+    }
+    const q = stockNum(stockEl("sfQty").value, 0);
+    const m = stockNum(stockEl("sfMin").value, 1);
+    const w = stockNum(stockEl("sfWarn").value, 2);
+    const data = {
+        id: f.id, n: name, q, u: f.u, o: stockEl("sfPlace").value,
+        w: Math.max(w, m), m, s: stockEl("sfStore").value === "__new__" ? "" : stockEl("sfStore").value, k: f.k
+    };
+    stockFormClose();
+    await stockSaveItem(data);
+    stockRender();
+}
 
 async function deleteTodo(id) {
     const taskToDelete = todoDb.find(x => String(x.id) === String(id));
@@ -1985,14 +3777,16 @@ function renderTodoList() {
         btnComplete.addEventListener("click", () => completeTodo(t.id));
 
         const btnEdit = document.createElement("button");
-        btnEdit.className = "todo-btn todo-btn-icon";
-        btnEdit.style.cssText = "background:#f2f2f7; border:none; cursor:pointer;";
+        btnEdit.className = "todo-btn todo-btn-icon todo-btn-edit";
+        btnEdit.setAttribute("aria-label", "Bearbeiten");
+        btnEdit.title = "Bearbeiten";
         btnEdit.textContent = "✏️";
         btnEdit.addEventListener("click", () => openEdit(t.id));
 
         const btnDel = document.createElement("button");
-        btnDel.className = "todo-btn todo-btn-icon";
-        btnDel.style.cssText = "background:#f2f2f7; border:none; cursor:pointer;";
+        btnDel.className = "todo-btn todo-btn-icon todo-btn-del";
+        btnDel.setAttribute("aria-label", "Löschen");
+        btnDel.title = "Löschen";
         btnDel.textContent = "🗑️";
         btnDel.addEventListener("click", () => deleteTodo(t.id));
 
@@ -2037,7 +3831,25 @@ async function syncDown() {
                         db[t].recipes = parsed.recipes;
                         try { localStorage.setItem("hh_recipes", JSON.stringify(parsed.recipes)); } catch (e) { /* egal */ }
                     }
+                    if (t === "food" && parsed.weekShift && typeof parsed.weekShift === "object") {
+                        db[t].weekShift = parsed.weekShift;
+                    }
+                    if (t === "todo") {
+                        db[t].history = todoHistMerge(Array.isArray(parsed.history) ? parsed.history : [], []);
+                        const hm = document.getElementById("historyModal");
+                        if (hm && hm.style.display !== "none") todoHistRender();
+                        if (!maintBusy) db[t].maint = maintNorm(parsed.maint);   // Wartung (solange nichts Ungespeichertes da ist)
+                        maintRefreshUI();
+                    }
+                    if (t === "shop") {
+                        if (!stockBusy) db[t].stock = stockNorm(parsed.stock);   // Vorrat (solange nichts Ungespeichertes da ist)
+                        stockRefreshUI();
+                    }
                 }
+            }
+            if (t === "food" && d && d.attributes) {
+                shiftCfgLoaded = true; // fehlt weekShift in HA, gelten die Standardwerte (Sonntag 23:00)
+                updateFoodAutoInfo();
             }
         }
 
@@ -2091,11 +3903,112 @@ let activeMealInput = null; // Merkt sich das zuletzt angeklickte Feld für Favo
 let isShiftingWeek = false; // Schutz vor doppeltem Ausführen beim Wochenwechsel
 
 // --- EINSTELLUNGEN FÜR DEN AUTOMATISCHEN WOCHENWECHSEL ---
-// Aktuell: Sonntag 23:00 Uhr.
-// Zum Testen z. B.: SHIFT_DAY = 6, SHIFT_HOUR = 6, SHIFT_MINUTE = 5 (Samstag 06:05)
-const SHIFT_DAY = 0;    // 0 = Sonntag, 1 = Montag, ..., 6 = Samstag
-const SHIFT_HOUR = 23;  // Stunde (0 bis 23)
-const SHIFT_MINUTE = 0; // Minute (0 bis 59)
+// Standard: Sonntag 23:00 Uhr. In der App über das ⚙️ am Hinweis im Wochenplan änderbar.
+// Die Einstellung steckt in db.food.weekShift und wird mit den Favoriten in Home Assistant
+// gespeichert – dadurch haben alle Geräte denselben Wert.
+const SHIFT_DEFAULT = { on: true, day: 0, hour: 23, minute: 0 };  // day: 0 = Sonntag, 1 = Montag, ..., 6 = Samstag
+const SHIFT_DAY_NAMES = ["Sonntags", "Montags", "Dienstags", "Mittwochs", "Donnerstags", "Freitags", "Samstags"];
+const SHIFT_DAY_FULL = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+let shiftCfgLoaded = false; // erst true, wenn die gespeicherte Einstellung aus Home Assistant gelesen wurde
+
+function getShiftCfg() {
+    const w = (db && db.food && db.food.weekShift && typeof db.food.weekShift === "object") ? db.food.weekShift : {};
+    const day = Number(w.day), hour = Number(w.hour), minute = Number(w.minute);
+    return {
+        on: w.on !== false,
+        day: (Number.isInteger(day) && day >= 0 && day <= 6) ? day : SHIFT_DEFAULT.day,
+        hour: (Number.isInteger(hour) && hour >= 0 && hour <= 23) ? hour : SHIFT_DEFAULT.hour,
+        minute: (Number.isInteger(minute) && minute >= 0 && minute <= 59) ? minute : SHIFT_DEFAULT.minute
+    };
+}
+function shiftSuffix(c) { return `_${c.day}-${c.hour}-${c.minute}`; }
+function shiftTimeText(c) { return `${String(c.hour).padStart(2, "0")}:${String(c.minute).padStart(2, "0")}`; }
+
+// Hinweis-Text im Wochenplan passend zur Einstellung
+function updateFoodAutoInfo() {
+    const el = document.getElementById("foodAutoText");
+    if (!el) return;
+    const c = getShiftCfg();
+    el.textContent = c.on
+        ? `✨ Automatischer Wochenwechsel ${SHIFT_DAY_NAMES[c.day]} um ${shiftTimeText(c)} Uhr oder manuell über den Button`
+        : "✋ Wochenwechsel nur manuell über den Button „Woche abschließen“";
+}
+
+// Nächster automatischer Wechsel (nach jetzt) – für die Vorschau im Einstellungsfenster
+function nextShiftDate(c, from) {
+    const now = from || new Date();
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), c.hour, c.minute, 0, 0);
+    d.setDate(d.getDate() + ((c.day - d.getDay() + 7) % 7));
+    if (d.getTime() <= now.getTime()) d.setDate(d.getDate() + 7);
+    return d;
+}
+
+// ===== Wochenwechsel einstellen (Fenster) =====
+let wsState = { on: true, day: 0 };
+
+function wsPad(n) { return String(n).padStart(2, "0"); }
+
+function wsReadTime() {
+    const t = document.getElementById("wsTime");
+    const m = /^(\d{1,2}):(\d{2})/.exec((t && t.value) || "");
+    return m ? { hour: Math.min(23, +m[1]), minute: Math.min(59, +m[2]) } : { hour: SHIFT_DEFAULT.hour, minute: SHIFT_DEFAULT.minute };
+}
+
+function wsRender() {
+    const on = document.getElementById("wsOn"), off = document.getElementById("wsOff");
+    if (on) on.classList.toggle("is-on", wsState.on);
+    if (off) off.classList.toggle("is-on", !wsState.on);
+    document.querySelectorAll("#wsDays button").forEach(b => b.classList.toggle("is-on", Number(b.dataset.day) === wsState.day));
+    const det = document.getElementById("wsDetail");
+    if (det) det.classList.toggle("is-off", !wsState.on);
+    const pv = document.getElementById("wsPreview");
+    if (pv) {
+        if (!wsState.on) {
+            pv.textContent = "Kein automatischer Wechsel – du schließt die Woche selbst mit dem Button „Woche abschließen“ ab.";
+        } else {
+            const t = wsReadTime();
+            const d = nextShiftDate({ day: wsState.day, hour: t.hour, minute: t.minute });
+            pv.textContent = `Nächster Wechsel: ${SHIFT_DAY_FULL[d.getDay()]}, ${wsPad(d.getDate())}.${wsPad(d.getMonth() + 1)}. um ${wsPad(t.hour)}:${wsPad(t.minute)} Uhr`;
+        }
+    }
+}
+
+function openWeekShiftSettings() {
+    const c = getShiftCfg();
+    wsState = { on: c.on, day: c.day };
+    const t = document.getElementById("wsTime");
+    if (t) t.value = shiftTimeText(c);
+    wsRender();
+    const m = document.getElementById("weekShiftModal");
+    if (m) m.style.display = "flex";
+}
+function wsClose() {
+    const m = document.getElementById("weekShiftModal");
+    if (m) m.style.display = "none";
+}
+function wsSetOn(v) { wsState.on = !!v; wsRender(); }
+function wsSetDay(d) { wsState.day = d; wsRender(); }
+
+async function wsSave() {
+    const t = wsReadTime();
+    const cfg = { on: wsState.on, day: wsState.day, hour: t.hour, minute: t.minute };
+    db.food.weekShift = cfg;
+    wsClose();
+    updateFoodAutoInfo();
+    try {
+        // Mit den Favoriten in Home Assistant speichern -> alle Geräte übernehmen es (spätestens nach ~20 s)
+        const res = await haFireEvent(SYNC_CONFIG.food.event, { favs: JSON.stringify(db.food) });
+        if (res && res.ok === false) throw new Error("HTTP " + res.status);
+    } catch (e) {
+        console.error("❌ Wochenwechsel-Einstellung konnte nicht gespeichert werden:", e);
+        showAlert("Die Einstellung konnte nicht gespeichert werden.", "Fehler ⚠️");
+        return;
+    }
+    // Timer neu eichen (ohne Gerichte zu löschen) – es wird nichts sofort verschoben
+    try { await checkAndAutoAdvanceFoodWeek(); } catch (e) { /* egal */ }
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => { document.getElementById("wsTime") && document.getElementById("wsTime").addEventListener("change", wsRender); });
+else if (document.getElementById("wsTime")) document.getElementById("wsTime").addEventListener("change", wsRender);
 
 function setActiveMealInput(el) {
     activeMealInput = el;
@@ -2149,7 +4062,7 @@ function formatStamp(d) {
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     // Hängt Tag/Stunde/Minute an, damit Änderungen im Code sofort als neuer Test erkannt werden!
-    return `${year}-${month}-${day}_${SHIFT_DAY}-${SHIFT_HOUR}-${SHIFT_MINUTE}`;
+    return `${year}-${month}-${day}${shiftSuffix(getShiftCfg())}`;
 }
 
 function getCurrentCycleStamp() {
@@ -2158,14 +4071,15 @@ function getCurrentCycleStamp() {
     const hour = now.getHours();
     const min = now.getMinutes();
     const target = new Date(now);
+    const cfg = getShiftCfg();
 
-    if (day === SHIFT_DAY) {
+    if (day === cfg.day) {
         // Vor der eingestellten Uhrzeit gilt noch der Stempel von letzter Woche (-7 Tage)
-        if (hour < SHIFT_HOUR || (hour === SHIFT_HOUR && min < SHIFT_MINUTE)) {
+        if (hour < cfg.hour || (hour === cfg.hour && min < cfg.minute)) {
             target.setDate(now.getDate() - 7);
         }
     } else {
-        const diff = (day - SHIFT_DAY + 7) % 7;
+        const diff = (day - cfg.day + 7) % 7;
         target.setDate(now.getDate() - diff);
     }
     return formatStamp(target);
@@ -2175,9 +4089,10 @@ function getManualAdvanceCycleStamp() {
     const now = new Date();
     const day = now.getDay();
     const target = new Date(now);
+    const cfg = getShiftCfg();
 
-    if (day !== SHIFT_DAY) {
-        const diff = (SHIFT_DAY - day + 7) % 7;
+    if (day !== cfg.day) {
+        const diff = (cfg.day - day + 7) % 7;
         target.setDate(now.getDate() + diff);
     }
     return formatStamp(target);
@@ -2217,12 +4132,17 @@ async function setInputTextWithRetry(entityId, value, tries = 3) {
 // ✅ GEÄNDERT: Schaltet IMMER um, egal ob Daten drin sind oder nicht
 async function checkAndAutoAdvanceFoodWeek() {
     if (isShiftingWeek || isUpdatingFood) return;
+    // Erst wenn die gespeicherte Einstellung gelesen wurde (sonst würde ein Gerät mit
+    // Standardwerten den Timer der anderen Geräte durcheinanderbringen)
+    if (!shiftCfgLoaded) return;
+    const cfg = getShiftCfg();
+    if (!cfg.on) return; // "Nur manuell": nie automatisch verschieben
     try {
         const raw = await readFoodRaw(FOOD_ENTITIES[0]); // leer ist okay!
         const weekParts = raw.split('~');
         const savedStamp = (weekParts[2] || "").trim();
         const currentStamp = getCurrentCycleStamp();
-        const configSuffix = `_${SHIFT_DAY}-${SHIFT_HOUR}-${SHIFT_MINUTE}`;
+        const configSuffix = shiftSuffix(cfg);
 
         const savedDay = stampToDayNumber(savedStamp);
         const currentDay = stampToDayNumber(currentStamp);
@@ -2537,7 +4457,16 @@ async function load() {
                 fullList = (typeof rawData === 'string') ? JSON.parse(rawData) : rawData;
             }
 
-            let filtered = fullList.filter(o => o.endsWith(` @${activeStore}`)).reverse();
+            let filtered = fullList.filter(o => o.endsWith(` @${activeStore}`) && !shopHidden.has(o)).reverse();
+
+            // Nicht zeichnen, solange gezogen wird, und nur neu zeichnen, wenn sich wirklich etwas geändert hat
+            if (shopDrag.pending || shopDrag.active) return;
+            const sig = activeStore + "\n" + filtered.join("\n");
+            if (sig === shopListSig && listEl.childElementCount > 0) {
+                if (typeof updateAppBadges === "function") updateAppBadges();
+                return;
+            }
+            shopListSig = sig;
             listEl.replaceChildren();
 
             if (filtered.length === 0) {
@@ -2555,15 +4484,20 @@ async function load() {
 
                     const btn = document.createElement("button");
                     btn.className = "btn-del-item";
-                    btn.textContent = "🗑️";
-                    btn.addEventListener("click", () => delItem(t));
+                    btn.type = "button";
+                    btn.textContent = "✓";
+                    btn.setAttribute("aria-label", "Erledigt – von der Einkaufsliste nehmen");
+                    btn.title = "Erledigt";
+                    btn.addEventListener("click", () => shopItemDone(li, btn, t));
 
                     li.appendChild(span);
                     li.appendChild(btn);
+                    shopDragBind(li, t);
                     listEl.appendChild(li);
                 });
             }
         } catch (e) {
+            shopListSig = "";
             listEl.replaceChildren();
             const errLi = document.createElement("li");
             errLi.textContent = "Fehler beim Laden ⚠️";
@@ -2625,7 +4559,7 @@ async function saveFood(idx) {
             week1Str = serializeFoodWeekObj(editedWeekObj, isSunday);
         }
 
-        const configSuffix = `_${SHIFT_DAY}-${SHIFT_HOUR}-${SHIFT_MINUTE}`;
+        const configSuffix = shiftSuffix(getShiftCfg());
         const savedStamp = (weekParts[2] || "").trim();
         const stampToKeep = (savedStamp && savedStamp.endsWith(configSuffix)) ? savedStamp : getCurrentCycleStamp();
 
@@ -3102,6 +5036,591 @@ function ingFillStores(sel, preferred) {
     sel.value = names.includes(preferred) ? preferred : ingDefaultStore();
     return names.length > 1;
 }
+
+// ===== Themefähige Auswahllisten =====
+// Ersetzt das System-Popup von select.hh-field durch eine eigene Liste mit den Theme-Farben (--hh-*).
+// Das echte <select> bleibt unsichtbar bestehen: value, change-Ereignis und onchange funktionieren wie bisher.
+let hhSelCurrent = null;
+
+function hhSelEnhance(sel) {
+    if (!sel || sel.dataset.hhSel) return;
+    sel.dataset.hhSel = "1";
+    const wrap = document.createElement("div");
+    wrap.className = "hh-sel";
+    sel.parentNode.insertBefore(wrap, sel);
+    wrap.appendChild(sel);
+    sel.classList.add("hh-sel-native");
+    sel.tabIndex = -1;
+    sel.setAttribute("aria-hidden", "true");
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "hh-sel-btn";
+    btn.id = (sel.id || "hhSel" + Math.random().toString(36).slice(2, 7)) + "Btn";
+    btn.setAttribute("aria-haspopup", "listbox");
+    btn.setAttribute("aria-expanded", "false");
+    const txt = document.createElement("span");
+    txt.className = "hh-sel-txt";
+    const arrow = document.createElement("span");
+    arrow.className = "hh-sel-arrow";
+    arrow.setAttribute("aria-hidden", "true");
+    btn.append(txt, arrow);
+
+    const list = document.createElement("div");
+    list.className = "hh-sel-list";
+    list.setAttribute("role", "listbox");
+    list.hidden = true;
+    wrap.append(btn, list);
+
+    const lab = sel.id ? document.querySelector(`label[for="${sel.id}"]`) : null;
+    if (lab) lab.htmlFor = btn.id;
+
+    // Beschriftung am Knopf aktuell halten (auch bei value = … und neu befüllten Optionen)
+    const sync = () => {
+        const o = sel.options[sel.selectedIndex];
+        txt.textContent = o ? o.textContent : "";
+        btn.disabled = sel.disabled || sel.options.length === 0;
+    };
+    const desc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value");
+    Object.defineProperty(sel, "value", {
+        configurable: true,
+        get() { return desc.get.call(this); },
+        set(v) { desc.set.call(this, v); sync(); }
+    });
+    new MutationObserver(sync).observe(sel, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["disabled"] });
+    sel.addEventListener("change", sync);
+    sync();
+
+    const close = (focusBtn) => {
+        if (list.hidden) return;
+        list.hidden = true;
+        wrap.classList.remove("is-open", "is-up", "is-right");
+        btn.setAttribute("aria-expanded", "false");
+        if (hhSelCurrent === wrap) hhSelCurrent = null;
+        if (focusBtn) btn.focus();
+    };
+    wrap._hhClose = close;
+
+    const choose = (value) => {
+        const changed = sel.value !== value;
+        close(true);
+        if (!changed) return;
+        sel.value = value;
+        sel.dispatchEvent(new Event("input", { bubbles: true }));
+        sel.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+
+    // Liste innerhalb des Fensters platzieren (nach unten oder oben, links oder rechts bündig); berücksichtigt den App-Zoom
+    const place = () => {
+        const card = wrap.closest(".win-card") || document.body;
+        const cr = card.getBoundingClientRect();
+        const wr = wrap.getBoundingClientRect();
+        const k = (wrap.offsetWidth > 0 && wr.width > 0) ? wr.width / wrap.offsetWidth : 1;
+        list.style.maxHeight = "";
+        list.style.maxWidth = "";
+        wrap.classList.remove("is-up", "is-right");
+        const gap = 6 * k, edge = 10 * k;
+        const need = list.scrollHeight * k + gap;
+        const below = cr.bottom - wr.bottom - edge;
+        const above = wr.top - cr.top - edge;
+        const up = need > below && above > below;
+        const room = Math.max(140 * k, (up ? above : below) - gap);
+        list.style.maxHeight = Math.floor(Math.min(room, 288 * k) / k) + "px";
+        const right = (wr.left + wr.width / 2) > (cr.left + cr.width / 2);
+        const maxW = right ? (wr.right - cr.left - edge) : (cr.right - wr.left - edge);
+        list.style.maxWidth = Math.floor(Math.max(wr.width, maxW) / k) + "px";
+        wrap.classList.toggle("is-up", up);
+        wrap.classList.toggle("is-right", right);
+    };
+
+    const open = () => {
+        if (btn.disabled || !list.hidden) return;
+        hhSelCloseAll(wrap);
+        list.replaceChildren();
+        Array.from(sel.options).forEach(o => {
+            const b = document.createElement("button");
+            const on = o.value === sel.value;
+            b.type = "button";
+            b.className = "hh-sel-opt" + (on ? " is-sel" : "");
+            b.setAttribute("role", "option");
+            b.setAttribute("aria-selected", on ? "true" : "false");
+            b.dataset.value = o.value;
+            const t = document.createElement("span");
+            t.textContent = o.textContent;
+            const c = document.createElement("span");
+            c.className = "hh-sel-check";
+            c.setAttribute("aria-hidden", "true");
+            c.textContent = "✓";
+            b.append(t, c);
+            b.addEventListener("click", () => choose(o.value));
+            list.appendChild(b);
+        });
+        list.hidden = false;
+        wrap.classList.add("is-open");
+        btn.setAttribute("aria-expanded", "true");
+        hhSelCurrent = wrap;
+        place();
+        const cur = list.querySelector(".is-sel") || list.querySelector(".hh-sel-opt");
+        if (cur) {
+            list.scrollTop = Math.max(0, cur.offsetTop - (list.clientHeight - cur.offsetHeight) / 2);
+            cur.focus({ preventScroll: true });
+        }
+    };
+
+    btn.addEventListener("click", () => { if (list.hidden) open(); else close(true); });
+    btn.addEventListener("keydown", e => {
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); open(); }
+    });
+    list.addEventListener("keydown", e => {
+        const it = Array.from(list.querySelectorAll(".hh-sel-opt"));
+        const i = it.indexOf(document.activeElement);
+        if (e.key === "ArrowDown") { e.preventDefault(); it[Math.min(it.length - 1, i + 1)].focus(); }
+        else if (e.key === "ArrowUp") { e.preventDefault(); it[Math.max(0, i - 1)].focus(); }
+        else if (e.key === "Home") { e.preventDefault(); it[0].focus(); }
+        else if (e.key === "End") { e.preventDefault(); it[it.length - 1].focus(); }
+        else if (e.key === "Tab") { close(false); }
+    });
+
+    // Schließt die Dialog-Anzeige, schließt auch die Liste
+    const win = wrap.closest(".win");
+    if (win) new MutationObserver(() => { if (getComputedStyle(win).display === "none") close(false); }).observe(win, { attributes: true, attributeFilter: ["style", "class"] });
+}
+
+function hhSelCloseAll(except) {
+    document.querySelectorAll(".hh-sel.is-open").forEach(w => { if (w !== except && w._hhClose) w._hhClose(false); });
+}
+
+document.addEventListener("pointerdown", e => {
+    if (hhSelCurrent && !hhSelCurrent.contains(e.target)) hhSelCurrent._hhClose(false);
+}, true);
+document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && hhSelCurrent) { e.preventDefault(); e.stopPropagation(); hhSelCurrent._hhClose(true); }
+}, true);
+window.addEventListener("resize", () => hhSelCloseAll());
+
+function hhSelInit() { document.querySelectorAll("select.hh-field").forEach(hhSelEnhance); }
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", hhSelInit);
+else hhSelInit();
+
+// ===== "Zugeordnet an": Auswahl wie bei "Wer kocht?" (Knopf + Popup in der Bildschirmmitte) =====
+// Der Knopf übernimmt das Aussehen des echten <select> (Farben kommen aus Theme und style.css).
+// Das <select> bleibt unsichtbar bestehen: value und change funktionieren wie bisher.
+const HH_ASSIGN_COPY = [
+    "background-color", "background-image", "color", "-webkit-text-fill-color",
+    "border-top-width", "border-top-style", "border-top-color",
+    "border-right-width", "border-right-style", "border-right-color",
+    "border-bottom-width", "border-bottom-style", "border-bottom-color",
+    "border-left-width", "border-left-style", "border-left-color",
+    "border-radius", "padding-top", "padding-right", "padding-bottom", "padding-left",
+    "font-size", "font-weight", "font-family", "box-shadow", "letter-spacing"
+];
+
+function hhAssignEnhance(sel, title) {
+    if (!sel || sel.dataset.hhAssign) return;
+    sel.dataset.hhAssign = "1";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.id = sel.id + "Btn";
+    btn.className = "hh-assign-btn";
+    btn.setAttribute("aria-haspopup", "dialog");
+    const txt = document.createElement("span");
+    txt.className = "hh-assign-txt";
+    const arrow = document.createElement("span");
+    arrow.className = "hh-assign-arrow";
+    arrow.setAttribute("aria-hidden", "true");
+    arrow.textContent = "▾";
+    btn.append(txt, arrow);
+    sel.parentNode.insertBefore(btn, sel.nextSibling);
+    sel.style.setProperty("display", "none", "important");
+
+    const paint = () => {
+        const cs = getComputedStyle(sel);
+        HH_ASSIGN_COPY.forEach(p => {
+            const v = cs.getPropertyValue(p);
+            if (v) btn.style.setProperty(p, v, "important");
+        });
+    };
+    const sync = () => {
+        const o = sel.options[sel.selectedIndex];
+        const t = o ? o.textContent : "";
+        txt.textContent = (sel.value ? "👤 " : "👥 ") + t;
+        btn.setAttribute("aria-label", title + ": " + t);
+        paint();
+    };
+    const desc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value");
+    Object.defineProperty(sel, "value", {
+        configurable: true,
+        get() { return desc.get.call(this); },
+        set(v) { desc.set.call(this, v); sync(); }
+    });
+    new MutationObserver(sync).observe(sel, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["selected"] });
+    sel.addEventListener("change", sync);
+    const win = sel.closest(".win");
+    if (win) new MutationObserver(() => { if (getComputedStyle(win).display !== "none") paint(); }).observe(win, { attributes: true, attributeFilter: ["style", "class"] });
+    btn.addEventListener("click", ev => { ev.preventDefault(); ev.stopPropagation(); hhAssignOpen(sel, title, btn); });
+    sync();
+}
+
+function hhAssignOpen(sel, title, returnFocus) {
+    const old = document.getElementById("customAssignModalOverlay");
+    if (old) old.remove();
+    const modal = document.createElement("div");
+    modal.id = "customAssignModalOverlay";
+    modal.className = "cook-modal-overlay";
+    const onKey = e => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); } };
+    const close = () => {
+        modal.remove();
+        document.removeEventListener("keydown", onKey, true);
+        if (returnFocus) returnFocus.focus();
+    };
+    document.addEventListener("keydown", onKey, true);
+    modal.onclick = close;
+
+    const card = document.createElement("div");
+    card.className = "modal-card cook-modal-card";
+    card.setAttribute("role", "dialog");
+    card.setAttribute("aria-label", title);
+    card.onclick = e => e.stopPropagation();
+    const h = document.createElement("h3");
+    h.style.margin = "0 0 6px 0";
+    h.style.textAlign = "center";
+    h.textContent = title;
+    card.appendChild(h);
+
+    const list = document.createElement("div");
+    list.className = "cook-modal-list";
+    Array.from(sel.options).forEach(opt => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "cat-btn cook-modal-option" + (sel.value === opt.value ? " active-food" : "");
+        b.textContent = (opt.value ? "👤 " : "✖ ") + opt.textContent;
+        b.onclick = () => {
+            const changed = sel.value !== opt.value;
+            sel.value = opt.value;
+            close();
+            if (changed) sel.dispatchEvent(new Event("change", { bubbles: true }));
+        };
+        list.appendChild(b);
+    });
+    card.appendChild(list);
+    modal.appendChild(card);
+    document.body.appendChild(modal);
+    const cur = list.querySelector(".active-food") || list.firstElementChild;
+    if (cur) cur.focus({ preventScroll: true });
+}
+
+function hhAssignInit() {
+    hhAssignEnhance(document.getElementById("modalAssignee"), "Zugeordnet an");
+    hhAssignEnhance(document.getElementById("edit-assignee"), "Zugeordnet an");
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", hhAssignInit);
+else hhAssignInit();
+
+// ==========================================================================
+// Datum & Uhrzeit im Theme-Look (Aufgabe hinzufügen / bearbeiten)
+// Das echte Feld bleibt im Hintergrund (value = "2026-11-12T10:00" bzw. "10:00"),
+// sichtbar ist ein Knopf, der ein Auswahlfenster mit Kalender / Uhrzeit öffnet.
+// ==========================================================================
+const HHDT_DAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+
+function hhDtPad(n) { return String(n).padStart(2, "0"); }
+
+function hhDtParse(v, mode) {
+    const o = { y: null, mo: null, d: null, h: 10, mi: 0 };
+    if (!v) return o;
+    let m;
+    if (mode === "t") {
+        m = /^(\d{1,2}):(\d{2})/.exec(v);
+        if (m) { o.h = Math.min(23, +m[1]); o.mi = Math.min(59, +m[2]); }
+        return o;
+    }
+    m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{1,2}):(\d{2}))?/.exec(v);
+    if (m) {
+        o.y = +m[1]; o.mo = +m[2] - 1; o.d = +m[3];
+        if (m[4] !== undefined) { o.h = Math.min(23, +m[4]); o.mi = Math.min(59, +m[5]); }
+    }
+    return o;
+}
+
+function hhDtDateText(y, mo, d) {
+    const dt = new Date(y, mo, d);
+    return `${dt.toLocaleDateString("de-DE", { weekday: "short" })}, ${hhDtPad(d)}.${hhDtPad(mo + 1)}.${y}`;
+}
+
+function hhDtLabel(v, mode) {
+    const o = hhDtParse(v, mode);
+    if (mode === "t") return v ? `${hhDtPad(o.h)}:${hhDtPad(o.mi)} Uhr` : "Uhrzeit wählen";
+    if (mode === "d") return o.y === null ? "Datum wählen" : hhDtDateText(o.y, o.mo, o.d);
+    if (o.y === null) return "Datum & Uhrzeit wählen";
+    return `${hhDtDateText(o.y, o.mo, o.d)} · ${hhDtPad(o.h)}:${hhDtPad(o.mi)} Uhr`;
+}
+
+function hhDtEnhance(inp, mode, title) {
+    if (!inp || inp.dataset.hhDt) return;
+    inp.dataset.hhDt = "1";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.id = inp.id + "Btn";
+    btn.className = "hh-assign-btn hh-dt-btn";
+    btn.setAttribute("aria-haspopup", "dialog");
+    const txt = document.createElement("span");
+    txt.className = "hh-assign-txt";
+    const ico = document.createElement("span");
+    ico.className = "hh-assign-arrow";
+    ico.setAttribute("aria-hidden", "true");
+    ico.textContent = mode === "t" ? "🕒" : "📅";
+    btn.append(txt, ico);
+    inp.parentNode.insertBefore(btn, inp.nextSibling);
+    inp.style.setProperty("display", "none", "important");
+
+    const paint = () => {
+        const cs = getComputedStyle(inp);
+        HH_ASSIGN_COPY.forEach(p => {
+            const v = cs.getPropertyValue(p);
+            if (v) btn.style.setProperty(p, v, "important");
+        });
+        // Höhe vom echten Feld übernehmen (Datumsfelder sind von Haus aus höher als ein Text-Knopf)
+        if (btn.offsetParent !== null) {
+            inp.style.setProperty("display", "block", "important");
+            const hh = inp.offsetHeight;
+            inp.style.setProperty("display", "none", "important");
+            if (hh > 0) btn.style.setProperty("min-height", hh + "px", "important");
+        }
+    };
+    const sync = () => {
+        const t = hhDtLabel(inp.value, mode);
+        txt.textContent = t;
+        btn.setAttribute("aria-label", title + ": " + t);
+        paint();
+    };
+    const desc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+    Object.defineProperty(inp, "value", {
+        configurable: true,
+        get() { return desc.get.call(this); },
+        set(v) { desc.set.call(this, v); sync(); }
+    });
+    inp.addEventListener("change", sync);
+    inp.addEventListener("input", sync);
+    const win = inp.closest(".win");
+    if (win) new MutationObserver(() => { if (getComputedStyle(win).display !== "none") paint(); }).observe(win, { attributes: true, attributeFilter: ["style", "class"] });
+    btn.addEventListener("click", ev => { ev.preventDefault(); ev.stopPropagation(); hhDtOpen(inp, mode, title, btn); });
+    sync();
+}
+
+function hhDtOpen(inp, mode, title, returnFocus) {
+    const old = document.getElementById("hhDtOverlay");
+    if (old) old.remove();
+    const cur = hhDtParse(inp.value, mode);
+    const now = new Date();
+    const st = {
+        y: cur.y, mo: cur.mo, d: cur.d, h: cur.h, mi: cur.mi,
+        vy: cur.y !== null ? cur.y : now.getFullYear(),
+        vm: cur.y !== null ? cur.mo : now.getMonth(),
+        tab: mode === "t" ? "time" : "date"
+    };
+    if ((mode === "dt" || mode === "d") && st.y === null) { st.y = now.getFullYear(); st.mo = now.getMonth(); st.d = now.getDate(); }
+
+    const overlay = document.createElement("div");
+    overlay.id = "hhDtOverlay";
+    overlay.className = "cook-modal-overlay";
+    const card = document.createElement("div");
+    card.className = "modal-card cook-modal-card hh-dt-card";
+    card.setAttribute("role", "dialog");
+    card.setAttribute("aria-label", title);
+    card.onclick = e => e.stopPropagation();
+
+    const head = document.createElement("h3");
+    head.className = "hh-dt-title";
+    head.textContent = (mode === "t" ? "🕒 " : "📅 ") + title;
+    const sum = document.createElement("div");
+    sum.className = "hh-dt-sum";
+    const tabs = document.createElement("div");
+    tabs.className = "hh-dt-tabs";
+    const body = document.createElement("div");
+    body.className = "hh-dt-body";
+    const foot = document.createElement("div");
+    foot.className = "hh-dt-foot";
+    card.append(head);
+    if (mode === "dt") card.append(sum, tabs);
+    card.append(body, foot);
+    overlay.appendChild(card);
+
+    const mk = (cls, text, attrs) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = cls;
+        b.textContent = text;
+        if (attrs) Object.keys(attrs).forEach(k => b.setAttribute(k, attrs[k]));
+        return b;
+    };
+
+    const onKey = e => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); } };
+    const close = () => {
+        overlay.remove();
+        document.removeEventListener("keydown", onKey, true);
+        if (returnFocus) returnFocus.focus({ preventScroll: true });
+    };
+    document.addEventListener("keydown", onKey, true);
+    overlay.onclick = close;
+
+    const apply = () => {
+        const val = mode === "t"
+            ? `${hhDtPad(st.h)}:${hhDtPad(st.mi)}`
+            : (mode === "d"
+                ? `${st.y}-${hhDtPad(st.mo + 1)}-${hhDtPad(st.d)}`
+                : `${st.y}-${hhDtPad(st.mo + 1)}-${hhDtPad(st.d)}T${hhDtPad(st.h)}:${hhDtPad(st.mi)}`);
+        const changed = inp.value !== val;
+        inp.value = val;
+        close();
+        inp.dispatchEvent(new Event("input", { bubbles: true }));
+        if (changed) inp.dispatchEvent(new Event("change", { bubbles: true }));
+    };
+
+    // Tabs (nur bei Datum + Uhrzeit)
+    const renderTabs = () => {
+        tabs.textContent = "";
+        [["date", "📅 Datum"], ["time", "🕒 Uhrzeit"]].forEach(([k, label]) => {
+            const b = mk("hh-dt-tab" + (st.tab === k ? " is-on" : ""), label, { "data-k": "tab-" + k });
+            b.onclick = () => { st.tab = k; render("tab-" + k); };
+            tabs.appendChild(b);
+        });
+    };
+
+    const renderDate = () => {
+        const nav = document.createElement("div");
+        nav.className = "hh-dt-nav";
+        const step = (dm) => {
+            const d = new Date(st.vy, st.vm + dm, 1);
+            st.vy = d.getFullYear(); st.vm = d.getMonth();
+        };
+        const bPY = mk("hh-dt-nbtn", "«", { "aria-label": "Jahr zurück", "data-k": "py" });
+        const bPM = mk("hh-dt-nbtn", "‹", { "aria-label": "Monat zurück", "data-k": "pm" });
+        const lab = document.createElement("div");
+        lab.className = "hh-dt-month";
+        lab.textContent = new Date(st.vy, st.vm, 1).toLocaleDateString("de-DE", { month: "long", year: "numeric" });
+        const bNM = mk("hh-dt-nbtn", "›", { "aria-label": "Monat vor", "data-k": "nm" });
+        const bNY = mk("hh-dt-nbtn", "»", { "aria-label": "Jahr vor", "data-k": "ny" });
+        bPY.onclick = () => { step(-12); render("py"); };
+        bPM.onclick = () => { step(-1); render("pm"); };
+        bNM.onclick = () => { step(1); render("nm"); };
+        bNY.onclick = () => { step(12); render("ny"); };
+        nav.append(bPY, bPM, lab, bNM, bNY);
+        body.appendChild(nav);
+
+        const wd = document.createElement("div");
+        wd.className = "hh-dt-grid hh-dt-wd";
+        HHDT_DAYS.forEach(n => { const s = document.createElement("span"); s.textContent = n; wd.appendChild(s); });
+        body.appendChild(wd);
+
+        const grid = document.createElement("div");
+        grid.className = "hh-dt-grid";
+        const first = new Date(st.vy, st.vm, 1);
+        const offset = (first.getDay() + 6) % 7;
+        for (let i = 0; i < 42; i++) {
+            const dt = new Date(st.vy, st.vm, 1 - offset + i);
+            const y = dt.getFullYear(), mo = dt.getMonth(), d = dt.getDate();
+            const isSel = st.y === y && st.mo === mo && st.d === d;
+            const isToday = now.getFullYear() === y && now.getMonth() === mo && now.getDate() === d;
+            const cls = "hh-dt-day" + (mo !== st.vm ? " is-out" : "") + (isToday ? " is-today" : "") + (isSel ? " is-sel" : "");
+            const b = mk(cls, String(d), { "data-k": `d-${y}-${mo}-${d}`, "aria-label": hhDtDateText(y, mo, d), "aria-pressed": isSel ? "true" : "false" });
+            b.onclick = () => {
+                st.y = y; st.mo = mo; st.d = d; st.vy = y; st.vm = mo;
+                render(`d-${y}-${mo}-${d}`);
+            };
+            grid.appendChild(b);
+        }
+        body.appendChild(grid);
+    };
+
+    const renderTime = () => {
+        const disp = document.createElement("div");
+        disp.className = "hh-dt-clock";
+        disp.textContent = `${hhDtPad(st.h)} : ${hhDtPad(st.mi)}`;
+        body.appendChild(disp);
+
+        const l1 = document.createElement("div");
+        l1.className = "hh-dt-lab";
+        l1.textContent = "Stunde";
+        body.appendChild(l1);
+        const gh = document.createElement("div");
+        gh.className = "hh-dt-grid hh-dt-tgrid";
+        for (let h = 0; h < 24; h++) {
+            const b = mk("hh-dt-cell" + (st.h === h ? " is-sel" : ""), hhDtPad(h), { "data-k": "h-" + h, "aria-label": hhDtPad(h) + " Uhr", "aria-pressed": st.h === h ? "true" : "false" });
+            b.onclick = () => { st.h = h; render("h-" + h); };
+            gh.appendChild(b);
+        }
+        body.appendChild(gh);
+
+        const l2 = document.createElement("div");
+        l2.className = "hh-dt-lab hh-dt-lab-row";
+        const l2t = document.createElement("span");
+        l2t.textContent = "Minute";
+        const steps = document.createElement("span");
+        steps.className = "hh-dt-steps";
+        const bm = mk("hh-dt-step", "−1", { "aria-label": "Eine Minute zurück", "data-k": "m-1" });
+        const bp = mk("hh-dt-step", "+1", { "aria-label": "Eine Minute vor", "data-k": "m+1" });
+        bm.onclick = () => { st.mi = (st.mi + 59) % 60; render("m-1"); };
+        bp.onclick = () => { st.mi = (st.mi + 1) % 60; render("m+1"); };
+        steps.append(bm, bp);
+        l2.append(l2t, steps);
+        body.appendChild(l2);
+        const gm = document.createElement("div");
+        gm.className = "hh-dt-grid hh-dt-tgrid";
+        for (let m = 0; m < 60; m += 5) {
+            const b = mk("hh-dt-cell" + (st.mi === m ? " is-sel" : ""), hhDtPad(m), { "data-k": "m-" + m, "aria-label": hhDtPad(m) + " Minuten", "aria-pressed": st.mi === m ? "true" : "false" });
+            b.onclick = () => { st.mi = m; render("m-" + m); };
+            gm.appendChild(b);
+        }
+        body.appendChild(gm);
+    };
+
+    const renderFoot = () => {
+        foot.textContent = "";
+        const quick = mk("hh-dt-btn-q", st.tab === "date" ? "Heute" : "Jetzt", { "data-k": "quick" });
+        quick.onclick = () => {
+            const n = new Date();
+            if (st.tab === "date") { st.y = n.getFullYear(); st.mo = n.getMonth(); st.d = n.getDate(); st.vy = st.y; st.vm = st.mo; render("quick"); }
+            else { st.h = n.getHours(); st.mi = n.getMinutes(); render("quick"); }
+        };
+        const no = mk("hh-dt-btn-no", "Abbrechen", { "data-k": "no" });
+        no.onclick = close;
+        const ok = mk("hh-dt-btn-ok", "Übernehmen ✅", { "data-k": "ok" });
+        ok.onclick = apply;
+        foot.append(quick, no, ok);
+    };
+
+    const render = (focusKey) => {
+        if (mode === "dt") {
+            sum.textContent = st.y === null ? "—" : `${hhDtDateText(st.y, st.mo, st.d)} · ${hhDtPad(st.h)}:${hhDtPad(st.mi)} Uhr`;
+            renderTabs();
+        }
+        const keep = body.scrollTop;
+        body.textContent = "";
+        if (st.tab === "date") renderDate(); else renderTime();
+        renderFoot();
+        if (focusKey) {
+            const el = overlay.querySelector(`[data-k="${focusKey}"]`);
+            if (el) el.focus({ preventScroll: true });
+        }
+        body.scrollTop = keep;
+    };
+
+    document.body.appendChild(overlay);
+    render(null);
+    const first = overlay.querySelector(".hh-dt-day.is-sel, .hh-dt-cell.is-sel, .hh-dt-day.is-today");
+    if (first) first.focus({ preventScroll: false });
+}
+
+function hhDtInit() {
+    hhDtEnhance(document.getElementById("modalDate"), "dt", "Festes Datum");
+    hhDtEnhance(document.getElementById("edit-date-val"), "dt", "Festes Datum");
+    hhDtEnhance(document.getElementById("modalTime"), "t", "Standard-Uhrzeit");
+    hhDtEnhance(document.getElementById("edit-time"), "t", "Uhrzeit");
+    hhDtEnhance(document.getElementById("wsTime"), "t", "Uhrzeit");
+    hhDtEnhance(document.getElementById("mfNext"), "d", "Nächster Termin");
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", hhDtInit);
+else hhDtInit();
 
 function ingCountText(n) { return `${n} ${n === 1 ? "Zutat" : "Zutaten"}`; }
 
@@ -3646,13 +6165,186 @@ function mealPickClose() {
     mealPick.open = false;
 }
 
+// ===== Einkauf: Artikel abhaken und per Ziehen in ein anderes Geschäft verschieben =====
+// Einträge der Liste sehen so aus: "2x Nudeln @Aldi" (Name + " @" + Geschäft).
+function shopItemDone(li, btn, t) {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    li.classList.add("is-done");          // kurz abhaken (durchgestrichen), dann aus der Liste nehmen
+    shopHidden.add(t);
+    setTimeout(async () => {
+        try { await delItem(t); } finally { shopHidden.delete(t); }
+    }, 380);
+}
+
+// Artikel in ein anderes Geschäft schieben: nur das " @Geschäft" am Ende des Eintrags wird getauscht
+async function shopMoveItem(text, fromStore, toStore) {
+    if (!toStore || toStore === fromStore) return false;
+    const suffix = ` @${fromStore}`;
+    if (!String(text).endsWith(suffix)) return false;
+    const moved = text.slice(0, text.length - suffix.length) + ` @${toStore}`;
+    shopHidden.add(text);
+    try {
+        const cfg = SYNC_CONFIG.shopping;
+        const d = await haGetState(cfg.entity);
+        // Ohne gelesene Liste nichts schreiben (sonst würde eine nicht erreichbare Liste überschrieben)
+        if (!d || !d.attributes || !(cfg.attr in d.attributes)) throw new Error("Einkaufsliste nicht erreichbar");
+        let list = [];
+        const raw = d.attributes[cfg.attr];
+        if (raw) {
+            const parsed = (typeof raw === "string") ? JSON.parse(raw) : raw;
+            if (Array.isArray(parsed)) list = parsed.slice();
+        }
+        const idx = list.indexOf(text);
+        if (idx < 0) return false;                       // wurde inzwischen schon geändert (z. B. auf einem anderen Gerät)
+        list.splice(idx, 1);
+        if (!list.includes(moved)) list.push(moved);     // steht dort schon genau so drin → zusammenführen
+        const res = await haFireEvent(cfg.event, { json_data: list });
+        if (res && res.ok === false) throw new Error("HTTP " + res.status);
+        if (typeof ingToast === "function") ingToast(`🛒 ${String(text).slice(0, text.length - suffix.length)} → ${toStore}`);
+        return true;
+    } catch (e) {
+        console.error("❌ Verschieben fehlgeschlagen:", e);
+        if (typeof ingToast === "function") ingToast("⚠️ Verschieben hat nicht geklappt");
+        return false;
+    } finally {
+        shopHidden.delete(text);
+        try { await load(); } catch (e) { /* egal */ }
+        if (typeof updateAppBadges === "function") { try { updateAppBadges(); } catch (e) { /* egal */ } }
+    }
+}
+
+const shopDrag = { pending: false, active: false, li: null, text: "", from: "", timer: null, ghost: null, tray: null, sx: 0, sy: 0, x: 0, y: 0, mode: "", target: "" };
+
+function shopDragBind(li, text) {
+    li.title = "Gedrückt halten und auf ein anderes Geschäft ziehen";
+    li.addEventListener("pointerdown", e => shopDragDown(e, li, text));
+    li.addEventListener("contextmenu", e => { if (shopDrag.pending || shopDrag.active) e.preventDefault(); });
+}
+function shopDragDown(e, li, text) {
+    const s = shopDrag;
+    if (s.pending || s.active) return;
+    if (e.target.closest && e.target.closest(".btn-del-item")) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    if (!Array.isArray(stores) || stores.filter(x => x !== activeStore).length === 0) return;   // nichts zum Hinziehen da
+    s.pending = true; s.active = false;
+    s.li = li; s.text = text; s.from = activeStore;
+    s.sx = s.x = e.clientX; s.sy = s.y = e.clientY;
+    s.mode = (e.pointerType === "mouse") ? "mouse" : "touch";
+    if (s.mode === "touch") s.timer = setTimeout(shopDragStart, 380);   // langes Drücken, damit Scrollen weiter geht
+    document.addEventListener("pointermove", shopDragMove, true);
+    document.addEventListener("pointerup", shopDragUp, true);
+    document.addEventListener("pointercancel", shopDragCancel, true);
+    document.addEventListener("keydown", shopDragKey, true);
+}
+function shopDragStart() {
+    const s = shopDrag;
+    if (!s.pending || s.active) return;
+    clearTimeout(s.timer);
+    s.pending = false; s.active = true;
+    s.li.classList.add("is-dragging");
+    document.body.classList.add("shop-dragging");
+    document.addEventListener("touchmove", shopDragBlockScroll, { passive: false });
+
+    const name = s.text.slice(0, s.text.length - (` @${s.from}`).length);
+    const g = document.createElement("div");
+    g.className = "shop-ghost";
+    g.textContent = "🛒 " + name;
+    document.body.appendChild(g);
+    s.ghost = g;
+
+    const tray = document.createElement("div");
+    tray.className = "shop-tray";
+    tray.id = "shopDropTray";
+    const title = document.createElement("div");
+    title.className = "shop-tray-title";
+    title.textContent = "Verschieben nach …";
+    const chips = document.createElement("div");
+    chips.className = "shop-tray-chips";
+    stores.filter(x => x !== s.from).forEach(st => {
+        const c = document.createElement("div");
+        c.className = "shop-tray-chip";
+        c.dataset.dropStore = st;
+        c.textContent = st;
+        chips.appendChild(c);
+    });
+    tray.append(title, chips);
+    document.body.appendChild(tray);
+    s.tray = tray;
+    if (navigator.vibrate) { try { navigator.vibrate(25); } catch (e) { /* egal */ } }
+    shopDragPlace();
+}
+function shopDragBlockScroll(e) { if (shopDrag.active && e.cancelable) e.preventDefault(); }
+function shopDragPlace() {
+    const s = shopDrag;
+    if (!s.active || !s.ghost) return;
+    const z = (typeof currentAppZoom === "number" && currentAppZoom > 0) ? currentAppZoom : 1;
+    const w = s.ghost.offsetWidth * z, h = s.ghost.offsetHeight * z;
+    s.ghost.style.left = ((s.x - w / 2) / z) + "px";
+    s.ghost.style.top = ((s.y - h - 14) / z) + "px";          // über dem Finger, damit er das Ziel nicht verdeckt
+    // Ziel unter dem Finger
+    let target = "";
+    const els = document.elementsFromPoint ? document.elementsFromPoint(s.x, s.y) : [];
+    for (const el of els) {
+        const t = el.closest ? el.closest("[data-drop-store]") : null;
+        if (t) { target = t.dataset.dropStore; break; }
+    }
+    if (target === s.from) target = "";
+    s.target = target;
+    document.querySelectorAll("[data-drop-store].is-drop").forEach(el => { if (el.dataset.dropStore !== target) el.classList.remove("is-drop"); });
+    if (target) document.querySelectorAll("[data-drop-store]").forEach(el => { if (el.dataset.dropStore === target) el.classList.add("is-drop"); });
+}
+function shopDragMove(e) {
+    const s = shopDrag;
+    if (!(s.pending || s.active)) return;
+    s.x = e.clientX; s.y = e.clientY;
+    if (s.pending) {
+        const dist = Math.hypot(s.x - s.sx, s.y - s.sy);
+        if (s.mode === "mouse" && dist > 6) shopDragStart();
+        else if (s.mode === "touch" && dist > 10) shopDragCleanup();   // der Finger scrollt: nicht ziehen
+        return;
+    }
+    if (e.cancelable) e.preventDefault();
+    shopDragPlace();
+}
+function shopDragUp(e) {
+    const s = shopDrag;
+    if (!(s.pending || s.active)) return;
+    const wasActive = s.active;
+    if (wasActive) { s.x = e.clientX; s.y = e.clientY; shopDragPlace(); }
+    const target = wasActive ? s.target : "";
+    const text = s.text, from = s.from;
+    shopDragCleanup();
+    if (wasActive && target) shopMoveItem(text, from, target);
+}
+function shopDragCancel() { shopDragCleanup(); }
+function shopDragKey(e) { if (e.key === "Escape") shopDragCleanup(); }
+function shopDragCleanup() {
+    const s = shopDrag;
+    clearTimeout(s.timer);
+    document.removeEventListener("pointermove", shopDragMove, true);
+    document.removeEventListener("pointerup", shopDragUp, true);
+    document.removeEventListener("pointercancel", shopDragCancel, true);
+    document.removeEventListener("keydown", shopDragKey, true);
+    document.removeEventListener("touchmove", shopDragBlockScroll, { passive: false });
+    if (s.li) s.li.classList.remove("is-dragging");
+    if (s.ghost) s.ghost.remove();
+    if (s.tray) s.tray.remove();
+    document.body.classList.remove("shop-dragging");
+    document.querySelectorAll("[data-drop-store].is-drop").forEach(el => el.classList.remove("is-drop"));
+    s.pending = false; s.active = false; s.li = null; s.ghost = null; s.tray = null; s.target = "";
+}
+
 async function delItem(t) {
     try {
         const cfg = SYNC_CONFIG.shopping;
         const d = await haGetState(cfg.entity);
 
+        // Ohne gelesene Liste nichts schreiben (sonst würde eine nicht erreichbare Liste leer überschrieben)
+        if (!d || !d.attributes || !(cfg.attr in d.attributes)) throw new Error("Einkaufsliste nicht erreichbar");
+
         let currentList = [];
-        if (d && d.attributes && d.attributes[cfg.attr]) {
+        if (d.attributes[cfg.attr]) {
             const rawData = d.attributes[cfg.attr];
             currentList = (typeof rawData === 'string') ? JSON.parse(rawData) : rawData;
         }
@@ -4224,6 +6916,83 @@ function renderHomeTodos() {
         c.textContent = String(due.length);
         c.classList.toggle("is-zero", due.length === 0);
     }
+    if (typeof renderHomeMaint === "function") renderHomeMaint();
+}
+
+// Eigene Karte "Wartung" auf der Startseite: fällig oder in der Vorwarnzeit
+function renderHomeMaint() {
+    const all = maintData().items;
+    const mdue = maintDueList();
+    const MAX = 6;
+    let html = "";
+    if (!all.length) {
+        html = `<div class="home-empty">Noch keine Wartung angelegt.</div>`;
+    } else if (!mdue.length) {
+        const nxt = maintItemsSorted()[0];
+        const st = nxt ? maintStatus(nxt) : null;
+        html = `<div class="home-empty">Nichts fällig – alles in Ordnung ✅${nxt ? `<span class="home-empty-sub">Als Nächstes: ${escapeHtml(nxt.n)} (${escapeHtml(maintInText(st.days))})</span>` : ""}</div>`;
+    } else {
+        mdue.slice(0, MAX).forEach(it => {
+            const st = maintStatus(it);
+            const color = st.k === "over" ? "var(--danger)" : "#f39c12";
+            const pill = st.days < 0 ? "Überfällig" : (st.days === 0 ? "Heute" : (st.days === 1 ? "Morgen" : "in " + st.days + " T."));
+            html += `<div class="home-row home-row-maint">
+                <div class="home-row-main">
+                    <strong class="home-row-title">🔧 ${escapeHtml(it.n)}</strong>
+                    <span class="home-row-sub" style="color:inherit; opacity:0.8;">${escapeHtml(maintEveryText(it.e, it.u))}</span>
+                </div>
+                <span class="home-pill" style="color:${color}; background:${color}15; border:1px solid ${color}30;">${pill}</span>
+                <button type="button" class="home-done" data-home-act="maint-done" data-id="${escapeHtml(it.id)}" aria-label="Wartung erledigt">✅</button>
+            </div>`;
+        });
+        if (mdue.length > MAX) {
+            html += `<button type="button" class="home-more" data-home-act="maint-open">+ ${mdue.length - MAX} weitere anzeigen</button>`;
+        }
+    }
+    homeSet("home-maint-list", html);
+    const c = document.getElementById("home-maint-count");
+    if (c) {
+        c.textContent = String(mdue.length);
+        c.classList.toggle("is-zero", mdue.length === 0);
+    }
+}
+
+// Startseite: Karte "Vorrat" – nur was knapp ist oder fehlt
+function renderHomeStock() {
+    const all = stockData().items;
+    const low = stockLowList();
+    const MAX = 6;
+    let html = "";
+    if (!all.length) {
+        html = `<div class="home-empty">Noch kein Vorrat angelegt.<span class="home-empty-sub">Tippe unten auf „Zum Vorrat“.</span></div>`;
+    } else if (!low.length) {
+        html = `<div class="home-empty">Alles da ✅<span class="home-empty-sub">${all.length} Artikel im Vorrat</span></div>`;
+    } else {
+        low.slice(0, MAX).forEach(it => {
+            const st = stockStatus(it);
+            const color = st.k === "warn" ? "#f39c12" : "var(--danger)";
+            const place = stockPlaceName(it.o);
+            const sub = [place ? "📍 " + place : "", it.l ? "🛒 steht auf der Liste" : (st.k === "warn" ? st.text : "")].filter(Boolean).join(" · ");
+            const pill = it.q <= 0 ? "Leer" : stockQtyText(it);
+            html += `<div class="home-row home-row-stock">
+                <div class="home-row-main">
+                    <strong class="home-row-title">📦 ${escapeHtml(it.n)}</strong>
+                    ${sub ? `<span class="home-row-sub" style="color:inherit; opacity:0.8;">${escapeHtml(sub)}</span>` : ""}
+                </div>
+                <span class="home-pill" style="color:${color}; background:${color}15; border:1px solid ${color}30;">${escapeHtml(pill)}</span>
+                ${stockNeedsList(it) ? `<button type="button" class="home-done" data-home-act="stock-list" data-id="${escapeHtml(it.id)}" aria-label="Auf die Einkaufsliste setzen">🛒</button>` : ""}
+            </div>`;
+        });
+        if (low.length > MAX) {
+            html += `<button type="button" class="home-more" data-home-act="stock-open">+ ${low.length - MAX} weitere anzeigen</button>`;
+        }
+    }
+    homeSet("home-stock-list", html);
+    const c = document.getElementById("home-stock-count");
+    if (c) {
+        c.textContent = String(low.length);
+        c.classList.toggle("is-zero", low.length === 0);
+    }
 }
 
 // Einkaufsliste: nach Geschäft gruppiert
@@ -4273,7 +7042,15 @@ async function renderHomeShop() {
     }
 }
 
-// Ausgaben des aktuellen Monats (aus der Finanz-Datenbank)
+// Farbiges Schild für Plus / Minus (Farben stehen in home.css)
+function homePill(v) {
+    const n = Math.round(((parseFloat(v) || 0) + Number.EPSILON) * 100) / 100;
+    const cls = n < 0 ? "is-minus" : (n > 0 ? "is-plus" : "is-zero");
+    return `<span class="fin-pill ${cls}">${n > 0 ? "+" : ""}${n.toFixed(2)}€</span>`;
+}
+
+// Ausgaben des aktuellen Monats (aus der Finanz-Datenbank).
+// Zusätzlich (nur wenn in den Finanzen eingeschaltet, getrennt): "Übrig" des Monats und "Gespart" des aktuellen Jahres.
 async function renderHomeMoney() {
     const now = new Date();
     const monthNames = ["januar", "februar", "märz", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "dezember"];
@@ -4283,10 +7060,10 @@ async function renderHomeMoney() {
 
     if (typeof fetchHA !== "function" || typeof parseFinanceRoot !== "function") return;
 
-    let m = null;
+    let m = null, root = null;
     try {
         const s = await fetchHA("sensor.haushalt_finance_db");
-        const root = parseFinanceRoot(s);
+        root = parseFinanceRoot(s);
         m = (root.months || []).find(x =>
             x && x.month_name &&
             x.month_name.toLowerCase().includes(monthNames[now.getMonth()]) &&
@@ -4297,12 +7074,23 @@ async function renderHomeMoney() {
         return;
     }
 
+    const sum = arr => (arr || []).reduce((acc, i) => acc + (parseFloat(i.amount) || 0), 0);
+    // Jeder Benutzer schaltet das in den Finanzen für sich ein (mit seinem Passwort)
+    const who = (typeof user !== "undefined" && user) ? String(user) : (localStorage.getItem("selectedUser") || "");
+    const opts = (typeof financeHomeOpts === "function") ? financeHomeOpts(root, who) : {};
+
+    // Gespart: nur das aktuelle Jahr (Monate ohne Einkommen zählen 0)
+    let savedRow = "";
+    if (opts.saved && typeof finYearStats === "function") {
+        const months = (root.months || []).filter(x => x && String(extractYearFromMonth(x)) === String(now.getFullYear()));
+        savedRow = `<div class="home-money-row home-money-saved"><span>Gespart ${now.getFullYear()}</span><b>${homePill(finYearStats(months).saved)}</b></div>`;
+    }
+
     if (!m) {
-        homeSet("home-money-body", `<div class="home-empty">Für ${escapeHtml(label)} gibt es noch keinen Monat in den Finanzen.</div>`);
+        homeSet("home-money-body", `<div class="home-empty">Für ${escapeHtml(label)} gibt es noch keinen Monat in den Finanzen.</div>${savedRow}`);
         return;
     }
 
-    const sum = arr => (arr || []).reduce((acc, i) => acc + (parseFloat(i.amount) || 0), 0);
     const fix = sum(m.fixum);
     const spend = sum(m.spendings);
     const latest = (m.spendings || []).slice(-4).reverse();
@@ -4311,6 +7099,11 @@ async function renderHomeMoney() {
         <div class="home-money-row"><span>Fixkosten</span><b>${homeMoney(fix)}</b></div>
         <div class="home-money-row"><span>Ausgaben</span><b>${homeMoney(spend)}</b></div>
         <div class="home-money-total"><span>Gesamt</span><b>${homeMoney(fix + spend)}</b></div>`;
+    // Einkommen eingetragen und eingeschaltet → zeigen, wie viel in diesem Monat übrig ist
+    if (opts.left && Array.isArray(m.income) && m.income.length) {
+        html += `<div class="home-money-row home-money-left"><span>Übrig</span><b>${homePill(sum(m.income) - fix - spend)}</b></div>`;
+    }
+    html += savedRow;
     if (latest.length) {
         html += `<div class="home-money-last-title">Zuletzt</div>`;
         latest.forEach(i => {
@@ -4365,10 +7158,559 @@ async function renderHomeFood() {
 async function loadHome(force) {
     renderHomeHeader();
     renderHomeTodos();
+    renderHomeStock();
     const nowMs = Date.now();
     if (!force && nowMs - homeLastFetch < 10000) return;
     homeLastFetch = nowMs;
-    await Promise.all([renderHomeFood(), renderHomeShop(), renderHomeMoney()]);
+    await Promise.all([renderHomeFood(), renderHomeShop(), renderHomeMoney(), renderHomeCalendar()]);
+}
+
+// ========================================================
+// --- 📅 KALENDER (Startseite: aktuelle Woche · Tippen öffnet den Monat) ---
+// Die Termine kommen aus den Home-Assistant-Kalendern, die in der Integration gewählt wurden
+// (auch mehrere, z. B. einer pro Person – jeder bekommt eine eigene Farbe).
+// Ein- und ausschalten: Integration → Optionen oder App-Einstellungen (hhFeature("calendar")).
+// ========================================================
+const CAL_COLORS = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
+const CAL_WD_SHORT = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+const CAL_WD_LONG = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+const CAL_MONTHS = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+const CAL_TTL = 90 * 1000;          // so lange gilt ein geladener Zeitraum, bevor neu gefragt wird
+const CAL_PENDING_MS = 90 * 1000;   // frisch angelegte/gelöschte Termine sofort zeigen, auch wenn der Kalender kurz braucht
+const calS = {
+    cache: new Map(),     // "von|bis" -> { t, events, failed, ok }
+    month: null,          // { y, m }  (m = 0..11)
+    sel: "",              // gewählter Tag (YYYY-MM-DD)
+    events: [],           // zuletzt gezeigte Termine im Monatsfenster
+    hidden: new Set(),    // ausgeblendete Kalender (pro Gerät gemerkt)
+    pend: [],             // { t, kind: "add" | "del", ev }
+    seq: 0,               // verwirft veraltete Antworten beim schnellen Blättern
+    homeSeq: 0,
+    saving: false,
+    allDay: false,
+    status: ""
+};
+try { (JSON.parse(localStorage.getItem("hh_cal_hidden") || "[]") || []).forEach(x => calS.hidden.add(String(x))); } catch (e) { /* egal */ }
+
+// ---- Datum ----
+function calPad(n) { return String(n).padStart(2, "0"); }
+function calIso(d) { return `${d.getFullYear()}-${calPad(d.getMonth() + 1)}-${calPad(d.getDate())}`; }
+function calFromIso(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(s || ""));
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+}
+function calDay0(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function calAddDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+function calMonday(d) { const x = calDay0(d); return calAddDays(x, -((x.getDay() + 6) % 7)); }
+function calFmtTime(d) { return `${calPad(d.getHours())}:${calPad(d.getMinutes())}`; }
+function calShortDate(d) { return `${d.getDate()}.${d.getMonth() + 1}.`; }
+function calLongDate(d) { return `${CAL_WD_LONG[d.getDay()]}, ${d.getDate()}. ${CAL_MONTHS[d.getMonth()]} ${d.getFullYear()}`; }
+function calMk(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+}
+
+// ---- Kalender (Farben, Namen) ----
+function calInfo(id) { return hhCalendars.find(c => c.entity_id === id) || null; }
+function calColor(id) {
+    const i = hhCalendars.findIndex(c => c.entity_id === id);
+    return CAL_COLORS[(i < 0 ? 0 : i) % CAL_COLORS.length];
+}
+function calNameOf(ev) { const c = calInfo(ev.cal); return (c && c.name) || ev.calName || ev.cal; }
+
+// ---- Termine ----
+// Rohdaten vom Server -> Termin mit Beginn/Ende als Datum und den Kalendertagen, die er berührt (first..last)
+function calNormEvent(ev) {
+    if (!ev || !ev.start) return null;
+    const allDay = !!ev.allDay;
+    let start, end;
+    if (allDay) {
+        start = calFromIso(ev.start);
+        end = calFromIso(ev.end) || (start ? calAddDays(start, 1) : null);
+    } else {
+        start = new Date(ev.start);
+        end = ev.end ? new Date(ev.end) : null;
+        if (isNaN(start)) start = null;
+        if (end && isNaN(end)) end = null;
+        if (start && !end) end = start;
+    }
+    if (!start || !end) return null;
+    const first = calDay0(start);
+    let last;
+    if (allDay) last = calAddDays(end, -1);                                              // Ende ist der Tag danach
+    else if (end > start && end.getHours() === 0 && end.getMinutes() === 0 && end.getSeconds() === 0) last = calAddDays(calDay0(end), -1);   // endet um 00:00
+    else last = calDay0(end);
+    if (last < first) last = first;
+    return {
+        cal: String(ev.cal || ""), calName: String(ev.calName || ""),
+        title: String(ev.summary || "").trim() || "(ohne Titel)", rawTitle: String(ev.summary || ""),
+        allDay, start, end, first, last,
+        rawStart: String(ev.start), location: String(ev.location || ""), description: String(ev.description || "")
+    };
+}
+// Frisch angelegte Termine sofort zeigen und gelöschte sofort ausblenden (einige Kalender brauchen einen Moment)
+function calOverlay(events) {
+    const now = Date.now();
+    calS.pend = calS.pend.filter(p => now - p.t < CAL_PENDING_MS);
+    let out = events.slice();
+    calS.pend.forEach(p => {
+        const same = x => x.cal === p.ev.cal && x.rawTitle === p.ev.rawTitle && x.allDay === p.ev.allDay && x.start.getTime() === p.ev.start.getTime();
+        if (p.kind === "add") { if (!out.some(same)) out.push(p.ev); }
+        else out = out.filter(x => !same(x));
+    });
+    return out;
+}
+function calEventsOn(events, day) {
+    const t = day.getTime();
+    return calOverlay(events)
+        .filter(e => !calS.hidden.has(e.cal) && e.first.getTime() <= t && e.last.getTime() >= t)
+        .sort((a, b) => (a.allDay === b.allDay)
+            ? ((a.start - b.start) || a.title.localeCompare(b.title, "de", { sensitivity: "base" }))
+            : (a.allDay ? -1 : 1));
+}
+function calTimeText(e, day) {
+    if (e.allDay) return "Ganztägig";
+    const startsHere = e.first.getTime() === day.getTime();
+    const endsHere = e.last.getTime() === day.getTime();
+    if (startsHere && endsHere) return e.end > e.start ? `${calFmtTime(e.start)}–${calFmtTime(e.end)} Uhr` : `${calFmtTime(e.start)} Uhr`;
+    if (startsHere) return `ab ${calFmtTime(e.start)} Uhr`;
+    if (endsHere) return `bis ${calFmtTime(e.end)} Uhr`;
+    return "Ganztägig";
+}
+function calRangeText(e) {
+    return e.first.getTime() === e.last.getTime() ? "" : `${calShortDate(e.first)} – ${calShortDate(e.last)}`;
+}
+
+// ---- Laden ----
+async function calLoad(from, to, force) {
+    const key = calIso(from) + "|" + calIso(to);
+    const hit = calS.cache.get(key);
+    if (!force && hit && Date.now() - hit.t < CAL_TTL) return hit;
+    const res = { t: Date.now(), events: [], failed: [], ok: false };
+    try {
+        const url = `${getBaseUrl()}/api/haushaltshilfe/calendar?start=${encodeURIComponent(from.toISOString())}&end=${encodeURIComponent(to.toISOString())}`;
+        const r = await fetch(url, { cache: "no-store" });
+        if (r.ok) {
+            const d = await r.json();
+            if (Array.isArray(d.calendars)) { hhCalendars = d.calendars; hhCalendarWrite = String(d.calendar_write || ""); }
+            if (d.enabled === false && hhFeature("calendar")) {          // in Home Assistant ausgeschaltet
+                hhSetFeatures(hhFeatures.filter(k => k !== "calendar"));
+                applyFeaturesToDOM();
+            }
+            res.events = (Array.isArray(d.events) ? d.events : []).map(calNormEvent).filter(Boolean);
+            res.failed = Array.isArray(d.failed) ? d.failed.map(String) : [];
+            res.ok = true;
+        }
+    } catch (e) { console.warn("Kalender nicht erreichbar:", e); }
+    if (res.ok) { calS.cache.set(key, res); return res; }
+    return hit || res;                                                   // alter Stand ist besser als nichts
+}
+function calInvalidate() { calS.cache.clear(); }
+
+// ---- Startseite: aktuelle Woche ----
+async function renderHomeCalendar() {
+    const body = document.getElementById("home-cal-body");
+    if (!body || !hhFeature("calendar") || !hhCredLoaded) return;
+    const mine = ++calS.homeSeq;
+    const today = calDay0(new Date());
+    const mon = calMonday(today);
+    if (!hhCalendars.length) {
+        homeSet("home-cal-body", `<div class="home-empty">Noch kein Kalender gewählt.<span class="home-empty-sub">Wähle ihn in Home Assistant unter Einstellungen → Geräte &amp; Dienste → Haushaltshilfe Pro → Konfigurieren.</span></div>`);
+        const c0 = document.getElementById("home-cal-count");
+        if (c0) { c0.textContent = "0"; c0.classList.add("is-zero"); }
+        return;
+    }
+    const res = await calLoad(mon, calAddDays(mon, 7));
+    if (mine !== calS.homeSeq || !hhFeature("calendar")) return;
+
+    let strip = `<div class="cal-week" role="group" aria-label="Aktuelle Woche">`;
+    const rows = [];
+    let total = 0;
+    for (let i = 0; i < 7; i++) {
+        const d = calAddDays(mon, i);
+        const evs = calEventsOn(res.events, d);
+        total += evs.length;
+        const cls = "cal-wday" + (d.getTime() === today.getTime() ? " is-today" : "") + (d < today ? " is-past" : "") + (evs.length ? " has-ev" : "");
+        let dots = evs.slice(0, 3).map(e => `<i class="cal-dot" style="background:${calColor(e.cal)}"></i>`).join("");
+        if (evs.length > 3) dots += `<small class="cal-more">+${evs.length - 3}</small>`;
+        const label = `${CAL_WD_LONG[d.getDay()]}, ${d.getDate()}. ${CAL_MONTHS[d.getMonth()]}${evs.length ? ": " + evs.length + (evs.length === 1 ? " Termin" : " Termine") : ""}`;
+        strip += `<button type="button" class="${cls}" data-home-act="cal-open" data-day="${calIso(d)}" aria-label="${escapeHtml(label)}">
+            <span class="cal-wd">${CAL_WD_SHORT[i]}</span><span class="cal-wn">${d.getDate()}</span><span class="cal-wdots">${dots}</span></button>`;
+        evs.forEach(e => rows.push({ d, e }));
+    }
+    strip += `</div>`;
+
+    const MAX = 6;
+    let list = rows;
+    if (list.length > MAX) list = list.filter(r => r.d >= today);       // bei vielen Terminen zuerst das, was noch kommt
+    const shown = list.slice(0, MAX);
+    let html = strip;
+    if (!rows.length) {
+        html += `<div class="home-empty">Diese Woche ist nichts eingetragen.<span class="home-empty-sub">Tippe auf einen Tag, um einen Termin anzulegen.</span></div>`;
+    } else {
+        shown.forEach(({ d, e }) => {
+            const isPast = d < today;
+            const dayTxt = d.getTime() === today.getTime() ? "Heute" : (d.getTime() === calAddDays(today, 1).getTime() ? "Morgen" : `${CAL_WD_SHORT[(d.getDay() + 6) % 7]} ${calShortDate(d)}`);
+            const sub = [calTimeText(e, d), e.location ? "📍 " + e.location : "", hhCalendars.length > 1 ? calNameOf(e) : ""].filter(Boolean).join(" · ");
+            html += `<button type="button" class="cal-row${isPast ? " is-past" : ""}" style="border-left-color:${calColor(e.cal)}" data-home-act="cal-open" data-day="${calIso(d)}">
+                <span class="cal-row-day">${escapeHtml(dayTxt)}</span>
+                <span class="cal-row-main"><strong class="home-row-title">${escapeHtml(e.title)}</strong><span class="home-row-sub">${escapeHtml(sub)}</span></span>
+            </button>`;
+        });
+        if (list.length > MAX) html += `<button type="button" class="home-more" data-home-act="cal-open" data-day="${calIso(today)}">+ ${list.length - MAX} weitere anzeigen</button>`;
+    }
+    if (!res.ok) html += `<div class="home-empty home-empty-sub">⚠️ Kalender gerade nicht erreichbar</div>`;
+    else if (res.failed.length) html += `<div class="home-empty home-empty-sub">⚠️ ${escapeHtml(res.failed.map(id => (calInfo(id) || { name: id }).name).join(", "))}: nicht lesbar</div>`;
+    homeSet("home-cal-body", html);
+    const c = document.getElementById("home-cal-count");
+    if (c) { c.textContent = String(total); c.classList.toggle("is-zero", total === 0); }
+}
+
+// ---- Monatsfenster ----
+function calGridStart() { return calMonday(new Date(calS.month.y, calS.month.m, 1)); }
+function calOpen(dayIso) {
+    if (!hhFeature("calendar")) return;
+    const d = calFromIso(dayIso) || calDay0(new Date());
+    calS.month = { y: d.getFullYear(), m: d.getMonth() };
+    calS.sel = calIso(d);
+    const m = document.getElementById("calModal");
+    if (m) m.style.display = "flex";
+    calSwipeInit();
+    calRenderModal();
+}
+function calClose() {
+    const m = document.getElementById("calModal");
+    if (m) m.style.display = "none";
+    calS.seq++;
+}
+function calCloseAll() {
+    calClose();
+    const f = document.getElementById("calFormModal");
+    if (f) f.style.display = "none";
+}
+function calMonthIsToday(y, m) { const t = new Date(); return t.getFullYear() === y && t.getMonth() === m; }
+function calShift(n) {
+    if (!calS.month) return;
+    const d = new Date(calS.month.y, calS.month.m + n, 1);
+    calS.month = { y: d.getFullYear(), m: d.getMonth() };
+    const sel = calFromIso(calS.sel);
+    if (!sel || sel.getFullYear() !== d.getFullYear() || sel.getMonth() !== d.getMonth()) {
+        calS.sel = calMonthIsToday(d.getFullYear(), d.getMonth()) ? calIso(new Date()) : calIso(d);
+    }
+    calRenderModal();
+}
+function calToday() {
+    const t = new Date();
+    calS.month = { y: t.getFullYear(), m: t.getMonth() };
+    calS.sel = calIso(t);
+    calRenderModal();
+}
+function calSelect(iso) {
+    const d = calFromIso(iso);
+    if (!d) return;
+    calS.sel = iso;
+    if (d.getFullYear() !== calS.month.y || d.getMonth() !== calS.month.m) {   // Tag aus dem Nachbarmonat: dorthin blättern
+        calS.month = { y: d.getFullYear(), m: d.getMonth() };
+        calRenderModal();
+        return;
+    }
+    document.querySelectorAll("#calGrid .cal-cell").forEach(c => c.classList.toggle("is-sel", c.dataset.day === iso));
+    calPaintDetail();
+}
+function calToggleCal(id) {
+    if (calS.hidden.has(id)) calS.hidden.delete(id); else calS.hidden.add(id);
+    try { localStorage.setItem("hh_cal_hidden", JSON.stringify(Array.from(calS.hidden))); } catch (e) { /* egal */ }
+    calPaintModal();
+    renderHomeCalendar();
+}
+async function calRenderModal(force) {
+    const mine = ++calS.seq;
+    const from = calGridStart(), to = calAddDays(from, 42);
+    const hit = calS.cache.get(calIso(from) + "|" + calIso(to));
+    calS.status = hit ? "" : "⏳ Termine werden geladen …";
+    calS.events = hit ? hit.events : [];
+    calPaintModal();
+    if (hit && !force && Date.now() - hit.t < CAL_TTL) return;
+    const res = await calLoad(from, to, force);
+    if (mine !== calS.seq) return;
+    calS.events = res.events;
+    if (!res.ok) calS.status = "⚠️ Kalender gerade nicht erreichbar";
+    else if (res.failed.length) calS.status = "⚠️ Nicht lesbar: " + res.failed.map(id => (calInfo(id) || { name: id }).name).join(", ");
+    else calS.status = "";
+    calPaintModal();
+}
+function calPaintModal() {
+    const { y, m } = calS.month;
+    const title = document.getElementById("calTitle");
+    if (title) title.textContent = `${CAL_MONTHS[m]} ${y}`;
+
+    // Legende: ein Kalender pro Person – antippen blendet ihn ein/aus
+    const legend = document.getElementById("calLegend");
+    if (legend) {
+        legend.replaceChildren();
+        if (hhCalendars.length > 1) {
+            hhCalendars.forEach(c => {
+                const on = !calS.hidden.has(c.entity_id);
+                const b = calMk("button", "hh-tab cal-chip" + (on ? " is-on" : ""));
+                b.type = "button";
+                b.setAttribute("aria-pressed", on ? "true" : "false");
+                b.title = on ? "Antippen: diesen Kalender ausblenden" : "Antippen: diesen Kalender einblenden";
+                const dot = calMk("i", "cal-dot");
+                dot.style.background = calColor(c.entity_id);
+                b.append(dot, calMk("span", "", c.name));
+                b.onclick = () => calToggleCal(c.entity_id);
+                legend.appendChild(b);
+            });
+            legend.style.display = "";
+        } else legend.style.display = "none";
+    }
+    const st = document.getElementById("calStatus");
+    if (st) { st.textContent = calS.status; st.style.display = calS.status ? "" : "none"; }
+
+    const grid = document.getElementById("calGrid");
+    if (grid) {
+        grid.replaceChildren();
+        const today = calDay0(new Date());
+        const start = calGridStart();
+        for (let i = 0; i < 42; i++) {
+            const d = calAddDays(start, i);
+            const iso = calIso(d);
+            const evs = calEventsOn(calS.events, d);
+            const b = calMk("button", "cal-cell" + (d.getMonth() !== m ? " is-out" : "") + (d.getTime() === today.getTime() ? " is-today" : "") + (iso === calS.sel ? " is-sel" : "") + (evs.length ? " has-ev" : ""));
+            b.type = "button";
+            b.dataset.day = iso;
+            b.setAttribute("aria-label", `${calLongDate(d)}${evs.length ? ", " + evs.length + (evs.length === 1 ? " Termin" : " Termine") : ""}`);
+            b.appendChild(calMk("span", "cal-num", String(d.getDate())));
+            const dots = calMk("span", "cal-dots");
+            evs.slice(0, 3).forEach(e => { const dot = calMk("i", "cal-dot"); dot.style.background = calColor(e.cal); dots.appendChild(dot); });
+            if (evs.length > 3) dots.appendChild(calMk("small", "cal-more", "+" + (evs.length - 3)));
+            b.appendChild(dots);
+            const titles = calMk("span", "cal-titles");     // nur auf breiten Bildschirmen sichtbar
+            evs.slice(0, 2).forEach(e => {
+                const t = calMk("span", "cal-t", (e.allDay ? "" : calFmtTime(e.start) + " ") + e.title);
+                t.style.borderLeftColor = calColor(e.cal);
+                titles.appendChild(t);
+            });
+            if (evs.length > 2) titles.appendChild(calMk("span", "cal-t cal-t-more", `+${evs.length - 2} weitere`));
+            b.appendChild(titles);
+            b.onclick = () => calSelect(iso);
+            grid.appendChild(b);
+        }
+    }
+    calPaintDetail();
+}
+function calPaintDetail() {
+    const d = calFromIso(calS.sel) || calDay0(new Date());
+    const t = document.getElementById("calDayTitle");
+    if (t) t.textContent = calLongDate(d);
+    const canAdd = hhCalendars.some(c => c.can_create);
+    const add = document.getElementById("calAddBtn");
+    if (add) add.style.display = canAdd ? "" : "none";
+    const list = document.getElementById("calDayList");
+    if (!list) return;
+    list.replaceChildren();
+    if (!hhCalendars.length) {
+        list.appendChild(calMk("div", "ing-empty", "Noch kein Kalender gewählt. Wähle ihn in Home Assistant unter Einstellungen → Geräte & Dienste → Haushaltshilfe Pro → Konfigurieren."));
+        return;
+    }
+    const evs = calEventsOn(calS.events, d);
+    if (!evs.length) list.appendChild(calMk("div", "ing-empty", canAdd ? "Keine Termine an diesem Tag. Mit „＋ Termin“ legst du einen an." : "Keine Termine an diesem Tag."));
+    evs.forEach(e => list.appendChild(calEventRow(e, d)));
+    if (!canAdd) list.appendChild(calMk("div", "ing-sub cal-readonly", "Die gewählten Kalender erlauben keine neuen Termine (nur lesen)."));
+}
+function calEventRow(e, day) {
+    const row = calMk("div", "cal-ev");
+    row.style.borderLeftColor = calColor(e.cal);
+    const main = calMk("div", "cal-ev-main");
+    main.appendChild(calMk("div", "cal-ev-title", e.title));
+    const sub = [calTimeText(e, day), calRangeText(e), e.location ? "📍 " + e.location : "", hhCalendars.length > 1 ? "👤 " + calNameOf(e) : ""].filter(Boolean).join(" · ");
+    main.appendChild(calMk("div", "cal-ev-sub", sub));
+    if (e.description) main.appendChild(calMk("div", "cal-ev-note", e.description));
+    row.appendChild(main);
+    const info = calInfo(e.cal);
+    if (info && info.can_delete) {
+        const del = calMk("button", "hh-round cal-ev-del", "🗑️");
+        del.type = "button";
+        del.title = "Termin löschen";
+        del.setAttribute("aria-label", "Termin löschen");
+        del.onclick = () => calDeleteEvent(e);
+        row.appendChild(del);
+    }
+    return row;
+}
+
+// Wischen nach links/rechts blättert den Monat (Handy/Tablet)
+function calSwipeInit() {
+    const el = document.getElementById("calBody");
+    if (!el || el.dataset.swipe) return;
+    el.dataset.swipe = "1";
+    let sx = 0, sy = 0, t0 = 0, on = false;
+    el.addEventListener("touchstart", e => {
+        const g = e.target.closest ? e.target.closest("#calGrid, .cal-wdhead") : null;
+        if (!g || e.touches.length !== 1) { on = false; return; }
+        sx = e.touches[0].clientX; sy = e.touches[0].clientY; t0 = Date.now(); on = true;
+    }, { passive: true });
+    el.addEventListener("touchend", e => {
+        if (!on) return;
+        on = false;
+        const t = e.changedTouches[0];
+        const dx = t.clientX - sx, dy = t.clientY - sy;
+        if (Date.now() - t0 < 800 && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.6) calShift(dx < 0 ? 1 : -1);
+    }, { passive: true });
+}
+document.addEventListener("keydown", e => {
+    const m = document.getElementById("calModal");
+    if (!m || m.style.display === "none" || (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))) return;
+    const f = document.getElementById("calFormModal");
+    if (f && f.style.display !== "none") return;
+    if (e.key === "ArrowLeft") { e.preventDefault(); calShift(-1); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); calShift(1); }
+});
+
+// ---- Neuer Termin ----
+function calNew(dayIso) {
+    const writable = hhCalendars.filter(c => c.can_create);
+    if (!writable.length) { if (typeof ingToast === "function") ingToast("Die gewählten Kalender erlauben keine neuen Termine"); return; }
+    const d = calFromIso(typeof dayIso === "string" ? dayIso : calS.sel) || calDay0(new Date());
+    const sel = document.getElementById("cfCal");
+    sel.textContent = "";
+    writable.forEach(c => { const o = document.createElement("option"); o.value = c.entity_id; o.textContent = c.name; sel.appendChild(o); });
+    let pref = "";
+    try { pref = localStorage.getItem("hh_cal_last") || ""; } catch (e) { /* egal */ }
+    if (!writable.some(c => c.entity_id === pref)) pref = writable.some(c => c.entity_id === hhCalendarWrite) ? hhCalendarWrite : writable[0].entity_id;
+    sel.value = pref;
+    document.getElementById("cfCalRow").style.display = writable.length > 1 ? "" : "none";
+    document.getElementById("cfTitle").value = "";
+    document.getElementById("cfDate").value = calIso(d);
+    document.getElementById("cfUntil").value = "";
+    document.getElementById("cfLoc").value = "";
+    document.getElementById("cfNote").value = "";
+    const now = new Date();
+    let h = (calIso(d) === calIso(now) && now.getHours() >= 6 && now.getHours() < 21) ? now.getHours() + 1 : 9;
+    document.getElementById("cfFrom").value = `${calPad(h)}:00`;
+    document.getElementById("cfTo").value = `${calPad(Math.min(h + 1, 23))}:00`;
+    calFormMode(false);
+    const m = document.getElementById("calFormModal");
+    if (m) m.style.display = "flex";
+    setTimeout(() => { const t = document.getElementById("cfTitle"); if (t) t.focus(); }, 60);
+}
+function calFormMode(allDay) {
+    calS.allDay = !!allDay;
+    document.getElementById("cfTimeRow").style.display = allDay ? "none" : "";
+    document.getElementById("cfUntilRow").style.display = allDay ? "" : "none";
+    [["cfTabTime", !allDay], ["cfTabDay", allDay]].forEach(([id, on]) => {
+        const b = document.getElementById(id);
+        if (b) { b.classList.toggle("is-on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); }
+    });
+}
+// Beginn ändern: das Ende wandert mit (gleiche Dauer)
+function calFormFromChanged() {
+    const f = document.getElementById("cfFrom").value, t = document.getElementById("cfTo").value;
+    const a = /^(\d{2}):(\d{2})$/.exec(f);
+    if (!a) return;
+    const prev = calS.fromPrev || f;
+    calS.fromPrev = f;
+    const p = /^(\d{2}):(\d{2})$/.exec(prev), b = /^(\d{2}):(\d{2})$/.exec(t);
+    let dur = 60;
+    if (p && b) { const d0 = (+b[1] * 60 + +b[2]) - (+p[1] * 60 + +p[2]); if (d0 > 0) dur = d0; }
+    const end = Math.min(23 * 60 + 59, +a[1] * 60 + +a[2] + dur);
+    document.getElementById("cfTo").value = `${calPad(Math.floor(end / 60))}:${calPad(end % 60)}`;
+}
+function calFormClose() {
+    const m = document.getElementById("calFormModal");
+    if (m) m.style.display = "none";
+}
+function calToast(msg) { if (typeof ingToast === "function") ingToast(msg); }
+async function calFormSave() {
+    if (calS.saving) return;
+    const title = document.getElementById("cfTitle").value.trim();
+    if (!title) { calToast("Bitte einen Titel eingeben ✏️"); document.getElementById("cfTitle").focus(); return; }
+    const date = document.getElementById("cfDate").value;
+    if (!calFromIso(date)) { calToast("Bitte ein Datum wählen 📅"); return; }
+    const cal = document.getElementById("cfCal").value;
+    const payload = { action: "create", calendar: cal, summary: title, allDay: calS.allDay };
+    let ev;
+    if (calS.allDay) {
+        const until = document.getElementById("cfUntil").value;
+        if (until && until < date) { calToast("Das Ende liegt vor dem Beginn"); return; }
+        payload.start = date;
+        if (until) payload.end = until;
+        ev = { start: date, end: calIso(calAddDays(calFromIso(until || date), 1)), allDay: true };
+    } else {
+        const f = document.getElementById("cfFrom").value, t = document.getElementById("cfTo").value;
+        if (!/^\d{2}:\d{2}$/.test(f)) { calToast("Bitte eine Uhrzeit wählen 🕒"); return; }
+        const s = new Date(`${date}T${f}`);
+        const e = /^\d{2}:\d{2}$/.test(t) ? new Date(`${date}T${t}`) : new Date(s.getTime() + 3600000);
+        if (isNaN(s) || isNaN(e) || e <= s) { calToast("Das Ende muss nach dem Beginn liegen"); return; }
+        payload.start = s.toISOString();
+        payload.end = e.toISOString();
+        ev = { start: payload.start, end: payload.end, allDay: false };
+    }
+    const loc = document.getElementById("cfLoc").value.trim();
+    const note = document.getElementById("cfNote").value.trim();
+    if (loc) payload.location = loc;
+    if (note) payload.description = note;
+    calS.saving = true;
+    const btn = document.getElementById("cfSave");
+    if (btn) btn.disabled = true;
+    try {
+        const r = await fetch(`${getBaseUrl()}/api/haushaltshilfe/calendar`, {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+        });
+        let d = {};
+        try { d = await r.json(); } catch (e2) { /* egal */ }
+        if (r.ok && d.success) {
+            try { localStorage.setItem("hh_cal_last", cal); } catch (e3) { /* egal */ }
+            const norm = calNormEvent(Object.assign({ cal, calName: (calInfo(cal) || {}).name || "", summary: title, location: loc, description: note }, ev));
+            if (norm) calS.pend.push({ t: Date.now(), kind: "add", ev: norm });
+            calFormClose();
+            calInvalidate();
+            calToast(`📅 „${title}“ ist eingetragen`);
+            const m = document.getElementById("calModal");
+            if (m && m.style.display !== "none") {
+                const dd = calFromIso(date);
+                if (dd) { calS.sel = date; calS.month = { y: dd.getFullYear(), m: dd.getMonth() }; }
+                calRenderModal(true);
+            }
+            renderHomeCalendar();
+            setTimeout(() => { calInvalidate(); const mm = document.getElementById("calModal"); if (mm && mm.style.display !== "none") calRenderModal(true); renderHomeCalendar(); }, 3000);
+        } else {
+            await showAlert(d.message || `Der Termin konnte nicht gespeichert werden (Status ${r.status}).`, "Termin nicht gespeichert ⚠️");
+        }
+    } catch (err) {
+        console.error("❌ Termin speichern:", err);
+        await showAlert("Home Assistant ist gerade nicht erreichbar.", "Termin nicht gespeichert ⚠️");
+    } finally {
+        calS.saving = false;
+        if (btn) btn.disabled = false;
+    }
+}
+async function calDeleteEvent(e) {
+    const ok = await showDeleteModal(`Möchtest du „${e.title}“ wirklich löschen?`, "Termin löschen 🗑️");
+    if (!ok) return;
+    try {
+        const r = await fetch(`${getBaseUrl()}/api/haushaltshilfe/calendar`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "delete", calendar: e.cal, summary: e.rawTitle, allDay: e.allDay, start: e.allDay ? e.rawStart : e.start.toISOString() })
+        });
+        let d = {};
+        try { d = await r.json(); } catch (e2) { /* egal */ }
+        if (r.ok && d.success) {
+            calS.pend.push({ t: Date.now(), kind: "del", ev: e });
+            calInvalidate();
+            calToast("🗑️ Termin gelöscht");
+            const m = document.getElementById("calModal");
+            if (m && m.style.display !== "none") calRenderModal(true);
+            renderHomeCalendar();
+        } else {
+            await showAlert(d.message || `Der Termin konnte nicht gelöscht werden (Status ${r.status}).`, "Termin nicht gelöscht ⚠️");
+        }
+    } catch (err) {
+        console.error("❌ Termin löschen:", err);
+        await showAlert("Home Assistant ist gerade nicht erreichbar.", "Termin nicht gelöscht ⚠️");
+    }
 }
 
 // Klicks auf der Startseite (Erledigt, Geschäft öffnen, Bereich öffnen)
@@ -4383,9 +7725,34 @@ document.addEventListener("click", async (e) => {
         tab("shop");
     } else if (act === "done") {
         el.disabled = true;
-        await completeTodo(el.getAttribute("data-id"));
+        try {
+            await completeTodo(el.getAttribute("data-id"));
+        } finally {
+            el.disabled = false;   // bei Abbruch ("Wer hat es gemacht?") wieder bedienbar
+        }
         renderHomeTodos();
         updateAppBadges();
+    } else if (act === "maint-done") {
+        el.disabled = true;
+        try {
+            await maintComplete(el.getAttribute("data-id"));
+        } finally {
+            el.disabled = false;   // bei Abbruch ("Wer hat es gemacht?") wieder bedienbar
+        }
+        renderHomeTodos();
+    } else if (act === "maint-open") {
+        openMaint();
+    } else if (act === "stock-list") {
+        el.disabled = true;
+        try {
+            await stockToList(el.getAttribute("data-id"));
+        } finally {
+            el.disabled = false;
+        }
+    } else if (act === "stock-open") {
+        openStock();
+    } else if (act === "cal-open") {
+        calOpen(el.getAttribute("data-day") || "");
     }
 });
 

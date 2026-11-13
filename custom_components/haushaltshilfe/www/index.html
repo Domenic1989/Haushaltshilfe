@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
-    <title>Haushaltshilfe 🏠</title>
+    <title>Haus-Zentrale Pro 🏠</title>
 
     <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
@@ -15,19 +15,19 @@
     <meta name="referrer" content="same-origin">
 
     <!-- Stylesheets: erst das Grundgerüst, danach die Themes (überschreiben nur Farben/Optik) -->
-    <link rel="stylesheet" href="style.css?v=1.1.6">
-    <link rel="stylesheet" href="home.css?v=1.1.6">
-    <link rel="stylesheet" href="glass-theme.css?v=1.1.6">
-    <link rel="stylesheet" href="dark-theme.css?v=1.1.6">
-    <link rel="stylesheet" href="green-theme.css?v=1.1.6">
-    <link rel="stylesheet" href="blue-theme.css?v=1.1.6">
-    <link rel="stylesheet" href="light-theme.css?v=1.1.6">
-    <link rel="stylesheet" href="winter-theme.css?v=1.1.6">
-    <link rel="stylesheet" href="xmas-theme.css?v=1.1.6">
-    <link rel="stylesheet" href="newyear-theme.css?v=1.1.6">
-    <link rel="stylesheet" href="royal-theme.css?v=1.1.6">
-    <link rel="stylesheet" href="spring-theme.css?v=1.1.6">
-    <link rel="stylesheet" href="bayern-theme.css?v=1.1.6">
+    <link rel="stylesheet" href="style.css?v=2.0.0">
+    <link rel="stylesheet" href="home.css?v=2.0.0">
+    <link rel="stylesheet" href="glass-theme.css?v=2.0.0">
+    <link rel="stylesheet" href="dark-theme.css?v=2.0.0">
+    <link rel="stylesheet" href="green-theme.css?v=2.0.0">
+    <link rel="stylesheet" href="blue-theme.css?v=2.0.0">
+    <link rel="stylesheet" href="light-theme.css?v=2.0.0">
+    <link rel="stylesheet" href="winter-theme.css?v=2.0.0">
+    <link rel="stylesheet" href="xmas-theme.css?v=2.0.0">
+    <link rel="stylesheet" href="newyear-theme.css?v=2.0.0">
+    <link rel="stylesheet" href="royal-theme.css?v=2.0.0">
+    <link rel="stylesheet" href="spring-theme.css?v=2.0.0">
+    <link rel="stylesheet" href="bayern-theme.css?v=2.0.0">
 
     <!-- Layout-Stufe passend zum Zoom (steuert Navigation + Fensterform in style.css) -->
 <script>
@@ -173,6 +173,16 @@
                         <div class="home-body" id="home-todo-list"></div>
                         <button type="button" class="home-link" data-home-act="go" data-tab="todo">Alle Aufgaben →</button>
                     </li>
+                    <li class="home-card" id="home-card-calendar" style="display:none;">
+                        <div class="home-head"><h2>📅 Kalender</h2><span class="home-count is-zero" id="home-cal-count">0</span></div>
+                        <div class="home-body" id="home-cal-body"></div>
+                        <button type="button" class="home-link" data-home-act="cal-open">Ganzen Kalender öffnen →</button>
+                    </li>
+                    <li class="home-card" id="home-card-maint">
+                        <div class="home-head"><h2>🔧 Wartung</h2><span class="home-count" id="home-maint-count">0</span></div>
+                        <div class="home-body" id="home-maint-list"></div>
+                        <button type="button" class="home-link" data-home-act="maint-open">Alle Wartungen →</button>
+                    </li>
                     <li class="home-card" id="home-card-food">
                         <div class="home-head"><h2>🍽️ Essen diese Woche</h2></div>
                         <div class="home-body" id="home-food-list"></div>
@@ -182,6 +192,11 @@
                         <div class="home-head"><h2>🛒 Einkaufsliste</h2><span class="home-count" id="home-shop-count">0</span></div>
                         <div class="home-body" id="home-shop-list"></div>
                         <button type="button" class="home-link" data-home-act="go" data-tab="shop">Zur Einkaufsliste →</button>
+                    </li>
+                    <li class="home-card" id="home-card-stock">
+                        <div class="home-head"><h2>📦 Vorrat</h2><span class="home-count" id="home-stock-count">0</span></div>
+                        <div class="home-body" id="home-stock-list"></div>
+                        <button type="button" class="home-link" data-home-act="stock-open">Zum Vorrat →</button>
                     </li>
                     <li class="home-card" id="home-card-money">
                         <div class="home-head"><h2 id="home-money-title">💰 Ausgaben</h2></div>
@@ -198,9 +213,10 @@
                     <div class="sidebar" id="shopSidebar"></div>
                     <div class="main-content">
                         <div class="input-card"><input type="text" id="in-shop" class="main-input" placeholder="Was fehlt?"><button class="btn-add" onclick="addShop()">+</button></div>
-                        <div class="admin-row"><button class="admin-btn" onclick="addNewCat('shop')">📂 + Kategorie</button><button class="admin-btn" onclick="addNewFav('shop')">⭐️ + Favoriten</button></div>
+                        <div class="admin-row"><button class="admin-btn" onclick="addNewCat('shop')">📂 + Kategorie</button><button class="admin-btn" onclick="addNewFav('shop')">⭐️ + Favoriten</button><button class="admin-btn" id="btn-shop-stock" onclick="openStock()">📦 Vorrat</button></div>
                         <div class="cat-scroll" id="cats-shop"></div>
                         <div class="fav-grid" id="favs-shop"></div>
+                        <div class="hh-hint" data-hint="shop" style="display:none;"></div>
                         <ul id="list-shop"></ul>
                     </div>
                 </div>
@@ -227,7 +243,8 @@
     
                 <!-- NEU: Info-Label für den automatischen Wochenwechsel -->
                 <div class="food-auto-info">
-                    ✨ Automatischer Wochenwechsel Sonntags um 23:00 Uhr oder manuell über den Button
+                    <span id="foodAutoText">✨ Automatischer Wochenwechsel Sonntags um 23:00 Uhr oder manuell über den Button</span>
+                    <button type="button" id="foodAutoCfgBtn" class="food-auto-cfg" onclick="openWeekShiftSettings()" title="Wochenwechsel einstellen" aria-label="Wochenwechsel einstellen">⚙️</button>
                 </div>
 
                 <div class="week-grid">
@@ -394,9 +411,10 @@
                     <div class="sidebar" id="todoSidebar"></div>
                     <div class="main-content">
                         <div class="input-card"><input type="text" id="in-todo" class="main-input" placeholder="Aufgabe..."><button class="btn-add" style="background:var(--todo)" onclick="addTodo()">+</button></div>
-                        <div class="admin-row"><button class="admin-btn" onclick="addNewCat('todo')">📂 + Kategorie</button><button class="admin-btn" onclick="addNewFav('todo')">⭐️ + Favoriten</button></div>
+                        <div class="admin-row"><button class="admin-btn" onclick="addNewCat('todo')">📂 + Kategorie</button><button class="admin-btn" onclick="addNewFav('todo')">⭐️ + Favoriten</button><button class="admin-btn" id="btn-todo-history" onclick="openTodoHistory()">📜 Verlauf</button><button class="admin-btn" id="btn-todo-maint" onclick="openMaint()">🔧 Wartung</button></div>
                         <div class="cat-scroll" id="cats-todo"></div>
                         <div class="fav-grid" id="favs-todo"></div>
+                        <div class="hh-hint" data-hint="todo" style="display:none;"></div>
                         <ul id="list-todo"></ul>
                     </div>
                 </div>
@@ -420,6 +438,9 @@
                         </button>
                     </div>
 
+                    <div id="finance-saved-wrap"></div>
+
+                    <div class="hh-hint" data-hint="years" style="display:none;"></div>
                     <div id="years-container"></div>
                 </div>
 
@@ -439,6 +460,7 @@
                         </button>
                     </div>
 
+                    <div class="hh-hint" data-hint="months" style="display:none;"></div>
                     <div id="months-container"></div>
                 </div>
             </div>
@@ -473,6 +495,18 @@
         </div>
     </div>
 
+    <!-- Finanzen: Gespart Jahr für Jahr -->
+    <div id="savedModal" class="win win-large hh-dlg" style="display:none;">
+        <div class="win-card pick-card">
+            <h3 class="ing-title">💰 Gespart</h3>
+            <p class="ing-sub">Einkommen − Fixkosten − Ausgaben, Jahr für Jahr. Tippe auf ein Jahr, um die Monate zu sehen.</p>
+            <div id="saved-content" class="saved-list"></div>
+            <div class="ing-actions">
+                <button type="button" onclick="closeSavedModal()" class="hh-btn-secondary">Schließen</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Finanzen: Fixkosten-Vorlagen -->
     <div id="fixkostenModal" class="win win-large" style="display:none;">
         <div class="win-card">
@@ -480,17 +514,21 @@
             <button type="button" onclick="if(typeof cancelFixkostenEdit === 'function') cancelFixkostenEdit(); document.getElementById('fixkostenModal').style.display='none'" style="position:absolute; top:20px; right:20px; background:var(--bg); border:none; border-radius:50%; width:40px; height:40px; cursor:pointer; color:var(--text); font-weight:bold; z-index:100;">✕</button>
 
             <h2 style="margin-top:0; color:var(--text); font-size:1.3rem; display:flex; align-items:center; gap:10px;">
-                ⚙️ Standard-Fixkosten
+                ⚙️ Fixkosten &amp; Einkommen
             </h2>
             <p style="font-size:0.8rem; color:var(--gray); margin-bottom:15px; line-height: 1.3;">
-                Erstelle deine eigenen wiederkehrenden Posten. Diese werden beim Anlegen eines neuen Monats automatisch eingefügt.
+                Erstelle deine eigenen wiederkehrenden Posten (Fixkosten oder Einkommen, z. B. Gehalt). Diese werden beim Anlegen eines neuen Monats automatisch eingefügt.
             </p>
 
             <!-- Eingabefelder für NEUEN Eintrag -->
             <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px; background:var(--bg); padding:15px; border-radius:20px;">
+                <div id="tplKindRow" class="tpl-kind-row" data-kind="fix">
+                    <button type="button" class="tpl-kind-btn is-on" data-kind="fix" aria-pressed="true" onclick="setTplKind('fix')">📌 Fixkosten</button>
+                    <button type="button" class="tpl-kind-btn" data-kind="income" aria-pressed="false" onclick="setTplKind('income')">💰 Einkommen</button>
+                </div>
                 <div>
                     <label style="font-size:0.7rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:4px;">BEZEICHNUNG</label>
-                    <input type="text" id="tpl_title" placeholder="z. B. Miete, Strom, Internet, KFZ" style="width:100%; padding:12px; border-radius:12px; border:1px solid rgba(0,0,0,0.1); box-sizing:border-box; outline:none; font-size:0.9rem; background:var(--card); color:var(--text);">
+                    <input type="text" id="tpl_title" placeholder="z. B. Miete, Strom, Gehalt" style="width:100%; padding:12px; border-radius:12px; border:1px solid rgba(0,0,0,0.1); box-sizing:border-box; outline:none; font-size:0.9rem; background:var(--card); color:var(--text);">
                 </div>
 
                 <div class="fix-form-row" style="display:flex; gap:10px;">
@@ -684,6 +722,10 @@
                 <button type="button" class="zoom-btn" onclick="adjustSystemZoom(0.05)">+</button>
             </div>
 
+            <label class="hint-toggle-row">
+                <input type="checkbox" id="hintsToggle" checked> 💡 Bedienhinweise anzeigen <span>(z. B. „Ziehen zum Sortieren“, nur auf diesem Gerät)</span>
+            </label>
+
             <div class="settings-protected">
             <!-- TABS AUSWAHL -->
             <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:10px; letter-spacing: 0.5px;">SICHTBARE TABS IN DER LEISTE</label>
@@ -703,6 +745,29 @@
                 <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
                     <input type="checkbox" class="tab-toggle" value="finance" checked> 💶 Finanzen
                 </label>
+            </div>
+
+            <!-- ZUSATZFUNKTIONEN -->
+            <label style="font-size:0.75rem; font-weight:bold; color:var(--gray); display:block; margin-bottom:10px; letter-spacing: 0.5px;">ZUSATZFUNKTIONEN (EIN- / AUSSCHALTEN)</label>
+            <div class="feature-box" style="display:flex; flex-direction:column; gap:12px; margin-bottom:25px; background:#f9f9fb; padding:12px; border-radius:12px; border:1px solid #ddd;">
+                <div class="feature-row">
+                    <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                        <input type="checkbox" class="feature-toggle" value="stock"> 📦 Vorrat
+                    </label>
+                    <div class="feature-hint">Bestand mit Einkaufsgrenze. Aus = Knopf und Startseiten-Karte sind weg, die Daten bleiben erhalten.</div>
+                </div>
+                <div class="feature-row">
+                    <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                        <input type="checkbox" class="feature-toggle" value="maint"> 🔧 Wartung
+                    </label>
+                    <div class="feature-hint">Wiederkehrende Wartungen (z. B. Rauchmelder, Filter). Aus = Knopf und Startseiten-Karte sind weg, die Daten bleiben erhalten.</div>
+                </div>
+                <div class="feature-row">
+                    <label style="display:flex; align-items:center; gap:10px; font-size:0.9rem; cursor:pointer;">
+                        <input type="checkbox" class="feature-toggle" value="calendar"> 📅 Kalender
+                    </label>
+                    <div class="feature-hint">Zeigt die aktuelle Woche auf der Startseite. Welche Kalender, wählst du in Home Assistant unter Einstellungen → Geräte &amp; Dienste → Haushaltshilfe Pro → Konfigurieren.</div>
+                </div>
             </div>
             </div>
         
@@ -797,6 +862,275 @@
         </div>
     </div>
 
+    <!-- Wochenwechsel einstellen (Tag + Uhrzeit oder aus) – gilt für alle Geräte -->
+    <div id="weekShiftModal" class="win win-medium hh-dlg" style="display:none;">
+        <div class="win-card pick-card">
+            <h3 class="ing-title">⏱️ Wochenwechsel</h3>
+            <p class="ing-sub">Wann wird „Nächste Woche“ automatisch zu „Diese Woche“? Die Einstellung gilt für alle Geräte.</p>
+            <div class="pick-tabs">
+                <button type="button" id="wsOn" class="hh-tab" onclick="wsSetOn(true)">✨ Automatisch</button>
+                <button type="button" id="wsOff" class="hh-tab" onclick="wsSetOn(false)">✋ Nur manuell</button>
+            </div>
+            <div id="wsDetail" class="ws-detail">
+                <div class="ws-lab">Wochentag</div>
+                <div class="ws-days" id="wsDays">
+                    <button type="button" class="hh-tab" data-day="1" onclick="wsSetDay(1)">Mo</button>
+                    <button type="button" class="hh-tab" data-day="2" onclick="wsSetDay(2)">Di</button>
+                    <button type="button" class="hh-tab" data-day="3" onclick="wsSetDay(3)">Mi</button>
+                    <button type="button" class="hh-tab" data-day="4" onclick="wsSetDay(4)">Do</button>
+                    <button type="button" class="hh-tab" data-day="5" onclick="wsSetDay(5)">Fr</button>
+                    <button type="button" class="hh-tab" data-day="6" onclick="wsSetDay(6)">Sa</button>
+                    <button type="button" class="hh-tab" data-day="0" onclick="wsSetDay(0)">So</button>
+                </div>
+                <div class="ws-lab">Uhrzeit</div>
+                <input type="time" id="wsTime" class="hh-field" value="23:00">
+            </div>
+            <p id="wsPreview" class="ws-preview"></p>
+            <div class="ing-actions">
+                <button type="button" onclick="wsClose()" class="hh-btn-secondary">Abbrechen</button>
+                <button type="button" id="wsSaveBtn" onclick="wsSave()" class="hh-btn-primary">Speichern ✅</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verlauf: alle erledigten Aufgaben -->
+    <div id="historyModal" class="win win-medium hh-dlg" style="display:none;">
+        <div class="win-card pick-card">
+            <h3 class="ing-title">📜 Verlauf</h3>
+            <p class="ing-sub" id="histSub"></p>
+            <div id="histList" class="hist-list"></div>
+            <div class="ing-actions">
+                <button type="button" id="histClear" onclick="todoHistoryClear()" class="hh-btn-secondary">🗑️ Alles löschen</button>
+                <button type="button" onclick="closeTodoHistory()" class="hh-btn-primary">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wartung: wiederkehrende Wartungen mit Intervall (eigenes großes Fenster, eigener Verlauf) -->
+    <div id="maintModal" class="win win-large hh-dlg" style="display:none;">
+        <div class="win-card pick-card">
+            <h3 class="ing-title">🔧 Wartung</h3>
+            <p class="ing-sub" id="maintSub"></p>
+            <div class="pick-tabs">
+                <button type="button" id="maintTabList" class="hh-tab is-on" onclick="maintSetTab('list')">🔧 Wartungen</button>
+                <button type="button" id="maintTabHist" class="hh-tab" onclick="maintSetTab('hist')">📜 Verlauf</button>
+            </div>
+            <div id="maintList" class="maint-list"></div>
+            <div id="maintActList" class="ing-actions">
+                <button type="button" onclick="closeMaint()" class="hh-btn-secondary">Schließen</button>
+                <button type="button" onclick="maintNew()" class="hh-btn-primary">＋ Neu</button>
+            </div>
+            <div id="maintActHist" class="ing-actions" style="display:none;">
+                <button type="button" id="maintHistClear" onclick="maintHistClear()" class="hh-btn-secondary">🗑️ Alles löschen</button>
+                <button type="button" onclick="closeMaint()" class="hh-btn-primary">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wartung: Vorlage wählen, ändern oder löschen -->
+    <div id="maintTplModal" class="win win-medium hh-dlg" style="display:none;">
+        <div class="win-card pick-card">
+            <h3 class="ing-title">➕ Neue Wartung</h3>
+            <p class="ing-sub">Vorlage antippen oder selbst anlegen. Mit ✏️ änderst und mit 🗑️ löschst du Vorlagen.</p>
+            <div id="maintTplList" class="maint-tpl-list"></div>
+            <button type="button" id="maintTplReset" onclick="maintTplReset()" class="hh-btn-ghost maint-tpl-reset">↺ Standard-Vorlagen zurückholen</button>
+            <div class="ing-actions">
+                <button type="button" onclick="maintTplClose()" class="hh-btn-secondary">Abbrechen</button>
+                <button type="button" onclick="maintTplNew()" class="hh-btn-secondary">＋ Vorlage</button>
+                <button type="button" onclick="maintFormOpen('item', null, false, true)" class="hh-btn-primary">Leer starten</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wartung: Formular (neue Wartung, Wartung bearbeiten, Vorlage) -->
+    <div id="maintFormModal" class="win win-medium hh-dlg" style="display:none;">
+        <div class="win-card pick-card">
+            <h3 class="ing-title" id="mfTitle">🔧 Wartung</h3>
+            <div class="mf-fields">
+                <div class="ws-lab">Name</div>
+                <input type="text" id="mfName" class="hh-field" maxlength="60" placeholder="z. B. Heizung warten" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();maintFormSave();}">
+                <div class="ws-lab">Wiederholen alle</div>
+                <input type="number" id="mfEvery" class="hh-field" min="1" max="999" inputmode="numeric" oninput="maintFormEvery()">
+                <div class="mf-tabs" id="mfUnits">
+                    <button type="button" class="hh-tab" data-u="d" onclick="maintFormUnit('d')">Tage</button>
+                    <button type="button" class="hh-tab" data-u="w" onclick="maintFormUnit('w')">Wochen</button>
+                    <button type="button" class="hh-tab" data-u="m" onclick="maintFormUnit('m')">Monate</button>
+                    <button type="button" class="hh-tab" data-u="y" onclick="maintFormUnit('y')">Jahre</button>
+                </div>
+                <div class="ws-lab">Vorwarnung</div>
+                <div class="mf-tabs mf-warns" id="mfWarns">
+                    <button type="button" class="hh-tab" data-w="0" onclick="maintFormWarn(0)">Keine</button>
+                    <button type="button" class="hh-tab" data-w="3" onclick="maintFormWarn(3)">3 Tage</button>
+                    <button type="button" class="hh-tab" data-w="7" onclick="maintFormWarn(7)">1 Woche</button>
+                    <button type="button" class="hh-tab" data-w="14" onclick="maintFormWarn(14)">2 Wochen</button>
+                    <button type="button" class="hh-tab" data-w="30" onclick="maintFormWarn(30)">1 Monat</button>
+                </div>
+                <div id="mfNextRow" class="mf-next">
+                    <div class="ws-lab">Nächster Termin</div>
+                    <input type="date" id="mfNext" class="hh-field">
+                    <p class="ing-sub">Sobald du eine Wartung als erledigt markierst, beginnt das Intervall ab dem Tag neu.</p>
+                </div>
+            </div>
+            <div class="ing-actions">
+                <button type="button" onclick="maintFormClose(true)" class="hh-btn-secondary">Abbrechen</button>
+                <button type="button" onclick="maintFormSave()" class="hh-btn-primary">Speichern ✅</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kalender: Monat, Termine des Tages, Blättern -->
+    <div id="calModal" class="win win-large hh-dlg" style="display:none;">
+        <div class="win-card pick-card cal-card">
+            <div class="cal-nav">
+                <button type="button" class="hh-round cal-nav-btn" onclick="calShift(-1)" aria-label="Vorheriger Monat">‹</button>
+                <h3 class="ing-title" id="calTitle">Kalender</h3>
+                <button type="button" class="hh-round cal-nav-btn" onclick="calShift(1)" aria-label="Nächster Monat">›</button>
+            </div>
+            <div id="calLegend" class="cal-legend" style="display:none;"></div>
+            <p id="calStatus" class="ing-sub cal-status" style="display:none;"></p>
+            <div id="calBody" class="cal-body">
+                <div class="cal-left">
+                    <div class="cal-wdhead" aria-hidden="true"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+                    <div id="calGrid" class="cal-grid"></div>
+                    <p class="ing-sub cal-hint">‹ › oder nach links/rechts wischen blättert den Monat. Tippe einen Tag an, dann siehst du seine Termine.</p>
+                </div>
+                <div class="cal-right">
+                    <div class="cal-detail-head">
+                        <strong id="calDayTitle" class="cal-day-title"></strong>
+                        <button type="button" id="calAddBtn" onclick="calNew()" class="hh-btn-primary">＋ Termin</button>
+                    </div>
+                    <div id="calDayList" class="cal-day-list"></div>
+                </div>
+            </div>
+            <div class="ing-actions">
+                <button type="button" onclick="calToday()" class="hh-btn-secondary">Heute</button>
+                <button type="button" onclick="calClose()" class="hh-btn-secondary">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kalender: neuer Termin -->
+    <div id="calFormModal" class="win win-medium hh-dlg" style="display:none;">
+        <div class="win-card pick-card">
+            <h3 class="ing-title">📅 Neuer Termin</h3>
+            <div class="mf-fields cf-fields">
+                <div class="ws-lab">Titel</div>
+                <input type="text" id="cfTitle" class="hh-field" maxlength="120" placeholder="z. B. Zahnarzt" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();calFormSave();}">
+                <div id="cfCalRow">
+                    <div class="ws-lab">In welchen Kalender?</div>
+                    <select id="cfCal" class="hh-field"></select>
+                </div>
+                <div class="mf-tabs cf-mode">
+                    <button type="button" id="cfTabTime" class="hh-tab is-on" onclick="calFormMode(false)">🕒 Mit Uhrzeit</button>
+                    <button type="button" id="cfTabDay" class="hh-tab" onclick="calFormMode(true)">📆 Ganztägig</button>
+                </div>
+                <div class="ws-lab">Datum</div>
+                <input type="date" id="cfDate" class="hh-field">
+                <div id="cfTimeRow" class="sf-two">
+                    <div><div class="ws-lab">Von</div><input type="time" id="cfFrom" class="hh-field" onchange="calFormFromChanged()"></div>
+                    <div><div class="ws-lab">Bis</div><input type="time" id="cfTo" class="hh-field"></div>
+                </div>
+                <div id="cfUntilRow" style="display:none;">
+                    <div class="ws-lab">Bis (nur bei mehreren Tagen)</div>
+                    <input type="date" id="cfUntil" class="hh-field">
+                </div>
+                <div class="ws-lab">Ort (optional)</div>
+                <input type="text" id="cfLoc" class="hh-field" maxlength="120" autocomplete="off">
+                <div class="ws-lab">Notiz (optional)</div>
+                <input type="text" id="cfNote" class="hh-field" maxlength="300" autocomplete="off">
+            </div>
+            <div class="ing-actions">
+                <button type="button" onclick="calFormClose()" class="hh-btn-secondary">Abbrechen</button>
+                <button type="button" id="cfSave" onclick="calFormSave()" class="hh-btn-primary">Speichern ✅</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vorrat: Bestand mit Einkaufsgrenze (eigenes großes Fenster) -->
+    <div id="stockModal" class="win win-large hh-dlg" style="display:none;">
+        <div class="win-card pick-card">
+            <h3 class="ing-title">📦 Vorrat</h3>
+            <p class="ing-sub" id="stockSub"></p>
+            <div id="stockChips" class="stock-chips"></div>
+            <div id="stockList" class="stock-list"></div>
+            <div class="ing-mode stock-mode">
+                <label for="stockAskMode">Beim Auf-die-Liste-Setzen</label>
+                <select id="stockAskMode" onchange="stockSetAskMode(this.value)" class="hh-field">
+                    <option value="ask">Immer fragen (Laden wählen)</option>
+                    <option value="auto">Automatisch (hinterlegter Laden)</option>
+                </select>
+            </div>
+            <div class="ing-actions">
+                <button type="button" onclick="closeStock()" class="hh-btn-secondary">Schließen</button>
+                <button type="button" onclick="stockPlacesOpen()" class="hh-btn-secondary">📍 Orte</button>
+                <button type="button" onclick="stockNew()" class="hh-btn-primary">＋ Neu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vorrat: Orte anlegen, umbenennen, löschen -->
+    <div id="stockPlacesModal" class="win win-medium hh-dlg" style="display:none;">
+        <div class="win-card pick-card">
+            <h3 class="ing-title">📍 Orte</h3>
+            <p class="ing-sub">Wo bewahrst du Dinge auf? Löschst du einen Ort, bleiben die Artikel erhalten.</p>
+            <div id="stockPlacesList" class="stock-places-list"></div>
+            <div class="ing-actions">
+                <button type="button" onclick="stockPlacesClose()" class="hh-btn-secondary">Schließen</button>
+                <button type="button" onclick="stockPlaceAdd()" class="hh-btn-primary">＋ Ort</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vorrat: Formular (neuer Artikel, Artikel bearbeiten) -->
+    <div id="stockFormModal" class="win win-medium hh-dlg" style="display:none;">
+        <div class="win-card pick-card">
+            <h3 class="ing-title" id="sfTitle">📦 Artikel</h3>
+            <div class="mf-fields sf-fields">
+                <div id="sfSugRow">
+                    <div class="ws-lab">Vorschläge</div>
+                    <div id="sfSug" class="mf-tabs sf-sug"></div>
+                </div>
+                <div class="ws-lab">Name</div>
+                <input type="text" id="sfName" class="hh-field" maxlength="60" placeholder="z. B. Nudeln" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();stockFormSave();}">
+                <div class="ws-lab">Menge jetzt da</div>
+                <input type="number" id="sfQty" class="hh-field" min="0" max="999" inputmode="numeric">
+                <div class="mf-tabs sf-units" id="sfUnits">
+                    <button type="button" class="hh-tab" data-u="Stk" onclick="stockFormUnit('Stk')">Stück</button>
+                    <button type="button" class="hh-tab" data-u="Pack" onclick="stockFormUnit('Pack')">Packung</button>
+                    <button type="button" class="hh-tab" data-u="Fl." onclick="stockFormUnit('Fl.')">Flasche</button>
+                    <button type="button" class="hh-tab" data-u="Dose" onclick="stockFormUnit('Dose')">Dose</button>
+                    <button type="button" class="hh-tab" data-u="kg" onclick="stockFormUnit('kg')">kg</button>
+                    <button type="button" class="hh-tab" data-u="l" onclick="stockFormUnit('l')">Liter</button>
+                </div>
+                <div class="ws-lab">Ort</div>
+                <select id="sfPlace" class="hh-field"></select>
+                <div class="sf-two">
+                    <div>
+                        <div class="ws-lab">Startseite ab</div>
+                        <input type="number" id="sfWarn" class="hh-field" min="0" max="999" inputmode="numeric">
+                    </div>
+                    <div>
+                        <div class="ws-lab">Einkaufsliste ab</div>
+                        <input type="number" id="sfMin" class="hh-field" min="0" max="999" inputmode="numeric">
+                    </div>
+                </div>
+                <p class="ing-sub sf-hint">„Ab“ heißt: wenn nur noch so viel oder weniger da ist.</p>
+                <div class="ws-lab">Geschäft</div>
+                <select id="sfStore" class="hh-field" onchange="stockFormStoreChange()"></select>
+                <div class="ws-lab">Einkauf</div>
+                <div class="mf-tabs sf-mode" id="sfMode">
+                    <button type="button" class="hh-tab" data-k="a" onclick="stockFormMode('a')">🤖 Automatisch</button>
+                    <button type="button" class="hh-tab" data-k="h" onclick="stockFormMode('h')">✋ Von Hand</button>
+                </div>
+                <p class="ing-sub sf-hint" id="sfModeHint"></p>
+            </div>
+            <div class="ing-actions">
+                <button type="button" onclick="stockFormClose()" class="hh-btn-secondary">Abbrechen</button>
+                <button type="button" onclick="stockFormSave()" class="hh-btn-primary">Speichern ✅</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Essen auswählen oder eintippen -->
     <div id="mealPickModal" class="win win-medium hh-dlg" style="display:none;">
         <div class="win-card pick-card">
@@ -838,6 +1172,23 @@
             <div class="ing-actions">
                 <button type="button" onclick="recClose()" class="hh-btn-secondary">Schließen</button>
                 <button type="button" onclick="recNew()" class="hh-btn-primary">➕ Neues Rezept</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vorrat: auf die Einkaufsliste setzen – in welchen Laden? -->
+    <div id="stockAskModal" class="win win-small hh-dlg" style="display:none;">
+        <div class="modal-card win-card">
+            <h3 id="stockAskTitle">🛒 Auf die Einkaufsliste?</h3>
+            <p id="stockAskText"></p>
+            <div id="stockAskStoreWrap" class="ing-store ing-ask-store">
+                <label for="stockAskStore">In welchen Laden?</label>
+                <select id="stockAskStore" class="hh-field"></select>
+            </div>
+            <label class="ing-ask-remember"><input type="checkbox" id="stockAskRemember"> Künftig automatisch, ohne Nachfrage (mit dem hinterlegten Laden)</label>
+            <div>
+                <button type="button" onclick="stockAskAnswer(true)" class="hh-btn-primary">🛒 Auf die Liste</button>
+                <button type="button" id="stockAskNo" onclick="stockAskAnswer(false)" class="hh-btn-secondary">Nicht jetzt</button>
             </div>
         </div>
     </div>
@@ -975,8 +1326,8 @@
 </div>
 
 <!-- ============ 5. SKRIPTE (Cache-Busting) ============ -->
-<script src="config.js?v=1.1.6"></script>
-<script src="script.js?v=1.1.6"></script>
-<script src="finance.js?v=1.1.6"></script>
+<script src="config.js?v=2.0.0"></script>
+<script src="script.js?v=2.0.0"></script>
+<script src="finance.js?v=2.0.0"></script>
 </body>
 </html>

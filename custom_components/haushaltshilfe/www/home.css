@@ -7,8 +7,19 @@
 #v-home .home-sub {
     margin: -0.6rem 0 1rem;
     font-weight: 700;
-    opacity: 0.8;
+    opacity: 1;
 }
+
+/* Begrüßungszeile ("Guten Tag, … · Datum") – in jedem Theme gut lesbar:
+   helle Themes dunkel, dunkle/bunte Themes hell, jeweils mit leichtem Schatten */
+body.theme-royal  #v-home .home-sub { color: #ffffff; text-shadow: 0 1px 8px rgba(0, 20, 60, 0.95), 0 0 14px rgba(56, 189, 248, 0.55); }
+body.theme-bayern #v-home .home-sub { color: #ffffff; text-shadow: 0 1px 8px rgba(80, 0, 14, 0.95), 0 0 14px rgba(255, 215, 0, 0.4); }
+body.theme-xmas   #v-home .home-sub { color: #ffe27a; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.85); }
+body.theme-spring #v-home .home-sub { color: #ffffff; text-shadow: 0 1px 8px rgba(19, 78, 94, 0.9); }
+body.theme-glass  #v-home .home-sub { color: #ffffff; text-shadow: 0 1px 8px rgba(60, 0, 110, 0.8); }
+body.theme-blue   #v-home .home-sub { color: #002244; text-shadow: 0 1px 8px rgba(255, 255, 255, 0.85); }
+body.theme-green  #v-home .home-sub { color: #00302a; text-shadow: 0 1px 8px rgba(255, 255, 255, 0.85); }
+body.theme-winter #v-home .home-sub { color: #002b49; text-shadow: 0 1px 8px rgba(255, 255, 255, 0.9); }
 
 /* Raster: Handy 1 Spalte, Tablet 2, PC 3 – je nach Breite */
 #home-grid {
@@ -252,7 +263,9 @@
 #mealAskModal[data-tone="dark"] .win-card,
 #mealAskModal[data-tone="dark"] .win-card *,
 #ingAskModal[data-tone="dark"] .win-card,
-#ingAskModal[data-tone="dark"] .win-card * { color: #fff !important; }
+#ingAskModal[data-tone="dark"] .win-card *,
+#stockAskModal[data-tone="dark"] .win-card,
+#stockAskModal[data-tone="dark"] .win-card * { color: #fff !important; }
 #ingModal[data-tone="dark"] .ing-add input::placeholder { color: rgba(255, 255, 255, 0.55) !important; }
 #ingModal[data-tone="dark"] select option,
 #mealPickModal[data-tone="dark"] select option { color: #1c1c1e !important; }
@@ -285,7 +298,7 @@
 .ing-mode label { font-size: 0.8rem; font-weight: 700; opacity: 0.8; flex: 1 1 auto; }
 .ing-mode select { flex: 1 1 11rem; min-width: 0; padding: 0.5rem 0.7rem; border-radius: 12px; font-size: 0.9rem; font-weight: 700; outline: none; }
 
-#ingAskModal > .win-card { text-align: center; }
+#ingAskModal > .win-card, #stockAskModal > .win-card { text-align: center; }
 .ing-ask-remember { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin: 0 0 1rem; font-size: 0.85rem; font-weight: 700; opacity: 0.85; cursor: pointer; text-align: left; }
 .ing-ask-remember input { margin: 0; flex: 0 0 auto; width: 1.15rem; height: 1.15rem; accent-color: var(--primary, #007aff); }
 
@@ -444,5 +457,827 @@ input.day-input.is-pick { cursor: pointer; }
 }
 
 /* Laden-Auswahl in der Zutaten-Frage */
-#ingAskModal .ing-ask-store { justify-content: center; text-align: left; margin: -0.6rem 0 0.9rem; }
-#ingAskModal .ing-ask-store select { flex: 0 1 12rem; }
+#ingAskModal .ing-ask-store, #stockAskModal .ing-ask-store { justify-content: center; text-align: left; margin: -0.6rem 0 0.9rem; }
+#ingAskModal .ing-ask-store select, #stockAskModal .ing-ask-store select { flex: 0 1 12rem; }
+
+/* ==========================================================================
+   Themefähige Auswahllisten (ersetzen das System-Popup der Auswahlfelder)
+   Farben: --hh-field-* (Knopf) und --hh-opt-* (Liste) aus der Theme-Datei.
+   ========================================================================== */
+.hh-sel { position: relative; display: block; min-width: 0; }
+.hh-sel > select.hh-sel-native {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    margin: 0; padding: 0; border: 0; opacity: 0; pointer-events: none;
+}
+.ing-store .hh-sel { flex: 1 1 auto; }
+.ing-mode .hh-sel { flex: 1 1 12rem; }
+#ingAskModal .ing-ask-store .hh-sel, #stockAskModal .ing-ask-store .hh-sel { flex: 0 1 12rem; }
+
+.hh-dlg .win-card button.hh-sel-btn {
+    display: flex !important; align-items: center; justify-content: space-between; gap: 0.5rem;
+    width: 100% !important; min-height: 2.6rem !important; margin: 0 !important;
+    padding: 0.55rem 0.7rem !important; border-radius: 12px !important;
+    font-size: 0.95rem !important; font-weight: 700 !important; text-align: left;
+    background: var(--hh-field-bg, var(--bg)) !important;
+    color: var(--hh-field-fg, var(--text)) !important;
+    border: var(--hh-field-border, 1px solid rgba(128, 128, 128, 0.4)) !important;
+    -webkit-text-fill-color: var(--hh-field-fg, var(--text));
+    box-shadow: none !important;
+}
+.hh-dlg .ing-mode .win-card button.hh-sel-btn, .hh-dlg .win-card .ing-mode button.hh-sel-btn { font-size: 0.9rem !important; }
+.hh-dlg .win-card button.hh-sel-btn:focus-visible,
+.hh-dlg .win-card .hh-sel.is-open > button.hh-sel-btn {
+    box-shadow: var(--hh-focus-ring, 0 0 0 2px rgba(0, 122, 255, 0.3)) !important; outline: none;
+}
+.hh-sel-txt { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hh-sel-arrow {
+    flex: 0 0 auto; width: 0.5rem; height: 0.5rem; margin-right: 0.15rem;
+    border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+    transform: translateY(-25%) rotate(45deg); transition: transform 0.15s;
+}
+.hh-sel.is-open .hh-sel-arrow { transform: translateY(25%) rotate(-135deg); }
+
+.hh-sel-list {
+    position: absolute; z-index: 40; left: 0; top: calc(100% + 6px);
+    min-width: 100%; width: max-content; max-width: 100%;
+    box-sizing: border-box; padding: 6px; overflow-x: hidden; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 2px;
+    background: var(--hh-opt-bg, var(--bg)); color: var(--hh-opt-fg, var(--text));
+    border: var(--hh-field-border, 1px solid rgba(128, 128, 128, 0.4));
+    border-radius: 14px;
+    box-shadow: 0 0 0 1px rgba(128, 128, 128, 0.35), 0 14px 34px rgba(0, 0, 0, 0.4);
+    -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+}
+.hh-sel-list[hidden] { display: none; }
+.hh-sel.is-up .hh-sel-list { top: auto; bottom: calc(100% + 6px); }
+.hh-sel.is-right .hh-sel-list { left: auto; right: 0; }
+
+.hh-dlg .win-card button.hh-sel-opt {
+    display: flex !important; align-items: center; justify-content: space-between; gap: 0.8rem;
+    width: 100% !important; min-height: 2.8rem !important; margin: 0 !important;
+    padding: 0.55rem 0.8rem !important; border-radius: 10px !important;
+    font-size: 0.98rem !important; font-weight: 700 !important; line-height: 1.25; text-align: left;
+    background: transparent !important; color: inherit !important;
+    border: 0 none !important; box-shadow: none !important;
+    -webkit-text-fill-color: currentColor; white-space: normal; cursor: pointer;
+}
+.hh-dlg .win-card button.hh-sel-opt:hover,
+.hh-dlg .win-card button.hh-sel-opt:focus-visible { background: rgba(128, 128, 128, 0.24) !important; outline: none; }
+.hh-dlg .win-card button.hh-sel-opt.is-sel {
+    background: var(--hh-btn-bg, #007aff) !important;
+    color: var(--hh-btn-fg, #fff) !important;
+}
+.hh-sel-check { flex: 0 0 auto; font-weight: 900; visibility: hidden; }
+.hh-sel-opt.is-sel .hh-sel-check { visibility: visible; }
+
+/* ==========================================================================
+   "Zugeordnet an" (Aufgabe hinzufügen / bearbeiten): Knopf statt System-Popup.
+   Das Aussehen (Farben, Rahmen, Rundung) kopiert das Skript vom echten Auswahlfeld.
+   ========================================================================== */
+.hh-assign-btn {
+    display: flex !important; align-items: center; justify-content: space-between; gap: 0.6rem;
+    width: 100% !important; box-sizing: border-box !important; margin: 0 0 15px 0 !important;
+    text-align: left; line-height: 1.25; cursor: pointer;
+}
+.hh-assign-txt { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hh-assign-arrow { flex: 0 0 auto; opacity: 0.8; font-size: 0.8rem; }
+.hh-assign-btn:active { transform: scale(0.99); }
+.hh-assign-btn:focus-visible { outline: 2px solid currentColor !important; outline-offset: 2px; }
+
+/* ==========================================================================
+   Aufgaben: Bearbeiten (✏️) und Löschen (🗑️) im Theme-Look
+   Farben kommen aus den --hh-* Variablen der Theme-Dateien (Nebenknopf).
+   ========================================================================== */
+#list-todo li .todo-btn.todo-btn-icon {
+    background: var(--hh-sec-bg, #f2f2f7) !important;
+    color: var(--hh-sec-fg, var(--text, #1c1c1e)) !important;
+    border: var(--hh-sec-border, 0 none) !important;
+    box-shadow: none !important;
+    cursor: pointer;
+}
+#list-todo li .todo-btn.todo-btn-icon:active { transform: scale(0.96); }
+/* Löschen bekommt einen leichten Rot-Ton, damit man es nicht verwechselt */
+#list-todo li .todo-btn.todo-btn-icon.todo-btn-del {
+    border-color: rgba(229, 57, 53, 0.7) !important;
+    box-shadow: inset 0 0 0 100px rgba(229, 57, 53, 0.16) !important;
+}
+
+/* ==========================================================================
+   Datum- und Uhrzeit-Auswahl (Aufgabe hinzufügen / bearbeiten)
+   Fenster: .cook-modal-overlay > .hh-dt-card (Lage/Zentrierung aus style.css)
+   ========================================================================== */
+html body .cook-modal-overlay > .cook-modal-card.hh-dt-card {
+    background: var(--hh-card-bg, var(--card)) !important;
+    color: var(--hh-text, var(--text)) !important;
+    border: var(--hh-card-border, 0 none) !important;
+    border-radius: var(--hh-card-radius, 26px) !important;
+    box-shadow: var(--hh-card-shadow, 0 20px 50px rgba(0, 0, 0, 0.3)) !important;
+    -webkit-backdrop-filter: var(--hh-card-blur, none);
+    backdrop-filter: var(--hh-card-blur, none);
+    overflow: hidden !important;
+    gap: 10px;
+    padding: 16px !important;
+    max-width: 26rem !important;
+    container-type: inline-size;
+    container-name: hhdt;
+}
+.hh-dt-card .hh-dt-title {
+    margin: 0 !important; text-align: center; font-size: 1.2rem;
+    color: var(--hh-head, inherit); text-shadow: var(--hh-head-shadow, none);
+}
+.hh-dt-card .hh-dt-sum {
+    text-align: center; font-weight: 800; font-size: 0.95rem;
+    padding: 0.45rem 0.6rem; border-radius: 12px;
+    background: var(--hh-row-bg, rgba(128, 128, 128, 0.13));
+}
+.hh-dt-card .hh-dt-tabs { display: flex; gap: 8px; }
+.hh-dt-card .hh-dt-body {
+    flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto;
+    -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding: 2px;
+}
+.hh-dt-card .hh-dt-nav { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.hh-dt-card .hh-dt-month { flex: 1 1 auto; min-width: 0; text-align: center; font-weight: 900; font-size: 1.05rem; }
+.hh-dt-card .hh-dt-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.hh-dt-card .hh-dt-wd { margin-bottom: 4px; }
+.hh-dt-card .hh-dt-wd span { font-size: 0.75rem; font-weight: 800; opacity: 0.75; text-align: center; padding: 2px 0; }
+.hh-dt-card .hh-dt-tgrid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.hh-dt-card .hh-dt-clock {
+    text-align: center; font-size: 2.3rem; font-weight: 900; letter-spacing: 0.06em; line-height: 1.2;
+    margin: 2px 0 8px; color: var(--hh-head, inherit); text-shadow: var(--hh-head-shadow, none);
+    font-variant-numeric: tabular-nums;
+}
+.hh-dt-card .hh-dt-lab {
+    text-align: left; font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.04em; opacity: 0.8; margin: 8px 0 4px;
+}
+.hh-dt-card .hh-dt-lab-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hh-dt-card .hh-dt-steps { display: flex; gap: 6px; }
+.hh-dt-card .hh-dt-foot { display: flex; flex-wrap: wrap; gap: 6px; align-items: stretch; }
+
+/* Alle Knöpfe im Fenster: eigene Klassen, damit globale Knopf-Regeln nicht stören */
+html body .hh-dt-card button.hh-dt-day,
+html body .hh-dt-card button.hh-dt-cell {
+    width: auto !important; min-width: 0 !important; height: 2.3rem !important; min-height: 0 !important;
+    margin: 0 !important; padding: 0 !important; border-radius: 10px !important;
+    font-size: 0.95rem !important; font-weight: 700 !important; line-height: 1 !important;
+    background: var(--hh-row-bg, rgba(128, 128, 128, 0.13)) !important;
+    color: var(--hh-text, var(--text)) !important;
+    -webkit-text-fill-color: currentColor !important;
+    border: 1px solid transparent !important; box-shadow: none !important; cursor: pointer;
+}
+html body .hh-dt-card button.hh-dt-day.is-out { opacity: 0.5; }
+html body .hh-dt-card button.hh-dt-day.is-today { box-shadow: inset 0 0 0 2px var(--hh-accent, currentColor) !important; }
+html body .hh-dt-card button.hh-dt-day.is-sel,
+html body .hh-dt-card button.hh-dt-cell.is-sel {
+    background: var(--hh-btn-bg, #007aff) !important;
+    color: var(--hh-btn-fg, #fff) !important;
+    border: var(--hh-btn-border, 1px solid transparent) !important;
+    box-shadow: var(--hh-btn-shadow, none) !important;
+    font-weight: 900 !important; opacity: 1;
+}
+html body .hh-dt-card button.hh-dt-day:focus-visible,
+html body .hh-dt-card button.hh-dt-cell:focus-visible,
+html body .hh-dt-card button.hh-dt-nbtn:focus-visible,
+html body .hh-dt-card button.hh-dt-step:focus-visible,
+html body .hh-dt-card button.hh-dt-tab:focus-visible { outline: 2px solid currentColor !important; outline-offset: 2px; }
+
+html body .hh-dt-card button.hh-dt-nbtn,
+html body .hh-dt-card button.hh-dt-step {
+    flex: 0 0 auto; width: 2.3rem !important; min-width: 0 !important; height: 2.3rem !important; min-height: 0 !important;
+    margin: 0 !important; padding: 0 !important; border-radius: 10px !important;
+    font-size: 1.2rem !important; font-weight: 900 !important; line-height: 1 !important;
+    background: var(--hh-sec-bg, rgba(128, 128, 128, 0.28)) !important;
+    color: var(--hh-sec-fg, var(--hh-text, var(--text))) !important;
+    -webkit-text-fill-color: currentColor !important;
+    border: var(--hh-sec-border, 0 none) !important; box-shadow: none !important; cursor: pointer;
+}
+html body .hh-dt-card button.hh-dt-step { width: 3rem !important; font-size: 0.95rem !important; }
+
+html body .hh-dt-card button.hh-dt-tab {
+    flex: 1 1 0; width: auto !important; min-width: 0 !important; min-height: 0 !important; margin: 0 !important;
+    padding: 0.5rem 0.4rem !important; border-radius: 12px !important;
+    font-size: 0.92rem !important; font-weight: 700 !important;
+    background: transparent !important; color: var(--hh-chip-fg, inherit) !important;
+    -webkit-text-fill-color: currentColor !important;
+    border: 1px solid var(--hh-chip-line, rgba(128, 128, 128, 0.5)) !important; box-shadow: none !important; cursor: pointer;
+}
+html body .hh-dt-card button.hh-dt-tab.is-on {
+    background: var(--hh-chip-on-bg, rgba(128, 128, 128, 0.4)) !important;
+    color: var(--hh-chip-on-fg, inherit) !important;
+    border-color: var(--hh-chip-on-line, rgba(128, 128, 128, 0.9)) !important;
+    font-weight: 900 !important;
+}
+
+html body .hh-dt-card button.hh-dt-btn-ok,
+html body .hh-dt-card button.hh-dt-btn-no,
+html body .hh-dt-card button.hh-dt-btn-q {
+    width: auto !important; min-width: max-content !important; min-height: 2.6rem !important; margin: 0 !important;
+    white-space: nowrap !important;
+    padding: 0.55rem 0.5rem !important; border-radius: 12px !important;
+    font-size: 0.95rem !important; font-weight: 800 !important; cursor: pointer;
+    -webkit-text-fill-color: currentColor !important;
+}
+html body .hh-dt-card button.hh-dt-btn-ok {
+    flex: 1.5 1 0;
+    background: var(--hh-btn-bg, #007aff) !important; color: var(--hh-btn-fg, #fff) !important;
+    border: var(--hh-btn-border, 0 none) !important; box-shadow: var(--hh-btn-shadow, none) !important;
+}
+html body .hh-dt-card button.hh-dt-btn-no {
+    flex: 1 1 0;
+    background: var(--hh-sec-bg, rgba(128, 128, 128, 0.28)) !important;
+    color: var(--hh-sec-fg, var(--hh-text, var(--text))) !important;
+    border: var(--hh-sec-border, 0 none) !important; box-shadow: none !important;
+}
+html body .hh-dt-card button.hh-dt-btn-q {
+    flex: 0 0 auto;
+    background: transparent !important; color: var(--hh-sec-fg, var(--hh-text, var(--text))) !important;
+    border: var(--hh-ghost-border, 1px solid rgba(128, 128, 128, 0.45)) !important; box-shadow: none !important;
+}
+
+/* Schmales Fenster (z. B. bei starkem App-Zoom): Monatsname eigene Zeile, Knöpfe untereinander */
+@container hhdt (max-width: 21.5rem) {
+    .hh-dt-card .hh-dt-nav { flex-wrap: wrap; row-gap: 6px; }
+    .hh-dt-card .hh-dt-month { order: -1; flex: 1 1 100%; }
+    html body .hh-dt-card button.hh-dt-nbtn { flex: 1 1 0; width: auto !important; }
+    .hh-dt-card .hh-dt-sum { font-size: 0.85rem; }
+    .hh-dt-card .hh-dt-foot { flex-wrap: wrap; }
+    html body .hh-dt-card button.hh-dt-btn-ok { order: -1; flex: 1 1 100%; }
+    .hh-dt-card .hh-dt-clock { font-size: 1.9rem; }
+}
+
+/* ==========================================================================
+   Wochenplan: Hinweis "Automatischer Wochenwechsel Sonntags um 23:00 Uhr …"
+   Bekommt in jedem Theme den Karten-Look (Farben aus --hh-*), damit er immer lesbar ist.
+   ========================================================================== */
+#v-food .food-auto-info {
+    background: var(--hh-card-bg, rgba(128, 128, 128, 0.1));
+    color: var(--hh-text, var(--text, #1c1c1e));
+    -webkit-text-fill-color: currentColor;
+    border: 1px solid var(--hh-chip-line, rgba(128, 128, 128, 0.25));
+    -webkit-backdrop-filter: var(--hh-card-blur, none);
+    backdrop-filter: var(--hh-card-blur, none);
+    text-shadow: none;
+    opacity: 1;
+}
+
+/* ==========================================================================
+   Wochenplan: ⚙️ am Hinweis + Fenster "Wochenwechsel einstellen"
+   ========================================================================== */
+#v-food .food-auto-info { display: flex; align-items: center; justify-content: center; gap: 0.6rem; }
+#v-food .food-auto-info > span { min-width: 0; }
+#v-food .food-auto-info button.food-auto-cfg {
+    flex: 0 0 auto; width: 2.1rem !important; min-width: 0 !important; height: 2.1rem !important; min-height: 0 !important;
+    margin: 0 !important; padding: 0 !important; border-radius: 50% !important;
+    font-size: 1rem !important; line-height: 1 !important; cursor: pointer;
+    background: var(--hh-sec-bg, rgba(128, 128, 128, 0.28)) !important;
+    color: var(--hh-sec-fg, var(--hh-text, var(--text))) !important;
+    border: var(--hh-sec-border, 1px solid rgba(128, 128, 128, 0.4)) !important;
+    box-shadow: none !important;
+}
+#v-food .food-auto-info button.food-auto-cfg:active { transform: scale(0.94); }
+
+.ws-detail { display: flex; flex-direction: column; gap: 0.4rem; transition: opacity 0.15s; }
+.ws-detail.is-off { opacity: 0.4; pointer-events: none; }
+.ws-lab { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.8; text-align: left; }
+.ws-days { display: flex; gap: 0.35rem; }
+.hh-dlg .win-card .ws-days button.hh-tab { padding: 0.65rem 0; }
+.ws-preview {
+    margin: 0; text-align: center; font-size: 0.9rem; font-weight: 700; line-height: 1.35;
+    padding: 0.55rem 0.7rem; border-radius: 12px;
+    background: var(--hh-row-bg, rgba(128, 128, 128, 0.13));
+}
+#weekShiftModal .ing-sub { margin-bottom: 0.3rem; }
+.hh-dlg #wsTime {
+    width: 100%; box-sizing: border-box; padding: 0.75rem 0.9rem; border-radius: 12px;
+    font-family: inherit; font-size: 1rem; font-weight: 700;
+}
+.ws-preview { margin: 0.25rem 0 0.5rem; }
+
+/* ==========================================================================
+   Aufgaben: Verlauf der erledigten Aufgaben (Fenster "📜 Verlauf")
+   ========================================================================== */
+#historyModal > .win-card { text-align: left; gap: 0.7rem; justify-content: flex-start; overflow-x: hidden; overflow-y: auto; }
+#historyModal > .win-card > * { flex: 0 0 auto; min-width: 0; }
+#historyModal > .win-card > .hist-list { flex: 1 1 auto; min-height: 8rem; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 0.4rem; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.hist-person { display: flex; align-items: center; gap: 0.5rem; margin: 0.7rem 0 0.1rem; font-size: 1.05rem; font-weight: 900; color: var(--hh-head, inherit); text-shadow: var(--hh-head-shadow, none); }
+.hist-person:first-child { margin-top: 0; }
+.hist-person-name { min-width: 0; overflow-wrap: anywhere; }
+.hist-count { flex: 0 0 auto; font-size: 0.7rem; font-weight: 800; padding: 0.1rem 0.55rem; border-radius: 999px; background: var(--hh-badge-bg, rgba(128, 128, 128, 0.35)); color: var(--hh-badge-fg, inherit); text-shadow: none; }
+.hist-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.7rem; border-radius: 12px; background: var(--hh-row-bg, rgba(128, 128, 128, 0.13)); flex: 0 0 auto; }
+.hist-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.hist-name { font-weight: 800; font-size: 1rem; overflow-wrap: anywhere; }
+.hist-meta { font-size: 0.82rem; font-weight: 700; opacity: 0.85; overflow-wrap: anywhere; }
+.hist-time { font-size: 0.8rem; font-weight: 600; opacity: 0.8; }
+.hh-dlg .win-card button.hist-del { flex: 0 0 auto; width: 2.4rem; height: 2.4rem; font-size: 1.05rem; }
+#histClear:disabled { opacity: 0.5; }
+
+/* ==========================================================================
+   "Wer hat es gemacht?" (Auswahl beim Erledigen / Zurücksetzen)
+   ========================================================================== */
+.hh-who-card .hh-who-sub { text-align: center; font-size: 0.9rem; font-weight: 700; opacity: 0.85; overflow-wrap: anywhere; }
+html body .cook-modal-overlay .cook-modal-option.hh-who-cancel { font-weight: 700 !important; opacity: 0.88; }
+
+/* Glass: dunkle Karte -> Überschrift/Text der Auswahl-Popups hell (war dunkel auf dunkel) */
+html body.theme-glass .cook-modal-overlay > .cook-modal-card { color: var(--hh-text, #fff) !important; }
+html body.theme-glass .cook-modal-overlay > .cook-modal-card > h3 { color: var(--hh-head, #e879f9) !important; text-shadow: var(--hh-head-shadow, none); }
+
+/* ==========================================================================
+   Wartung (Fenster "🔧 Wartung", Vorlagen, Formular) + Startseite
+   ========================================================================== */
+#maintModal > .win-card { text-align: left; gap: 0.7rem; justify-content: flex-start; overflow: hidden; }
+#maintModal > .win-card > * { flex: 0 0 auto; min-width: 0; }
+#maintModal > .win-card > .maint-list { flex: 1 1 auto; min-height: 8rem; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 0.45rem; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+#maintModal .ing-title { text-align: center; }
+#maintModal .ing-sub { text-align: center; }
+.maint-row {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.6rem;
+    padding: 0.6rem 0.75rem; border-radius: 12px; flex: 0 0 auto;
+    background: var(--hh-row-bg, rgba(128, 128, 128, 0.13));
+    border-left: 5px solid transparent;
+}
+.maint-row.maint-s-over { border-left-color: #e5484d; }
+.maint-row.maint-s-soon { border-left-color: #f5a524; }
+.maint-main { flex: 1 1 11rem; min-width: 0; display: flex; flex-direction: column; gap: 0.12rem; }
+.maint-name { font-weight: 800; font-size: 1.02rem; overflow-wrap: anywhere; }
+.maint-meta { font-size: 0.8rem; font-weight: 600; opacity: 0.8; overflow-wrap: anywhere; }
+.maint-due { font-size: 0.88rem; font-weight: 800; overflow-wrap: anywhere; }
+.maint-btns { display: flex; gap: 0.4rem; margin-left: auto; flex: 0 0 auto; }
+.hh-dlg .win-card button.maint-btn { flex: 0 0 auto; width: 2.5rem; height: 2.5rem; font-size: 1.05rem; }
+.hh-dlg .win-card button.maint-ok {
+    background: var(--hh-btn-bg, #007aff) !important; color: var(--hh-btn-fg, #fff) !important;
+    border: var(--hh-btn-border, none) !important; box-shadow: var(--hh-btn-shadow, none) !important;
+}
+#maintActHist button:disabled, #maintHistClear:disabled { opacity: 0.5; }
+
+/* Vorlagen */
+.maint-tpl-list { display: flex; flex-direction: column; gap: 0.4rem; overflow-y: auto; min-height: 0; max-height: min(24rem, 52vh); -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.maint-tpl-row { display: flex; align-items: center; gap: 0.4rem; flex: 0 0 auto; }
+.hh-dlg .win-card button.maint-tpl-main { flex: 1 1 0; min-width: 0; width: auto; }
+.maint-tpl-name { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; min-width: 0; text-align: left; }
+.maint-tpl-name strong { font-weight: 800; overflow-wrap: anywhere; }
+.maint-tpl-name small { opacity: 0.75; font-weight: 600; font-size: 0.78rem; }
+.hh-dlg .win-card button.maint-tpl-reset { min-height: 0; padding: 0.55rem 0.8rem; margin: 0; border-radius: 12px; font-weight: 700; font-size: 0.85rem; }
+#maintTplModal > .win-card { gap: 0.7rem; justify-content: flex-start; text-align: left; }
+#maintTplModal > .win-card > * { flex: 0 0 auto; min-width: 0; }
+#maintTplModal .ing-title, #maintTplModal .ing-sub { text-align: center; }
+#maintTplModal .ing-actions { flex-wrap: wrap; }
+#maintTplModal .ing-actions button { flex: 1 1 6.5rem; min-width: 0; font-size: 0.9rem; padding: 0.4rem 0.3rem; }
+
+/* Formular */
+.mf-fields, .mf-next { display: flex; flex-direction: column; gap: 0.4rem; text-align: left; }
+.mf-tabs { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.hh-dlg .win-card .mf-tabs button.hh-tab { flex: 1 1 auto; min-width: 4.2rem; padding: 0.6rem 0.4rem; }
+.mf-tabs.mf-warns { display: grid; grid-template-columns: repeat(auto-fit, minmax(5.2rem, 1fr)); }
+.mf-fields .ws-lab { margin-top: 0.3rem; }
+.hh-dlg #mfName, .hh-dlg #mfEvery, .hh-dlg #mfNext {
+    width: 100%; box-sizing: border-box; padding: 0.75rem 0.9rem; border-radius: 12px;
+    font-family: inherit; font-size: 1rem; font-weight: 700;
+}
+#maintFormModal > .win-card { gap: 0.7rem; justify-content: flex-start; }
+#maintFormModal > .win-card > * { flex: 0 0 auto; min-width: 0; }
+#maintFormModal .ing-title { text-align: center; }
+#maintFormModal .mf-next .ing-sub { margin-top: 0.1rem; }
+#btn-todo-maint { white-space: nowrap; }
+
+/* Startseite: Karte "Wartung" */
+.home-empty .home-empty-sub { display: block; margin-top: 0.25rem; font-size: 0.8rem; font-weight: 600; opacity: 0.75; }
+
+/* ==========================================================================
+   Vorrat (Fenster "📦 Vorrat", Orte, Formular) + Startseite
+   ========================================================================== */
+#stockModal > .win-card { text-align: left; gap: 0.7rem; justify-content: flex-start; overflow: hidden; }
+#stockModal > .win-card > * { flex: 0 0 auto; min-width: 0; }
+#stockModal > .win-card > .stock-list { flex: 1 1 auto; min-height: 8rem; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 0.45rem; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+#stockModal .ing-title, #stockModal .ing-sub { text-align: center; }
+#stockModal .ing-actions { flex-wrap: wrap; }
+#stockModal .ing-actions button { flex: 1 1 6rem; min-width: 0; font-size: 0.9rem; padding: 0.4rem 0.3rem; }
+.stock-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.hh-dlg .win-card .stock-chips button.hh-tab { flex: 0 1 auto; min-width: 0; padding: 0.45rem 0.75rem; font-size: 0.85rem; }
+
+.stock-row {
+    display: flex; flex-direction: column; gap: 0.5rem;
+    padding: 0.65rem 0.75rem; border-radius: 12px; flex: 0 0 auto;
+    background: var(--hh-row-bg, rgba(128, 128, 128, 0.13));
+    border-left: 5px solid transparent;
+}
+.stock-row.stock-s-empty, .stock-row.stock-s-low { border-left-color: #e5484d; }
+.stock-row.stock-s-warn { border-left-color: #f5a524; }
+.stock-top { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 0.4rem 0.6rem; }
+.stock-main { flex: 1 1 9rem; min-width: 0; display: flex; flex-direction: column; gap: 0.12rem; }
+.stock-name { font-weight: 800; font-size: 1.02rem; overflow-wrap: anywhere; }
+.stock-meta { font-size: 0.8rem; font-weight: 600; opacity: 0.8; overflow-wrap: anywhere; }
+.stock-lim { font-size: 0.74rem; font-weight: 600; opacity: 0.7; overflow-wrap: anywhere; }
+.stock-pill {
+    flex: 0 1 auto; max-width: 100%; padding: 0.2rem 0.6rem; border-radius: 999px;
+    font-size: 0.74rem; font-weight: 800; line-height: 1.25; text-align: center; border: 1px solid transparent;
+}
+.stock-pill.s-empty, .stock-pill.s-low { color: #fff; background: #d43a43; border-color: transparent; }
+.stock-pill.s-warn { color: #fff; background: #b86a00; border-color: transparent; }
+.stock-pill.s-list { color: inherit; background: rgba(128, 128, 128, 0.2); border-color: rgba(128, 128, 128, 0.38); }
+.stock-bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+.stock-step { display: flex; align-items: center; gap: 0.35rem; }
+.hh-dlg .win-card button.stock-qty {
+    flex: 0 0 auto; width: auto; min-width: 4.2rem; height: 2.5rem; min-height: 0; margin: 0; padding: 0 0.7rem;
+    border-radius: 12px; font-weight: 900; font-size: 1.05rem; white-space: nowrap;
+    background: var(--hh-field-bg, var(--bg)) !important; color: var(--hh-field-fg, var(--text)) !important;
+    border: var(--hh-field-border, 1px solid rgba(128, 128, 128, 0.4)) !important; box-shadow: none !important;
+    -webkit-text-fill-color: var(--hh-field-fg, var(--text));
+}
+.hh-dlg .win-card button.stock-minus:disabled { opacity: 0.4; }
+.hh-dlg .win-card button.stock-list {
+    background: var(--hh-btn-bg, #007aff) !important; color: var(--hh-btn-fg, #fff) !important;
+    border: var(--hh-btn-border, none) !important; box-shadow: var(--hh-btn-shadow, none) !important;
+}
+
+/* Tablet und PC: das Vorrat-Fenster füllt die ganze Seite, die Artikel laufen in Spalten */
+#stockModal > .win-card { max-width: none; width: 100%; }
+.stock-cols { display: flex; flex-direction: column; gap: 0.45rem; flex: 0 0 auto; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #stockModal > .win-card { height: calc(var(--z-vh, 100vh) - 2 * var(--z-edge, 16px)); }
+:where(html:where([data-bp="m"], [data-bp="l"])) #stockModal .stock-cols { display: block; column-width: 18rem; column-gap: 0.8rem; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #stockModal .stock-cols > * { break-inside: avoid; margin: 0 0 0.6rem; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #stockModal .stock-cols > .hist-person { break-after: avoid; margin: 0.2rem 0 0.4rem; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #stockModal .stock-chips { justify-content: center; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #stockModal .ing-actions { justify-content: center; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #stockModal .ing-actions button { flex: 0 1 11rem; }
+
+/* Orte */
+.stock-places-list { display: flex; flex-direction: column; gap: 0.4rem; overflow-y: auto; min-height: 0; max-height: min(24rem, 52vh); -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+.stock-place-row { display: flex; align-items: center; gap: 0.5rem; flex: 0 0 auto; padding: 0.55rem 0.7rem; border-radius: 12px; background: var(--hh-row-bg, rgba(128, 128, 128, 0.13)); }
+.stock-place-name { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; text-align: left; }
+.stock-place-name strong { font-weight: 800; overflow-wrap: anywhere; }
+.stock-place-name small { opacity: 0.75; font-weight: 600; font-size: 0.78rem; }
+#stockPlacesModal > .win-card { gap: 0.7rem; justify-content: flex-start; text-align: left; }
+#stockPlacesModal > .win-card > * { flex: 0 0 auto; min-width: 0; }
+#stockPlacesModal .ing-title, #stockPlacesModal .ing-sub { text-align: center; }
+
+/* Formular */
+#stockFormModal > .win-card { gap: 0.7rem; justify-content: flex-start; text-align: left; }
+#stockFormModal > .win-card > * { flex: 0 0 auto; min-width: 0; }
+#stockFormModal .ing-title { text-align: center; }
+.sf-fields { gap: 0.4rem; }
+.hh-dlg #sfName, .hh-dlg #sfQty, .hh-dlg #sfWarn, .hh-dlg #sfMin {
+    width: 100%; box-sizing: border-box; padding: 0.75rem 0.9rem; border-radius: 12px;
+    font-family: inherit; font-size: 1rem; font-weight: 700;
+}
+.sf-two { display: grid; grid-template-columns: 1fr 1fr; gap: 0.2rem 0.6rem; }
+.sf-two > div { min-width: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.sf-hint { margin: 0.1rem 0 0; text-align: left; }
+.hh-dlg .win-card .sf-sug button.hh-tab { flex: 0 1 auto; min-width: 0; padding: 0.4rem 0.7rem; font-size: 0.82rem; }
+.hh-dlg .win-card .sf-units button.hh-tab { min-width: 3.6rem; }
+.hh-dlg .win-card .sf-mode button.hh-tab { min-width: 8rem; }
+#btn-shop-stock { white-space: nowrap; }
+
+/* ==========================================================================
+   Einkauf: Haken statt Mülleimer + Artikel in ein anderes Geschäft ziehen
+   (Farben kommen aus den Theme-Dateien: --hh-btn-*, --hh-sec-*, --hh-card-*)
+   ========================================================================== */
+html body #list-shop > li > .btn-del-item {
+    width: 2.8rem; height: 2.8rem; min-width: 2.8rem; flex: 0 0 2.8rem;
+    border-radius: 50% !important;
+    background: var(--hh-btn-bg, var(--primary, #34c759)) !important;
+    color: var(--hh-btn-fg, #fff) !important;
+    border: var(--hh-btn-border, none) !important;
+    font-size: 1.15rem; font-weight: 900; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    box-shadow: var(--hh-btn-shadow, 0 2px 6px rgba(0, 0, 0, 0.18)) !important;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+:where(html:where([data-bp="m"], [data-bp="l"])) #list-shop > li > .btn-del-item { width: 2.3rem; height: 2.3rem; min-width: 2.3rem; flex-basis: 2.3rem; }
+html body #list-shop > li > .btn-del-item:active { transform: scale(0.88); }
+html body #list-shop > li > .btn-del-item:focus-visible { outline: 3px solid var(--hh-accent, var(--primary, #34c759)) !important; outline-offset: 2px !important; }
+#list-shop > li { touch-action: pan-y; -webkit-touch-callout: none; cursor: grab; }
+#list-shop > li > span { -webkit-user-select: none; user-select: none; }
+#list-shop > li.is-done { opacity: 0.45; transition: opacity 0.3s ease; }
+#list-shop > li.is-done > span { text-decoration: line-through; }
+#list-shop > li.is-dragging { opacity: 0.35; outline: 2px dashed var(--hh-accent, var(--primary, #34c759)); outline-offset: -2px; }
+body.shop-dragging, body.shop-dragging * { -webkit-user-select: none !important; user-select: none !important; cursor: grabbing !important; }
+
+.shop-ghost {
+    position: fixed; z-index: 70001; pointer-events: none;
+    max-width: min(18rem, 80vw);
+    padding: 0.55rem 0.9rem; border-radius: 14px;
+    background: var(--hh-btn-bg, var(--primary, #34c759)); color: var(--hh-btn-fg, #fff);
+    border: var(--hh-btn-border, none);
+    font-size: 0.95rem; font-weight: 800;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+    transform: rotate(-2deg);
+}
+.shop-tray {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 70000;
+    padding: 0.7rem 0.8rem calc(0.8rem + env(safe-area-inset-bottom, 0px));
+    background: var(--hh-card-bg, var(--card, #fff)); color: var(--hh-text, var(--text, #1c1c1e));
+    -webkit-backdrop-filter: var(--hh-card-blur, none); backdrop-filter: var(--hh-card-blur, none);
+    border-top: 3px solid var(--hh-accent, var(--primary, #34c759));
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.28);
+    display: flex; flex-direction: column; gap: 0.5rem;
+    animation: shopTrayIn 0.18s ease-out both;
+}
+.shop-tray-title { font-size: 0.8rem; font-weight: 800; opacity: 0.8; text-align: center; color: inherit; }
+.shop-tray-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
+.shop-tray-chip {
+    min-width: 6rem; max-width: 100%; padding: 0.85rem 1rem; text-align: center;
+    border-radius: 16px; font-size: 1rem; font-weight: 800;
+    background: var(--hh-sec-bg, rgba(128, 128, 128, 0.22)); color: var(--hh-sec-fg, inherit);
+    border: 2px dashed var(--hh-accent, var(--primary, #34c759));
+    overflow-wrap: anywhere; transition: transform 0.12s ease;
+}
+.shop-tray-chip.is-drop, .side-btn.is-drop {
+    background: var(--hh-btn-bg, var(--primary, #34c759)) !important; color: var(--hh-btn-fg, #fff) !important;
+    border-color: var(--hh-accent, var(--primary, #34c759)) !important; border-style: solid !important;
+    box-shadow: 0 0 0 3px var(--hh-accent, var(--primary, #34c759)) !important;
+    transform: scale(1.06);
+}
+@keyframes shopTrayIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .shop-tray { animation: none; } }
+
+/* ==========================================================================
+   Finanzen: Einkommen, Übrig / Gespart, Fenster "Gespart"
+   (Schilder haben feste Farben mit weißer Schrift: grün = Plus, rot = Minus)
+   ========================================================================== */
+.fin-pill {
+    display: inline-block; flex: 0 0 auto; padding: 0.15rem 0.65rem; border-radius: 999px;
+    font-weight: 800; font-size: 0.85rem; line-height: 1.35; color: #fff; white-space: nowrap;
+}
+.fin-pill.is-plus { background: #187a3a; }
+.fin-pill.is-minus { background: #c4313a; }
+.fin-pill.is-zero { background: #5b6270; }
+.fin-pill.fin-pill-big { font-size: 1.1rem; padding: 0.25rem 0.9rem; }
+
+/* Monats- und Jahreskarten: Zeile "Übrig" / "Gespart" */
+.month-card .mc-left { margin-top: 0.55rem; align-items: center; font-weight: 800; }
+
+/* Monats-Fenster */
+.fin-result .fi-name { font-weight: 800; }
+.finance-item.fin-result { flex-wrap: wrap; }
+.fin-result-note { flex: 1 0 100%; font-size: 0.78rem; font-weight: 600; opacity: 0.85; overflow-wrap: anywhere; text-align: left; }
+.saved-list .fin-result-note { flex: none; text-align: center; padding: 0.5rem; }
+.finance-item.fin-fill-income {
+    width: 100%; box-sizing: border-box; justify-content: center; cursor: pointer; text-align: center;
+    font: inherit; font-weight: 700; color: inherit; border: 1px dashed currentColor; margin-bottom: 0;
+}
+
+/* Vorlagen-Fenster: Art wählen (Fixkosten / Einkommen) */
+.tpl-kind-row { display: flex; gap: 0.5rem; }
+.tpl-kind-row > button.tpl-kind-btn,
+.saved-card-opts > button.fin-opt-btn {
+    flex: 1 1 0; min-width: 0; margin: 0; padding: 0.6rem 0.2rem; border-radius: 12px;
+    font: inherit; font-weight: 700; font-size: 0.82rem; line-height: 1.15; white-space: normal; overflow-wrap: normal; word-break: normal; cursor: pointer;
+    border: 1px solid var(--hh-chip-line, rgba(128, 128, 128, 0.55));
+    background: transparent; color: var(--hh-chip-fg, inherit); box-shadow: none;
+}
+.tpl-kind-row > button.tpl-kind-btn.is-on,
+.saved-card-opts > button.fin-opt-btn.is-on {
+    background: var(--hh-chip-on-bg, rgba(128, 128, 128, 0.4)); color: var(--hh-chip-on-fg, inherit);
+    border-color: var(--hh-chip-on-line, rgba(128, 128, 128, 0.9)); font-weight: 900;
+}
+
+/* Karte "Gespart insgesamt" über den Jahren */
+#finance-saved-wrap { margin-bottom: 1rem; }
+#finance-saved-wrap:empty { display: none; }
+.saved-card {
+    text-align: left; width: 100%; box-sizing: border-box; padding: 1rem 1.1rem;
+    border-radius: var(--hh-card-radius, 22px);
+    background: var(--hh-card-bg, var(--card)); color: var(--hh-text, var(--text));
+    border: var(--hh-card-border, 1px solid rgba(128, 128, 128, 0.25));
+    box-shadow: var(--hh-card-shadow, 0 4px 12px rgba(0, 0, 0, 0.08));
+    -webkit-backdrop-filter: var(--hh-card-blur, none); backdrop-filter: var(--hh-card-blur, none);
+}
+.saved-card-main { cursor: pointer; border-radius: 12px; }
+.saved-card-main:focus-visible { outline: 3px solid var(--hh-accent, var(--primary, #007aff)); outline-offset: 2px; }
+.saved-card-opts { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.8rem; padding-top: 0.7rem; border-top: 1px solid rgba(128, 128, 128, 0.3); }
+.saved-opts-label { flex: 1 0 100%; font-size: 0.78rem; font-weight: 800; opacity: 0.85; }
+.saved-card-opts > button.fin-opt-btn { flex: 1 1 9rem; }
+.saved-opts-hint { flex: 1 0 100%; font-size: 0.75rem; font-weight: 600; opacity: 0.85; line-height: 1.3; overflow-wrap: anywhere; }
+.saved-card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
+.saved-card-title { font-size: 1.05rem; font-weight: 900; min-width: 0; overflow-wrap: anywhere; }
+.saved-card-sub { margin-top: 0.4rem; font-size: 0.8rem; font-weight: 700; opacity: 0.75; overflow-wrap: anywhere; }
+
+/* Fenster "Gespart" */
+#savedModal > .win-card { text-align: left; gap: 0.7rem; justify-content: flex-start; overflow: hidden; }
+#savedModal > .win-card > * { flex: 0 0 auto; min-width: 0; }
+#savedModal > .win-card > .saved-list { flex: 1 1 auto; min-height: 8rem; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 0.5rem; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+#savedModal .ing-title, #savedModal .ing-sub { text-align: center; }
+#savedModal .ing-actions { justify-content: center; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #savedModal .ing-actions button { flex: 0 1 11rem; }
+.saved-row, .saved-year-head {
+    display: flex; align-items: center; gap: 0.6rem; min-width: 0; box-sizing: border-box;
+    padding: 0.65rem 0.8rem; border-radius: 12px; flex: 0 0 auto;
+    background: var(--hh-row-bg, rgba(128, 128, 128, 0.13));
+}
+.saved-row .fi-name { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font-weight: 700; }
+.saved-row.saved-total { padding: 0.85rem 0.9rem; font-size: 1.05rem; }
+.saved-row.saved-total .fi-name { font-weight: 900; }
+.saved-note { font-weight: 600; opacity: 0.7; font-size: 0.75rem; }
+.saved-year { margin: 0; }
+.hh-dlg .win-card button.saved-year-head {
+    width: 100%; margin: 0; min-height: 3rem; text-align: left; font: inherit; font-weight: 800; cursor: pointer;
+    background: var(--hh-sec-bg, rgba(128, 128, 128, 0.28)) !important;
+    color: var(--hh-sec-fg, var(--hh-text, var(--text))) !important;
+    border: var(--hh-sec-border, none) !important;
+    box-shadow: none !important;
+}
+.saved-year-name { flex: 1 0 auto; font-size: 1.05rem; white-space: nowrap; }
+.saved-year-meta { flex: 0 1 auto; min-width: 0; font-size: 0.75rem; font-weight: 700; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.saved-year-arrow { flex: 0 0 auto; font-size: 1.1rem; width: 1rem; text-align: center; }
+.saved-year-body { margin-top: 0.4rem; display: flex; flex-direction: column; gap: 0.4rem; padding-left: 0.4rem; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #savedModal > .win-card { height: min(calc(var(--z-vh, 100vh) - 2 * var(--z-edge, 16px)), 46rem); }
+:where(html:where([data-bp="m"], [data-bp="l"])) #savedModal .saved-year-body { display: block; column-width: 16rem; column-gap: 0.6rem; }
+:where(html:where([data-bp="m"], [data-bp="l"])) #savedModal .saved-year-body > .saved-row { break-inside: avoid; margin: 0 0 0.4rem; }
+
+/* ==========================================================================
+   Lob-Fenster nach dem Erledigen (kurz sichtbar, blockiert nichts)
+   ========================================================================== */
+html body .cook-modal-overlay.hh-praise-overlay {
+    background: rgba(0, 0, 0, 0.22) !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+    pointer-events: none !important;
+}
+html body .cook-modal-overlay.hh-praise-overlay.is-out { opacity: 0; transition: opacity 0.22s ease; }
+html body .cook-modal-overlay.hh-praise-overlay > .cook-modal-card.hh-praise-card {
+    pointer-events: auto; align-items: center !important; gap: 0.4rem;
+    max-width: min(21rem, 100%) !important; padding: 1.3rem 1.2rem !important; cursor: pointer;
+}
+.hh-praise-emoji { font-size: 3.2rem; line-height: 1.1; animation: hhPraisePop 0.65s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+.hh-praise-title { font-size: 1.3rem; font-weight: 900; overflow-wrap: anywhere; }
+.hh-praise-sub { font-size: 0.9rem; font-weight: 700; opacity: 0.8; overflow-wrap: anywhere; }
+@keyframes hhPraisePop {
+    0%   { transform: scale(0.3) rotate(-16deg); opacity: 0; }
+    60%  { transform: scale(1.25) rotate(8deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .hh-praise-emoji { animation: none; } }
+
+/* ===== Zusatzfunktionen in den App-Einstellungen ===== */
+.feature-hint { font-size: 0.75rem; line-height: 1.35; margin: 3px 0 0 28px; color: var(--gray, #6b7280); }
+
+/* ==========================================================================
+   Kalender: Startseite (aktuelle Woche) + Fenster (Monat, Termine, Formular)
+   Farben der Fenster kommen aus den --hh-* Variablen der Theme-Dateien.
+   Jeder Kalender (z. B. eine Person) bekommt eine eigene Punktfarbe (inline).
+   ========================================================================== */
+.cal-dot {
+    display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; flex: 0 0 auto;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+.cal-more { font-size: 0.6rem; font-weight: 800; line-height: 1; opacity: 0.8; }
+
+/* Startseite: Wochenleiste */
+#home-grid .cal-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.25rem; }
+#home-grid .cal-wday {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    margin: 0; padding: 0.4rem 0.1rem 0.3rem; min-width: 0; min-height: 0; width: auto; height: auto;
+    border: 0; border-radius: 12px; box-shadow: none; cursor: pointer;
+    background: rgba(128, 128, 128, 0.12); color: inherit; font: inherit; text-align: center;
+    -webkit-text-fill-color: currentColor;
+}
+#home-grid .cal-wd { font-size: 0.62rem; font-weight: 800; text-transform: uppercase; line-height: 1; opacity: 0.8; }
+#home-grid .cal-wn { font-size: 1.05rem; font-weight: 900; line-height: 1.1; }
+#home-grid .cal-wdots { display: flex; align-items: center; justify-content: center; gap: 2px; min-height: 0.7rem; max-width: 100%; overflow: hidden; }
+#home-grid .cal-wday.is-today { box-shadow: inset 0 0 0 2px var(--primary, #34c759); background: rgba(52, 199, 89, 0.14); }
+#home-grid .cal-wday.is-past { opacity: 0.6; }
+#home-grid .cal-wday:focus-visible, #home-grid .cal-row:focus-visible { outline: 2px solid var(--primary, #34c759); outline-offset: 2px; }
+
+/* Startseite: Termine der Woche */
+#home-grid .cal-row {
+    display: flex; align-items: center; gap: 0.6rem; width: 100%; margin: 0; min-width: 0; min-height: 0; height: auto;
+    padding: 0.5rem 0.6rem; border: 0; border-left: 5px solid transparent; border-radius: 14px; box-shadow: none; cursor: pointer;
+    background: rgba(128, 128, 128, 0.12); color: inherit; font: inherit; text-align: left;
+    -webkit-text-fill-color: currentColor;
+}
+#home-grid .cal-row.is-past { opacity: 0.6; }
+#home-grid .cal-row-day { flex: 0 0 auto; min-width: 3.1rem; font-size: 0.72rem; font-weight: 800; line-height: 1.2; opacity: 0.85; }
+#home-grid .cal-row-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+#home-grid .cal-row-main .home-row-title { overflow-wrap: anywhere; }
+#home-grid .cal-row-main .home-row-sub { overflow-wrap: anywhere; font-weight: 700; opacity: 0.85; }
+#home-grid .home-empty.home-empty-sub { font-size: 0.78rem; padding: 0.2rem; }
+
+/* Fenster */
+#calModal > .win-card { max-width: none; width: 100%; text-align: left; gap: 0.6rem; justify-content: flex-start; overflow: hidden; }
+#calModal > .win-card > * { flex: 0 0 auto; min-width: 0; }
+#calModal > .win-card > .cal-body { flex: 1 1 auto; min-height: 8rem; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 0.7rem; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+#calModal .ing-sub { text-align: center; }
+#calModal .ing-actions { flex-wrap: wrap; }
+#calModal .ing-actions button { flex: 1 1 6rem; min-width: 0; font-size: 0.9rem; padding: 0.4rem 0.3rem; }
+.cal-nav { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.cal-nav .ing-title { flex: 1 1 auto; margin: 0; text-align: center; min-width: 0; }
+.hh-dlg .win-card button.cal-nav-btn { flex: 0 0 auto; width: 2.7rem; height: 2.7rem; font-size: 1.6rem; padding: 0 0 0.12rem; }
+.cal-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem; }
+.hh-dlg .win-card .cal-legend button.hh-tab { flex: 0 1 auto; display: inline-flex; align-items: center; gap: 0.4rem; min-width: 0; padding: 0.4rem 0.7rem; font-size: 0.85rem; }
+.hh-dlg .win-card .cal-legend button.hh-tab:not(.is-on) { opacity: 0.65; }
+.hh-dlg .win-card .cal-legend button.hh-tab:not(.is-on) span { text-decoration: line-through; }
+.cal-status { margin: 0; font-weight: 700; }
+.cal-hint { margin: 0.4rem 0 0; font-size: 0.78rem; }
+.cal-left { min-width: 0; display: flex; flex-direction: column; }
+.cal-right { min-width: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.cal-wdhead { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.2rem; text-align: center; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; opacity: 0.8; margin-bottom: 0.2rem; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.2rem; touch-action: pan-y; }
+.hh-dlg .win-card button.cal-cell {
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px;
+    width: auto; min-width: 0; min-height: 3.1rem; margin: 0; padding: 0.3rem 0.1rem 0.25rem;
+    border: 0; border-radius: 10px; box-shadow: none; cursor: pointer; overflow: hidden;
+    background: var(--hh-row-bg, rgba(128, 128, 128, 0.13)); color: var(--hh-text, var(--text)); font: inherit;
+    -webkit-text-fill-color: currentColor;
+}
+.hh-dlg .win-card button.cal-cell .cal-num { font-size: 0.95rem; font-weight: 800; line-height: 1.1; }
+.hh-dlg .win-card button.cal-cell .cal-dots { display: flex; align-items: center; justify-content: center; gap: 2px; min-height: 0.6rem; max-width: 100%; overflow: hidden; }
+.hh-dlg .win-card button.cal-cell .cal-titles { display: none; width: 100%; flex-direction: column; gap: 2px; text-align: left; }
+.hh-dlg .win-card button.cal-cell.is-out { opacity: 0.45; }
+.hh-dlg .win-card button.cal-cell.is-today { box-shadow: inset 0 0 0 2px var(--hh-accent, var(--primary, #007aff)); }
+.hh-dlg .win-card button.cal-cell.is-today .cal-num { font-weight: 900; text-decoration: underline; text-underline-offset: 2px; }
+.hh-dlg .win-card button.cal-cell.is-sel {
+    background: var(--hh-chip-on-bg, rgba(128, 128, 128, 0.4)); color: var(--hh-chip-on-fg, inherit);
+    box-shadow: inset 0 0 0 2px var(--hh-chip-on-line, rgba(128, 128, 128, 0.9));
+}
+.hh-dlg .win-card button.cal-cell.is-sel.is-today { box-shadow: inset 0 0 0 3px var(--hh-accent, var(--hh-chip-on-line, rgba(128, 128, 128, 0.9))); }
+.hh-dlg .win-card button.cal-cell:focus-visible { outline: 2px solid var(--hh-accent, var(--primary, #007aff)); outline-offset: 1px; }
+.cal-detail-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem 0.6rem; }
+.cal-day-title { flex: 1 1 11rem; min-width: 0; font-size: 1.02rem; font-weight: 800; overflow-wrap: anywhere; }
+.hh-dlg .win-card button#calAddBtn { flex: 0 0 auto; width: auto; min-height: 0; margin: 0; padding: 0.5rem 0.9rem; border-radius: 12px; font-size: 0.92rem; font-weight: 800; }
+.cal-day-list { display: flex; flex-direction: column; gap: 0.45rem; min-width: 0; }
+.cal-ev {
+    display: flex; align-items: center; gap: 0.6rem; flex: 0 0 auto; min-width: 0;
+    padding: 0.6rem 0.7rem; border-radius: 12px; border-left: 5px solid transparent;
+    background: var(--hh-row-bg, rgba(128, 128, 128, 0.13));
+}
+.cal-ev-main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.cal-ev-title { font-weight: 800; font-size: 1rem; overflow-wrap: anywhere; }
+.cal-ev-sub { font-size: 0.8rem; font-weight: 600; opacity: 0.85; overflow-wrap: anywhere; }
+.cal-ev-note { font-size: 0.78rem; font-weight: 500; opacity: 0.75; overflow-wrap: anywhere; white-space: pre-wrap; }
+.hh-dlg .win-card button.cal-ev-del { flex: 0 0 auto; width: 2.4rem; height: 2.4rem; font-size: 1.05rem; }
+.cal-readonly { margin: 0.2rem 0 0; font-size: 0.78rem; }
+
+/* Tablet und PC: das Fenster füllt die Seite. Am PC steht der Monat links und die Termine des Tages rechts. */
+:where(html:where([data-bp="m"], [data-bp="l"])) #calModal > .win-card { height: calc(var(--z-vh, 100vh) - 2 * var(--z-edge, 16px)); }
+:where(html:where([data-bp="l"])) #calModal > .win-card > .cal-body { flex-direction: row; align-items: stretch; overflow: hidden; gap: 1rem; }
+:where(html:where([data-bp="l"])) #calModal .cal-left { flex: 1 1 0; overflow-y: auto; }
+:where(html:where([data-bp="l"])) #calModal .cal-right { flex: 0 0 min(22rem, 36%); overflow-y: auto; }
+/* Ist das Raster breit genug, stehen in den Feldern die Titel statt der Punkte */
+.cal-grid { container: calgrid / inline-size; }
+@container calgrid (min-width: 34rem) {
+    .hh-dlg .win-card button.cal-cell { min-height: 4.6rem; padding: 0.35rem 0.3rem; align-items: stretch; }
+    .hh-dlg .win-card button.cal-cell .cal-num { align-self: flex-start; padding-left: 0.1rem; }
+    .hh-dlg .win-card button.cal-cell .cal-dots { display: none; }
+    .hh-dlg .win-card button.cal-cell .cal-titles { display: flex; }
+}
+.cal-t { display: block; border-left: 3px solid transparent; padding-left: 0.25rem; font-size: 0.7rem; font-weight: 700; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-t-more { opacity: 0.8; border-left-color: transparent !important; }
+
+/* Formular */
+#calFormModal > .win-card { gap: 0.7rem; justify-content: flex-start; text-align: left; }
+#calFormModal > .win-card > * { flex: 0 0 auto; min-width: 0; }
+#calFormModal .ing-title { text-align: center; }
+.cf-fields { gap: 0.4rem; }
+.hh-dlg #cfTitle, .hh-dlg #cfDate, .hh-dlg #cfFrom, .hh-dlg #cfTo, .hh-dlg #cfUntil, .hh-dlg #cfLoc, .hh-dlg #cfNote {
+    width: 100%; box-sizing: border-box; padding: 0.75rem 0.9rem; border-radius: 12px;
+    font-family: inherit; font-size: 1rem; font-weight: 700;
+}
+.hh-dlg .win-card .cf-mode button.hh-tab { flex: 1 1 0; }
+
+/* ==========================================================================
+   Sortieren per Ziehen (Geschäfte, Räume, Jahre, Monate) + Bedienhinweise
+   ========================================================================== */
+[data-sort-group] { -webkit-touch-callout: none; }
+.hh-sort-src { opacity: 0.35 !important; outline: 2px dashed var(--hh-accent, var(--primary, #34c759)); outline-offset: -2px; }
+.hh-sort-over { outline: 2px solid var(--hh-accent, var(--primary, #34c759)); outline-offset: -2px; }
+body.hh-sorting, body.hh-sorting * { -webkit-user-select: none !important; user-select: none !important; cursor: grabbing !important; }
+.hh-sort-ghost {
+    position: fixed; z-index: 70001; pointer-events: none;
+    max-width: min(18rem, 80vw);
+    padding: 0.55rem 0.9rem; border-radius: 14px;
+    background: var(--hh-btn-bg, var(--primary, #34c759)); color: var(--hh-btn-fg, #fff);
+    border: var(--hh-btn-border, none);
+    font-size: 0.95rem; font-weight: 800;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+    transform: rotate(-2deg);
+}
+.hh-sort-bar {
+    position: fixed; z-index: 70002; pointer-events: none; display: none;
+    border-radius: 3px;
+    background: var(--hh-accent, var(--primary, #34c759));
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6), 0 0 10px var(--hh-accent, var(--primary, #34c759));
+}
+
+.hh-hint {
+    margin: 0.2rem 0 0.7rem; padding: 0.4rem 0.8rem; border-radius: 10px;
+    font-size: 0.74rem; line-height: 1.35; font-weight: 700; text-align: center;
+    background: var(--hh-card-bg, rgba(128, 128, 128, 0.1)); color: var(--hh-text, var(--text, #1c1c1e));
+    -webkit-text-fill-color: currentColor;
+    border: 1px solid var(--hh-chip-line, rgba(128, 128, 128, 0.25));
+    -webkit-backdrop-filter: var(--hh-card-blur, none); backdrop-filter: var(--hh-card-blur, none);
+    text-shadow: none; opacity: 1;
+}
+.hint-toggle-row {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin: -6px 0 20px; padding: 0 4px; font-size: 0.9rem; cursor: pointer;
+}
+.hint-toggle-row span { font-size: 0.75rem; opacity: 0.7; }
+
+/* ==========================================================================
+   Finanzen: schmale Karten (z. B. mehrere Spalten auf dem Tablet)
+   Reicht die Breite nicht, rutscht der Betrag unter die Bezeichnung (rechtsbündig) statt über den Rand zu laufen.
+   ========================================================================== */
+.month-card .mc-row { flex-wrap: wrap; row-gap: 0.05rem; }
+.month-card .mc-row > :last-child { margin-left: auto; }
