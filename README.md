@@ -8,7 +8,7 @@
 
 # 🏠 Haushaltshilfe Pro für Home Assistant
 
-Eine elegante, benutzerfreundliche All-in-One-Lösung für die Organisation deines Haushalts direkt in Home Assistant. Verwalte Einkaufslisten, Finanzen, Aufgaben, Essenspläne und Müllabfuhr-Termine in einem übersichtlichen Custom Panel.
+Eine elegante, benutzerfreundliche All-in-One-Lösung für die Organisation deines Haushalts direkt in Home Assistant. Verwalte Einkaufslisten, Vorrat, Finanzen, Aufgaben, Wartungen, Essenspläne, Termine und Müllabfuhr in einem übersichtlichen Custom Panel.
 
 [![Open your Home Assistant instance and open your repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Domenic1989&repository=Haushaltshilfe&category=integration)
 
@@ -16,30 +16,40 @@ Eine elegante, benutzerfreundliche All-in-One-Lösung für die Organisation dein
 
 ## ✨ Features
 
-- 🏡 **Startseite**: Begrüßung mit allem Wichtigen auf einen Blick – heute fällige Aufgaben, Einkaufsliste, aktuelle Ausgaben und das Essen der aktuellen Woche.
-- 🍽️ **Wochen-Essensplan**: Speiseplan von Montag bis Sonntag übersichtlich verwalten, für diese Woche und für die nächste Woche.
+- 🏡 **Startseite**: Begrüßung mit allem Wichtigen auf einen Blick – heute fällige Aufgaben, fällige Wartungen, knapper Vorrat, die Termine der Woche, Einkaufsliste, aktuelle Ausgaben und das Essen der aktuellen Woche.
+- 🍽️ **Wochen-Essensplan**: Speiseplan von Montag bis Sonntag übersichtlich verwalten, für diese Woche und für die nächste Woche. Wann die nächste Woche automatisch zur aktuellen wird (Standard: Sonntag, 23:00 Uhr), stellst du selbst ein.
 - 👆 **Schnelle Mahlzeiten-Auswahl**: Ein Tipp auf ein Essensfeld öffnet ein Auswahlfenster mit deinen Favoriten und Rezepten – oder du tippst einfach etwas ein.
 - 🛒 **Automatische Einkaufsliste aus dem Essensplan**: Trägst du ein bekanntes Gericht ein (z. B. *Pizza*), setzt die App auf Wunsch die Zutaten automatisch auf die Einkaufsliste – in den Laden deiner Wahl. Automatisch, händisch oder gar nicht: Du entscheidest.
 - 📖 **Rezepte**: Über 50 eingebaute Rezepte, die du ansehen, ändern und um eigene Rezepte erweitern kannst.
+- 📦 **Vorrat**: Behalte im Blick, was du zu Hause hast. Wird etwas knapp, meldet es die Startseite – und die App fragt dich, ob und in welchem Laden es auf die Einkaufsliste soll.
+- 🔧 **Wartung**: Wiederkehrende Aufgaben wie Rauchmelder prüfen, Heizung warten oder TÜV – mit Intervall, Vorwarnung, Vorlagen und eigenem Verlauf.
+- 📅 **Kalender**: Die aktuelle Woche auf der Startseite, ein Tipp öffnet den ganzen Monat. Du kannst mehrere Home-Assistant-Kalender (z. B. einen pro Person) mit eigenen Farben anzeigen und Termine direkt eintragen.
+- ✅ **Erledigt mit Namen und Lob**: Beim Erledigen fragt die App, wer es gemacht hat, und bedankt sich mit einem kleinen Lob-Fenster. Der **📜 Verlauf** zeigt, wer was erledigt hat.
+- ↕️ **Sortieren per Ziehen**: Geschäfte, Räume, Jahre und Monate bringst du durch Ziehen in die gewünschte Reihenfolge, am Handy mit gedrücktem Finger. Artikel schiebst du im Einkauf einfach in ein anderes Geschäft. Kleine 💡 Hinweise in der App zeigen, wo das geht.
+- 🧩 **Zusatzfunktionen**: Vorrat, Wartung und Kalender schaltest du ein oder aus – in der App oder in den Integrations-Optionen. Wer sie nicht braucht, sieht sie nicht.
 - 🗑️ **Müllabfuhr-Übersicht**: Direkte Anbindung an bestehende Müll-Sensoren, die du ganz bequem in den Integrations-Optionen von Home Assistant auswählst.
-- 🔄 **Neustart-sicher**: Alle Daten (Finanzen, Einkäufe, Aufgaben, Essenspläne, Rezepte) bleiben auch nach einem Home Assistant Neustart dauerhaft gespeichert.
+- 🔄 **Neustart-sicher**: Alle Daten (Finanzen, Einkäufe, Vorrat, Aufgaben, Wartungen, Essenspläne, Rezepte) bleiben auch nach einem Home Assistant Neustart dauerhaft gespeichert.
 - 🔑 **Sichere Anmeldung**: Läuft über deine Home-Assistant-Sitzung. Für Wand-Tablets im Kiosk-Modus kann pro Gerät ein eigenes Token hinterlegt werden.
 - 🎛️ **Dynamische Tab-Steuerung**: Blende einzelne Navigations-Tabs ganz nach Bedarf aus oder ein – entweder direkt im Dashboard-Overlay oder über die Home Assistant Integrations-Einstellungen.
 - 🔐 **Passwort- & System-Verwaltung**: Master- und Admin-Passwort bequem über die Benutzeroberfläche oder in Home Assistant anpassen. Alle Passwörter werden nur gehasht gespeichert und am Server geprüft.
 - 🔄 **Vollständige bidirektionale Synchronisation**: Egal ob du Passwörter oder die Tab-Sichtbarkeit im Dashboard-Overlay oder in den HA-Integrationsoptionen änderst – beide Stellen halten sich automatisch gegenseitig synchron!
 - 📱 **Für Handy, Tablet und PC**: Die Oberfläche passt sich der Bildschirmgröße und dem eingestellten Zoom an. Kleine Fenster bleiben klein, große Fenster bleiben groß – auch im Wand-Tablet-Betrieb.
-- 🎨 **11 Themes**: Von Glass und Dark bis Weihnachten und FC Bayern. Alle Fenster – auch die neuen für Essensauswahl, Zutaten und Rezepte – passen sich dem gewählten Theme an.
+- 🎨 **11 Themes**: Von Glass und Dark bis Weihnachten und FC Bayern. Alle Fenster – auch Essensauswahl, Zutaten, Rezepte, Vorrat, Wartung, Kalender sowie Auswahllisten und Datums-/Uhrzeit-Auswahl – passen sich dem gewählten Theme an.
 
-### 💰 Finanzen & Fixkosten-Vorlagen
+### 💰 Finanzen, Einkommen & Fixkosten-Vorlagen
 
 * Monatsübersicht für Ausgaben und Fixkosten.
-* Vorlagen-Verwaltung mit flexiblen Intervallen (monatlich, quartalsweise, jährlich) für die automatische Übernahme in neue Monate.
+* Vorlagen-Verwaltung mit flexiblen Intervallen (monatlich, quartalsweise, jährlich) für die automatische Übernahme in neue Monate. Neben Fixkosten gibt es jetzt auch **Einkommens-Vorlagen** (z. B. Gehalt).
+* **Einkommen & Übrig:** Trage dein Einkommen pro Monat ein. Die App rechnet aus, was übrig bleibt (Einkommen − Fixkosten − Ausgaben).
+* **Gespart:** Eine eigene Karte zeigt, wie viel du insgesamt gespart hast – Jahr für Jahr aufklappbar.
+* **Auf der Startseite zeigen:** Wer möchte, blendet *Übrig (Monat)* und *Gespart (Jahr)* auf der eigenen Startseite ein. Das gilt nur für den eigenen Benutzer und wird mit dem eigenen Passwort eingeschaltet.
 * Geräteübergreifende Synchronisation via Home Assistant Helper (`helper_finance_templates`).
 
 ### 🔔 Home Assistant Automatisierungen & Push-Benachrichtigungen
 
 * **Aufgaben-Bestätigung:** Push-Nachricht bei Erledigung/Bearbeitung einer Aufgabe mit Raum- und Namenangabe.
 * **Fälligkeits-Erinnerung:** Minuten-genaue Push-Erinnerung, wenn eine Aufgabe fällig wird.
+* **Popup bei fälliger Aufgabe (optional):** Ein Vollbild-Popup auf Handy oder Tablet, sobald eine Aufgabe fällig wird. Dafür brauchst du die HACS-Integration *Browser Mod*.
 * Die fertigen YAML-Vorlagen dafür findest du im Ordner [`automations/`](automations/).
 
 ---
@@ -117,6 +127,40 @@ Solltest du bereits eine Müllkalender-Integration (wie z. B. *Waste Collection 
 
 ---
 
+## 🧩 Zusatzfunktionen & Kalender einrichten (optional)
+
+📦 **Vorrat**, 🔧 **Wartung** und 📅 **Kalender** sind Zusatzfunktionen, die du ein- und ausschalten kannst, weil nicht jeder sie braucht. Ausgeschaltet verschwinden die Knöpfe und die Startseiten-Karten – deine Daten bleiben erhalten.
+
+| Funktion | Standard |
+| :--- | :--- |
+| 📦 Vorrat | an (wer ihn schon nutzt, behält ihn) |
+| 🔧 Wartung | an (wer sie schon nutzt, behält sie) |
+| 📅 Kalender | aus |
+
+1. Gehe in Home Assistant zu **Einstellungen** ➔ **Geräte & Dienste** ➔ **Haushaltshilfe Pro** ➔ **Konfigurieren**.
+2. Wähle bei **Zusatzfunktionen (Vorrat, Wartung, Kalender)** aus, was du nutzen möchtest.
+3. Für den Kalender wählst du bei **📅 Kalender: Diese Kalender auf der Startseite anzeigen** einen oder mehrere deiner Home-Assistant-Kalender aus.
+4. Bei **📅 Kalender: Neue Termine hier eintragen** legst du fest, in welchen Kalender neue Termine standardmäßig kommen (leer = der erste Kalender).
+5. Klicke auf **OK** und lade die App einmal neu.
+
+Alternativ schaltest du die Zusatzfunktionen in der App unter **⚙️ System-Einstellungen** ➔ **Zusatzfunktionen** ein und aus. Welche Kalender angezeigt werden, wählst du immer in Home Assistant.
+
+> 👥 **Kalender für mehrere Personen:** Wähle einfach pro Person einen Kalender aus. Jeder Kalender bekommt in der App eine eigene Farbe, und du kannst einzelne Kalender ein- und ausblenden. Hast du mehrere Kalender, wählst du beim Anlegen eines Termins, in welchen er kommt.
+
+> ℹ️ **Termine anlegen und löschen** geht nur bei Kalendern, die das in Home Assistant erlauben (z. B. Google Kalender oder der „Lokale Kalender“). Reine Abo-Kalender, etwa über eine ICS-Adresse, und Feiertags-Kalender sind nur lesbar. Die App erkennt das selbst und zeigt **＋ Termin** bzw. 🗑️ nur dort, wo es geht.
+
+---
+
+## 🔔 Popup bei fälliger Aufgabe einrichten (optional)
+
+1. Installiere **Browser Mod** über HACS und registriere dein Handy oder Tablet im Reiter *Browser Mod* der Home-Assistant-Seitenleiste.
+2. Öffne die Datei *Haushaltshilfe - Popup bei fälliger Aufgabe (Browser Mod).yaml* aus dem Ordner [`automations/`](automations/) und kopiere den Inhalt.
+3. Gehe in Home Assistant zu **Einstellungen** ➔ **Automatisierungen** ➔ **Neue Automatisierung**, tippe oben rechts auf **⋮** ➔ **In YAML bearbeiten**, ersetze den Inhalt und speichere.
+
+Jede Minute wird geprüft, ob eine Aufgabe genau jetzt fällig wird. Dann erscheint auf den registrierten Geräten ein Vollbild-Popup mit dem Namen der Aufgabe, dem Raum und der zuständigen Person. Mehrere Aufgaben in derselben Minute stehen in einem Popup. Mit **Zur Haushaltshilfe** springst du direkt in die App. Soll das Popup nur auf bestimmten Geräten erscheinen, steht in der Datei, wie du die Browser-IDs einträgst.
+
+---
+
 # 📖 Bedienungsanleitung – Haushaltshilfe Pro 🏠
 
 ## 🔑 Übersicht der Standard-Passwörter & Einstellungen
@@ -126,7 +170,7 @@ Solltest du bereits eine Müllkalender-Integration (wie z. B. *Waste Collection 
 | **Master-Passwort** | `Dein_Passwort_welches_du_vergeben_hast` | Zugriff auf die System-Einstellungen (`⚙️` oben rechts am Login-Bildschirm). |
 | **Admin-Passwort** | `Dein_Passwort_welches_du_vergeben_hast` | Zugriff auf die Benutzerverwaltung (`⚙️ Verwaltung` zum Löschen von Benutzern). |
 
-> 💡 **Hinweis zu Passwörtern & Tabs:** Sämtliche Passwörter sowie die Sichtbarkeit der einzelnen Tabs können flexibel auf zwei Wegen angepasst werden:
+> 💡 **Hinweis zu Passwörtern, Tabs & Zusatzfunktionen:** Sämtliche Passwörter, die Sichtbarkeit der einzelnen Tabs und die Zusatzfunktionen können flexibel auf zwei Wegen angepasst werden:
 > 1. **Über das Dashboard**: Im Login-Bildschirm oben rechts auf das Zahnrad `⚙️` klicken.
 > 2. **Über Home Assistant**: Unter **Einstellungen ➔ Geräte & Dienste ➔ Haushaltshilfe Pro ➔ Konfigurieren**.
 >
@@ -167,7 +211,9 @@ Solltest du bereits eine Müllkalender-Integration (wie z. B. *Waste Collection 
    - Das **Master-Passwort** für die Systemeinstellung neu festlegen (leer lassen = unverändert).
    - Das **Admin-Passwort** für die Benutzerverwaltung neu festlegen (leer lassen = unverändert).
    - Den **Geräte-Zoom** per Schieberegler oder mit **−** / **+** einstellen. Der Zoom gilt nur für das Gerät, auf dem du ihn änderst.
+   - Die **💡 Bedienhinweise** ein- oder ausschalten (z. B. „Gedrückt halten & ziehen …“). Das gilt nur für das Gerät, auf dem du es änderst.
    - Die **sichtbaren Tabs** in der Leiste auswählen.
+   - Die **Zusatzfunktionen** 📦 Vorrat, 🔧 Wartung und 📅 Kalender ein- oder ausschalten.
 4. Klicke auf **Speichern**.
 
 ---
@@ -187,17 +233,35 @@ Die Navigations-Tabs 🛒 Einkaufsliste, 📋 Haushalt / Aufgaben, 🍽️ Essen
 
 ---
 
+## 🧩 Zusatzfunktionen ein- und ausschalten
+
+📦 Vorrat, 🔧 Wartung und 📅 Kalender sind optional, weil nicht jeder sie braucht.
+
+1. **Über das Dashboard**:
+   - Klicke auf der Anmeldeseite oben rechts auf das Zahnrad **`⚙️`** und gib das Master-Passwort ein.
+   - Setze oder entferne im Bereich **„Zusatzfunktionen“** die Häkchen und klicke auf **Speichern**.
+2. **Über Home Assistant**:
+   - Gehe zu **Einstellungen ➔ Geräte & Dienste ➔ Haushaltshilfe Pro ➔ Konfigurieren**.
+   - Wähle bei **Zusatzfunktionen** aus, was du nutzen möchtest.
+
+Ausgeschaltet verschwinden der jeweilige Knopf und die Startseiten-Karte. Deine Daten bleiben erhalten und sind wieder da, sobald du die Funktion einschaltest. Die Einstellung gilt für alle Geräte. Welche Kalender angezeigt werden, wählst du in Home Assistant (siehe *Zusatzfunktionen & Kalender einrichten*).
+
+---
+
 ## 2. 🏡 Startseite
 
 Nach der Anmeldung siehst du auf einen Blick, was heute wichtig ist:
 
 - **Begrüßung** mit deinem Namen und dem heutigen Datum.
-- **Heute fällig**: Die Aufgaben, die heute dran sind. Mit einem Tipp auf das Häkchen erledigst du sie direkt.
+- **Heute fällig**: Die Aufgaben, die heute dran sind (und überfällige). Mit einem Tipp auf das Häkchen erledigst du sie direkt – die App fragt dann, wer es gemacht hat.
+- **🔧 Wartung**: Wartungen, die fällig sind oder in der Vorwarnzeit liegen. *(Zusatzfunktion)*
+- **📦 Vorrat**: Was knapp wird oder fehlt, mit Menge. Mit **🛒** setzt du einen Artikel direkt auf die Einkaufsliste. *(Zusatzfunktion)*
+- **📅 Kalender**: Die aktuelle Woche mit ihren Terminen. Ein Tipp öffnet den ganzen Kalender. *(Zusatzfunktion, standardmäßig aus)*
 - **Essen diese Woche**: Der Wochenplan von Montag bis Sonntag, der heutige Tag ist hervorgehoben.
 - **Einkaufsliste**: Die fehlenden Artikel, nach Läden gruppiert.
-- **Ausgaben des Monats**: Fixkosten, Ausgaben und Gesamtsumme des aktuellen Monats.
+- **Ausgaben des Monats**: Fixkosten, Ausgaben und Gesamtsumme des aktuellen Monats. Wenn du es in den Finanzen eingeschaltet hast, siehst du hier auch *Übrig* (Monat) und *Gespart* (Jahr).
 
-Unter jeder Karte führt ein Link direkt ins passende Modul (*Alle Aufgaben*, *Zum Wochenplan*, *Zur Einkaufsliste*, *Zu den Finanzen*).
+Unter jeder Karte führt ein Link direkt ins passende Modul (*Alle Aufgaben*, *Alle Wartungen*, *Zum Vorrat*, *Ganzen Kalender öffnen*, *Zum Wochenplan*, *Zur Einkaufsliste*, *Zu den Finanzen*).
 
 ---
 
@@ -207,11 +271,43 @@ Unter jeder Karte führt ein Link direkt ins passende Modul (*Alle Aufgaben*, *Z
 - **Schnellartikel / Favoriten**: Beim Klick auf ein Favoriten-Icon öffnet sich das Mengen-Modal (`shopQtyModal`), in dem du die gewünschte Stückzahl festlegst.
 - **Kategorie & Favorit erstellen**: Nutze die Buttons **`📂 + Kategorie`** und **`⭐️ + Favoriten`**, um Schnellauswahlen anzulegen.
 - **Geschäfte-Filter**: Filtere über die linke Seitenleiste (`shopSidebar`) nach Supermärkten. Mit **`+ Ort`** legst du einen neuen Laden an.
+- **Geschäfte sortieren**: Ziehe die Geschäfte in der Seitenleiste in die gewünschte Reihenfolge (siehe *Sortieren per Ziehen*).
+- **Artikel abhaken**: Mit dem **✓** neben dem Artikel nimmst du ihn von der Liste.
+- **Artikel in ein anderes Geschäft schieben**: Halte einen Artikel gedrückt (am PC: mit der Maus anklicken und ziehen) und ziehe ihn auf das Geschäft, in dem du ihn kaufen willst.
+- **📦 Vorrat**: Der Knopf **`📦 Vorrat`** öffnet deinen Vorrat (nur wenn die Zusatzfunktion eingeschaltet ist). Mehr dazu im nächsten Kapitel.
 - **Zutaten aus dem Essensplan**: Artikel, die aus Rezepten kommen, landen wie alle anderen Artikel auf der Liste – mit Menge und Laden (z. B. `2x Milch @Aldi`). Mehr dazu im Kapitel *Wochenplan*.
 
 ---
 
-## 4. 🍽️ Wochenplan-Modul (`Essen` / `v-food`)
+## 4. 📦 Vorrat (`📦 Vorrat` im Einkaufs-Tab)
+
+Der Vorrat zeigt dir, was du zu Hause hast, und erinnert dich, rechtzeitig nachzukaufen. (Zusatzfunktion – siehe *Zusatzfunktionen ein- und ausschalten*.)
+
+- **Artikel anlegen**: Tippe auf **`＋ Neu`**. Wähle einen Vorschlag (z. B. *Nudeln* oder *Klopapier*) oder gib einen eigenen Namen ein.
+- **Menge**: Mit **−** und **＋** änderst du die Menge, mit einem Tipp auf die Zahl tippst du sie direkt ein. Die Einheit wählst du aus: Stück, Packung, Flasche, Dose, kg oder Liter.
+- **Zwei Grenzen**: Bei **„Startseite ab“** steht der Artikel als knapp auf der Startseite. Bei **„Einkaufsliste ab“** soll er auf die Einkaufsliste. „Ab“ heißt: wenn nur noch so viel oder weniger da ist.
+- **Orte**: Mit **`📍 Orte`** legst du fest, wo du Dinge aufbewahrst (z. B. Vorratsschrank, Kühlschrank, Keller). Oben im Fenster filterst du nach Ort. Löschst du einen Ort, bleiben die Artikel erhalten.
+- **Geschäft**: Bei jedem Artikel kannst du ein Geschäft hinterlegen.
+- **Einkauf – 🤖 Automatisch oder ✋ Von Hand**: Bei *Automatisch* kümmert sich die App um die Einkaufsliste, sobald die Grenze erreicht ist. Bei *Von Hand* setzt du den Artikel selbst mit dem **🛒** auf die Liste.
+- **Status**: Artikel sind als *Wird knapp*, *Nachkaufen* oder *Leer* markiert. Steht ein Artikel schon auf der Einkaufsliste, wird er nicht doppelt hinzugefügt.
+
+### 🛒 Vor dem Verschieben auf die Einkaufsliste gefragt werden
+
+Erreicht ein Artikel mit *Automatisch* seine Einkaufsgrenze, fragt dich die App zuerst: **„In welchen Laden?“** – auch wenn beim Artikel ein Geschäft hinterlegt ist, denn man kauft ja nicht immer im selben.
+
+- **🛒 Auf die Liste**: Der Artikel kommt in den gewählten Laden.
+- **Nicht jetzt**: Der Artikel bleibt, wo er ist. Gefragt wird erst wieder, wenn zwischendurch wieder genug da war.
+- **Künftig automatisch, ohne Nachfrage**: Mit diesem Haken geht es künftig ohne Nachfrage in den beim Artikel hinterlegten Laden (sonst in das gerade offene Geschäft).
+- **Verhalten umstellen**: Im Vorrat-Fenster steht unten **„Beim Auf-die-Liste-Setzen“**: *Immer fragen (Laden wählen)* oder *Automatisch (hinterlegter Laden)*.
+- Auch wenn du von Hand auf **🛒** tippst, wird gefragt (mit **Abbrechen**).
+
+### 🏡 Auf der Startseite
+
+Die Karte **📦 Vorrat** zeigt nur, was knapp ist oder fehlt, mit der Menge. Ist alles da, steht dort „Alles da ✅“.
+
+---
+
+## 5. 🍽️ Wochenplan-Modul (`Essen` / `v-food`)
 
 ### Grundfunktionen
 
@@ -220,7 +316,8 @@ Unter jeder Karte führt ein Link direkt ins passende Modul (*Alle Aufgaben*, *Z
 - **Koch / Verantwortlichen zuweisen**: Wähle im Dropdown-Menü neben dem Tag die kochende Person aus.
 - **Kategorien & Favoriten**: Nutze **`📂 + Kategorie`** und **`⭐️ + Favoriten`**, um Lieblingsgerichte schnell in den Wochenplan einzufügen.
 - **Woche verschieben / abschließen**: Klicke auf **`Woche abschließen/verschieben 🔄`**, um die Gerichte von „Nächste Woche“ manuell nach vorne in „Diese Woche“ zu rücken und die nächste Woche zu leeren.
-- **Automatischer Wochenwechsel**: Der Essensplan rückt jeden Sonntag um 23:00 Uhr automatisch weiter, sodass die nächste Woche nahtlos in die aktuelle Woche übergeht.
+- **Automatischer Wochenwechsel**: Standardmäßig rückt der Essensplan jeden Sonntag um 23:00 Uhr automatisch weiter, sodass die nächste Woche nahtlos in die aktuelle Woche übergeht.
+- **⏱️ Wochenwechsel einstellen**: Tippe auf das **⚙️** neben dem Hinweis über dem Wochenplan. Dort wählst du **✨ Automatisch** (mit Wochentag und Uhrzeit) oder **✋ Nur manuell**. Eine Vorschau zeigt dir den nächsten Wechsel. Die Einstellung gilt für alle Geräte.
 - **Woche zurücksetzen**: Klicke unten auf **`Woche zurücksetzen 🧹`**, um alle Tage der aktiven Woche auf einmal zu leeren.
 
 ### 👆 Mahlzeiten-Auswahl (Tipp auf ein Essensfeld)
@@ -276,7 +373,7 @@ Weitere Details:
 
 ---
 
-## 5. 🏠 Aufgaben- & Haus-Modul (`Haus` / `v-todo`)
+## 6. 🏠 Aufgaben- & Haus-Modul (`Haus` / `v-todo`)
 
 ### Neue Aufgabe anlegen (`intervalModal`)
 1. Gib die Aufgabe im Textfeld ein (z. B. *„Rasen mähen“*) und klicke auf **`+`**.
@@ -287,12 +384,46 @@ Weitere Details:
    - **Option 3 (Festes Datum)**: Exaktes Fälligkeitsdatum über den Kalender auswählen und mit **Datum nutzen ✅** bestätigen.
 
 ### Aufgabe erledigen & bearbeiten (`editModal`)
-- **Erledigen**: Klicke auf das Häkchen neben der Aufgabe.
-- **Bearbeiten**: Klicke auf den Namen einer Aufgabe, um das Bearbeiten-Modal zu öffnen. Hier kannst du den Namen, die Zuordnung, Intervalle, Wochentage oder das Datum anpassen.
+- **Erledigen**: Klicke auf das Häkchen neben der Aufgabe. Gibt es mehrere Benutzer, fragt die App **„Wer hat es gemacht?“** – das muss nicht der angemeldete Benutzer sein. Danach bedankt sie sich mit einem kurzen **Lob-Fenster** (jedes Mal ein anderer Spruch).
+- **Bearbeiten**: Klicke auf den Namen einer Aufgabe, um das Bearbeiten-Modal zu öffnen. Hier kannst du den Namen, die Zuordnung, Intervalle, Wochentage oder das Datum anpassen. Datum und Uhrzeit wählst du in einem Fenster im Look deines Themes.
+- **Räume sortieren**: Ziehe die Räume in der Seitenleiste in die gewünschte Reihenfolge (siehe *Sortieren per Ziehen*).
+
+### 📜 Verlauf (`📜 Verlauf` im Aufgaben-Tab)
+Der **Verlauf** zeigt die zuletzt erledigten Aufgaben, nach Personen sortiert und mit Datum und Uhrzeit. Mit 🗑️ löschst du einzelne Einträge, mit **Alles löschen** den ganzen Verlauf. Der Verlauf ist auf allen Geräten gleich und merkt sich die letzten 100 Einträge.
 
 ---
 
-## 6. 💰 Finanz-Modul (`Finanzen` / `v-finance`)
+## 7. 🔧 Wartung (`🔧 Wartung` im Aufgaben-Tab)
+
+Für alles, was nur alle paar Wochen, Monate oder Jahre ansteht: Rauchmelder prüfen, Heizung warten, Reifenwechsel, TÜV … (Zusatzfunktion – siehe *Zusatzfunktionen ein- und ausschalten*.)
+
+- **Neue Wartung**: Tippe auf **`＋ Neu`** und wähle eine Vorlage (z. B. *Rauchmelder prüfen*, *Heizung warten*, *Auto: TÜV / HU* oder *Waschmaschine reinigen*) oder starte mit **Leer starten**.
+- **Eigene Vorlagen**: Mit **`＋ Vorlage`** legst du eine Vorlage an. Mit ✏️ änderst und mit 🗑️ löschst du Vorlagen. **↺ Standard-Vorlagen zurückholen** bringt die mitgelieferten wieder.
+- **Intervall**: Bei **„Wiederholen alle“** gibst du eine Zahl ein und wählst *Tage*, *Wochen*, *Monate* oder *Jahre*.
+- **Vorwarnung**: *Keine*, *3 Tage*, *1 Woche*, *2 Wochen* oder *1 Monat* vorher erscheint die Wartung auf der Startseite.
+- **Nächster Termin**: Wird aus dem Intervall vorgeschlagen und lässt sich ändern.
+- **✅ Erledigt**: Die App fragt, wer es gemacht hat, setzt „zuletzt“ auf heute und den nächsten Termin auf heute plus Intervall.
+- **Status**: Überfällige (⚠️) und bald fällige (⏰) Wartungen sind markiert.
+- **Verlauf**: Im Reiter **📜 Verlauf** des Wartungsfensters siehst du, wer was erledigt hat (die letzten 50 Einträge). Er ist getrennt vom Aufgaben-Verlauf.
+- **Startseite**: Die Karte **🔧 Wartung** zeigt, was fällig ist oder in der Vorwarnzeit liegt.
+
+---
+
+## 8. 📅 Kalender (`📅 Kalender` auf der Startseite)
+
+Der Kalender zeigt die Termine deiner Home-Assistant-Kalender. (Zusatzfunktion, standardmäßig aus – die Einrichtung steht im Kapitel *Zusatzfunktionen & Kalender einrichten*.)
+
+- **Aktuelle Woche**: Die Karte auf der Startseite zeigt Montag bis Sonntag, der heutige Tag ist hervorgehoben. Farbige Punkte markieren Tage mit Terminen, darunter stehen die Termine der Woche.
+- **Ganzen Kalender öffnen**: Ein Tipp auf einen Tag, einen Termin oder **„Ganzen Kalender öffnen →“** öffnet den Monat.
+- **Blättern**: Mit **‹** und **›** oder durch Wischen nach links und rechts gehst du einen Monat zurück oder vor. **Heute** springt zurück zum aktuellen Tag.
+- **Tag ansehen**: Tippe einen Tag an, dann siehst du seine Termine mit Uhrzeit, Ort und Notiz.
+- **Termin anlegen**: Mit **`＋ Termin`** gibst du Titel, Datum und Uhrzeit ein – oder wählst *Ganztägig*, bei mehreren Tagen mit „Bis“-Datum. Ort und Notiz sind optional. Hast du mehrere Kalender, wählst du unter **„In welchen Kalender?“** den Ziel-Kalender. Die App merkt sich deine letzte Wahl.
+- **Termin löschen**: Mit 🗑️ löschst du einen Termin, wenn der Kalender das erlaubt.
+- **Mehrere Kalender**: Jeder Kalender hat eine eigene Farbe. Über die Chips oben im Kalender blendest du einzelne Kalender ein oder aus.
+
+---
+
+## 9. 💰 Finanz-Modul (`Finanzen` / `v-finance`)
 
 - Das Finanz-Modul ist in eine übersichtliche Zwei-Ebenen-Struktur (Jahre ➔ Monate) unterteilt.
 - **Jahr anlegen**: Klicke oben auf `➕ Jahr hinzufügen` und gib eine vierstellige Jahreszahl ein (z. B. 2026), um das Jahr als neue Übersichtskarte zu erstellen.
@@ -301,19 +432,24 @@ Weitere Details:
 - **Einträge verwalten**: Klicke auf eine Monatskarte, um das Detail-Modal (`finance-modal`) zu öffnen.
 - **Fixum & Spendings**: Trage Fixkosten (Miete, Internet) oder variable Ausgaben (Einkauf, Tanken) mit Betrag (€) und Beschreibung ein.
 - **Eintrag löschen**: Klicke auf das `✕` neben dem jeweiligen Eintrag.
-- **Standard-Fixkosten-Vorlagen verwalten**: Über die Einstellungen kannst du wiederkehrende Posten (inklusive Intervall-Auswahl wie monatlich, quartalsweise oder in bestimmten Monaten) hinterlegen.
-  - **Bearbeiten leicht gemacht**: Klicke einfach direkt auf einen bestehenden Fixkosten-Eintrag in der Liste, um ihn sofort in die Eingabefelder zu laden, anzupassen und per `💾 Änderung speichern` zu aktualisieren.
+- **Fixkosten- und Einkommens-Vorlagen verwalten**: Über **`⚙️ Fixkosten verwalten`** kannst du wiederkehrende Posten (inklusive Intervall-Auswahl wie monatlich, quartalsweise oder in bestimmten Monaten) hinterlegen. Mit dem Schalter **📌 Fixkosten / 💰 Einkommen** legst du fest, ob die Vorlage eine Ausgabe oder ein Einkommen (z. B. Gehalt) ist.
+  - **Bearbeiten leicht gemacht**: Klicke einfach direkt auf einen bestehenden Eintrag in der Liste, um ihn sofort in die Eingabefelder zu laden, anzupassen und per `💾 Änderung speichern` zu aktualisieren.
+- **Einkommen eintragen**: Im Monatsfenster gibt es den Bereich **💰 EINKOMMEN**. Mit **↻ Einkommen aus Vorlagen eintragen** übernimmst du deine Einkommens-Vorlagen.
+- **Übrig**: Der Bereich **🧮 ÜBRIG / GESPART** rechnet *Einkommen − Fixkosten − Ausgaben* aus. Auf den Monatskarten stehen *Einkommen* und *Übrig*, auf den Jahreskarten *Einkommen (Jahr)* und *Gespart*.
+- **Gespart insgesamt**: Die Karte **💰 Gespart insgesamt** über den Jahren zeigt die Summe. Ein Tipp öffnet das Fenster **Gespart**, das Jahr für Jahr aufklappbar ist. Monate ohne Einkommen zählen mit 0.
+- **Auf der Startseite zeigen**: Unter dieser Karte schaltest du **💰 Gespart (Jahr)** und **🧮 Übrig (Monat)** für deine Startseite ein. Einschalten geht nur mit deinem eigenen Passwort, ausschalten ohne. Die Einstellung gilt nur für deinen Benutzer.
+- **Jahre und Monate sortieren**: Ziehe die Jahres- bzw. Monatskarten in die gewünschte Reihenfolge (siehe *Sortieren per Ziehen*).
 
 ---
 
-## 7. 🚛 Müll-Modul (`Müll` / `v-trash`)
+## 10. 🚛 Müll-Modul (`Müll` / `v-trash`)
 
 - Zeigt automatisch die nächsten Abholtermine für **Gelber Sack**, **Altpapier**, **Restmüll**, **Biomüll** und die **Weihnachtsbaum-Abholung** an.
 - Die Daten werden automatisch live aus den hinterlegten Home-Assistant-Sensoren geladen.
 
 ---
 
-## 8. 🎨 Themes & Design anpassen (`theme-dropdown`)
+## 11. 🎨 Themes & Design anpassen (`theme-dropdown`)
 
 Klicke unten links in der Seitenleiste auf das Symbol **`🎨🔍`**, um das Erscheinungsbild der Oberfläche zu wechseln und den Zoom anzupassen. Mit dem **Theme-Modus** stellst du ein, ob das Theme automatisch passend zur Jahreszeit wechselt (*Auto*) oder dein gewähltes Theme bleibt. Verfügbare Themes:
 
@@ -329,7 +465,7 @@ Klicke unten links in der Seitenleiste auf das Symbol **`🎨🔍`**, um das Ers
 - 🌸 **Frühling** (Frühlingshaftes Design)
 - 🔴 **FC Bayern** (Mit roten Fußball-Akzenten)
 
-Alle Fenster der App – auch die Fenster für Essensauswahl, Zutaten und Rezepte – übernehmen automatisch die Farben des gewählten Themes. Die Oberfläche passt sich dabei Handy, Tablet und PC sowie dem eingestellten Zoom an.
+Alle Fenster der App – auch die Fenster für Essensauswahl, Zutaten, Rezepte, Vorrat, Wartung und Kalender sowie die Auswahllisten und die Datums- und Uhrzeit-Auswahl – übernehmen automatisch die Farben des gewählten Themes. Die Oberfläche passt sich dabei Handy, Tablet und PC sowie dem eingestellten Zoom an.
 
 ### 🛠️ Für Theme-Entwickler
 
@@ -346,6 +482,26 @@ Jede Theme-Datei (`<name>-theme.css`) enthält am Ende einen Block **„ESSENSWA
 | `--hh-toast-bg`, `--hh-toast-fg` | Hinweis-Meldung unten |
 
 Ein neues Theme braucht nur diesen Block, damit die Fenster passen. Ohne ihn gilt ein neutrales Standard-Aussehen.
+
+---
+
+## 12. ↕️ Sortieren per Ziehen & Bedienhinweise
+
+Du kannst diese Dinge durch Ziehen in eine andere Reihenfolge bringen:
+
+| Was | Wo |
+| :--- | :--- |
+| **Geschäfte** | Einkaufs-Tab, Seitenleiste |
+| **Räume** | Aufgaben-Tab, Seitenleiste |
+| **Jahre** | Finanzen, Jahresübersicht |
+| **Monate** | Finanzen, Monatsübersicht |
+
+- **Am Handy und Tablet**: Element **gedrückt halten** (kurz warten) und dann ziehen. Normales Scrollen mit dem Finger geht weiter wie gewohnt.
+- **Am PC**: Element mit der **Maus anklicken und ziehen**.
+- **Während des Ziehens** zeigt ein Balken, wo das Element landet. Am Rand scrollt die Liste von selbst weiter. Mit **Esc** brichst du ab.
+- **Artikel verschieben**: Im Einkauf ziehst du einen Artikel auf ein anderes Geschäft, wenn du ihn dort kaufen möchtest.
+
+**💡 Bedienhinweise:** Über den Listen steht eine kleine Zeile, die zeigt, was sich ziehen lässt (z. B. *„💡 Räume gedrückt halten und ziehen, um sie zu sortieren.“*). Sie erscheint nur, wenn es mindestens zwei Einträge gibt. Wer sie nicht braucht, schaltet sie unter **⚙️ System-Einstellungen** ➔ **„💡 Bedienhinweise anzeigen“** aus. Das gilt nur für das jeweilige Gerät.
 
 ---
 
